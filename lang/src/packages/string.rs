@@ -209,7 +209,7 @@ pub fn indexof(args: Vec<AST>, context: &mut HashMap<String, AST>) -> Result<(AS
             }
         },
 
-        _ => Err(format!("string.endswith requires two strings, got {} and {}", args[0], args[1]))
+        _ => Err(format!("string.indexof requires two strings, got {} and {}", args[0], args[1]))
     }
 }
 
