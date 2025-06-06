@@ -244,7 +244,7 @@ pub fn lower(args: Vec<AST>, context: &mut HashMap<String, AST>) -> Result<(AST,
     match eval(args[0].clone(), context) {
         Ok(AST::String(s)) => Ok((AST::String(s.to_lowercase()), AST::Null)),
 
-        _ => Err(format!("string.capitalize requires a string, got {}", args[0]))
+        _ => Err(format!("string.lower requires a string, got {}", args[0]))
     }
 }
 
