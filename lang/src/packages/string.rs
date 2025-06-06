@@ -196,7 +196,7 @@ pub fn includes(args: Vec<AST>, context: &mut HashMap<String, AST>) -> Result<(A
     match (eval(args[0].clone(), context), eval(args[1].clone(), context)) {
         (Ok(AST::String(s)), Ok(AST::String(suf))) => Ok((AST::Boolean(s.contains(&suf.clone())), AST::Null)),
 
-        _ => Err(format!("string.endswith requires two strings, got {} and {}", args[0], args[1]))
+        _ => Err(format!("string.includes requires two strings, got {} and {}", args[0], args[1]))
     }
 }
 
