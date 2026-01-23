@@ -106,7 +106,18 @@ pub fn eval(expr: AST, context: &mut HashMap<String, AST>) -> Result<AST, String
 
         AST::Import { file, as_, line } => {
             let args = std::env::args().collect::<Vec<String>>();
-            let file = file.unwrap().replace("\"", "");
+            let file: String = match file {
+                Some(f) => f.replace("\"", ""),
+                None => {
+                    if as_.is_some() {
+                        // parse the file to be the same as what u are trying to import as
+                        // so u can do 'import math' instead of 'import "math" as math'
+                        as_.clone().unwrap()
+                    } else {
+                        return Err("Import file name cannot be null".to_string());
+                    }
+                }
+            };
 
             let path: PathBuf;
 
