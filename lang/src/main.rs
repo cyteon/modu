@@ -38,11 +38,11 @@ fn main() {
         "install" => cli::install::install(),
         "uninstall" => cli::uninstall::uninstall(),
         "--version" => {
-            println!("Modu v0.5.2");
+            println!("Modu v0.6.1");
         }
 
-        _ => {
-            println!("Invalid action");
+        action => {
+            println!("Unknown command: {}", action);
         }
     }
 }

@@ -39,33 +39,14 @@ pub fn repl() {
         }
 
         if this_input.contains("}") {
-            open_functions -= 1;
+            let _ = open_functions.saturating_sub(1);
         }
 
         input.push_str(&this_input);
 
         if open_functions == 0 {
             parse(&input, context).unwrap_or_else(|e| {
-                println!("\n⚠️  {}", e.0);
-                println!("Traceback (most recent call last):");
-                println!("    File \"<stdin>\", line {}", current_line);
-
-                let joined = history.join("");
-                let bytes = joined.as_bytes();
-
-                PrettyPrinter::new()
-                    .language("rust")
-                    .header(true)
-                    .line_numbers(true)
-                    .highlight(current_line)
-                    .grid(true)
-                    .input_from_bytes(bytes)
-                    .line_ranges(
-                        LineRanges::from(vec![LineRange::from(&format!("{}:{}", current_line - 1, current_line + 1)).unwrap()])
-                    )
-                    .print()
-                    .unwrap();
-
+                println!("⚠️  {}", e.0);
                 println!("Believe this is a bug? Report it: https://github.com/Cyteon/modu/issues/new");
             });
         }

@@ -22,7 +22,7 @@ impl From<std::num::ParseIntError> for LexingError {
 #[logos(error = LexingError)]
 #[logos(skip r"[ \t\n\f\r]+")]
 pub enum Token {
-    #[regex("//[^\n]*|/\\*([^*]|\\*[^/])*\\*/")]
+    #[regex("//[^\n]*|/\\*([^*]|\\*[^/])*\\*/", allow_greedy = true)]
     Comment,
 
     #[token("/*")]
