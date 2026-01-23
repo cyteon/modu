@@ -1,4 +1,4 @@
-fn equals(a,b) {
+fn equals(a, b) {
     if a == b {
         return true;
     }
