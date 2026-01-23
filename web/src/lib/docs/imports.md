@@ -52,6 +52,14 @@ let b = file.read("input.modu");
 ```
 or alternatively
 ```rust
+import math;
+import file;
+
+let a = math.abs(-5);
+let b = file.read("input.modu");
+```
+or even
+```rust
 import "math" as *;
 import "file" as *;
 
