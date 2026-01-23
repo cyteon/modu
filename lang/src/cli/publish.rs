@@ -91,7 +91,7 @@ pub fn publish() {
     let mut file = std::fs::File::open("project.toml").unwrap();
     let mut contents = String::new();
     file.read_to_string(&mut contents).unwrap();
-    let toml: toml::Value = contents.parse().unwrap();
+    let toml: toml::Value = toml::from_str(&contents).unwrap();
     let package = toml.get("package").unwrap();
 
     let name = package.get("name").unwrap();
