@@ -12,7 +12,7 @@ print(time.to_local_date_time(time.now()));
 
 import "yapper.modu" as yapper
 
-yapper.yap(time.to_local_date_time(time.now()))
+yapper.yap( time.to_local_date_time(time.now()) )
 yapper.yap( math.div( math.div( math.mul(5, 2), pow(2, 2) ), 1 ) );             // should be 2.5
 yapper.yap( math.div( math.div( math.mul(5, 2), pow(2, 1) ), math.abs(1-2) ) ); // should be 5
 yapper.yap( math.div( math.div( math.mul(-5, 2), pow(2, 1) ), math.abs(-2) ) ); // should be -2.5
@@ -21,4 +21,4 @@ print( math.div( math.div( math.mul(5, 2), pow(2, 1) ), math.abs(1-2) ) );      
 print( math.div( math.div( math.mul(5, 2), pow(2, 1) ), math.abs(-2) ) );       // should be 2.5 
 
 let a = math.div(1,3);
-print( div(a, mul( 3, 0 ) + 1 ) ); // should be 1/3 (aka.. 0.333[..])
+print( div(a, mul( 3, 0 ) + 1 ) ); // should be 1/3 (aka.. 0.333...)

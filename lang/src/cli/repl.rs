@@ -40,7 +40,7 @@ pub fn repl() {
 
         if open_functions == 0 {
             parse(&input, context).unwrap_or_else(|e| {
-                println!("⚠️  {}", e.0);
+                println!("⚠️ {}", e.0);
                 println!("Believe this is a bug? Report it: https://github.com/cyteon/modu/issues/new");
             });
         }

@@ -158,14 +158,6 @@ pub fn handle_nested_ast(mut ast: Vec<AST>, temp_ast: Vec<AST>, current_line: us
                                 });
                             }
                         }
-                        
-                        /*let updated_body = handle_nested_ast(if_body, temp_ast, current_line)?;
-
-                        body.push(AST::IfStatement {
-                            condition,
-                            body: updated_body,
-                            line: if_line,
-                        });*/
                     }
 
                     AST::RBracket => {
@@ -245,14 +237,6 @@ pub fn handle_nested_ast(mut ast: Vec<AST>, temp_ast: Vec<AST>, current_line: us
                                 });
                             }
                         }
-                        
-                        /*let updated_body = handle_nested_ast(if_body, temp_ast, current_line)?;
-
-                        body.push(AST::IfStatement {
-                            condition,
-                            body: updated_body,
-                            line: if_line,
-                        });*/
                     }
 
                     AST::RBracket => {
@@ -857,7 +841,7 @@ pub fn clean_args(obj: AST) -> AST {
 
 pub fn parse(input: &str, context: &mut HashMap<String, AST>) -> Result<(), (String, usize)> {
     let verbose = std::env::args().collect::<Vec<String>>()
-                            .iter().any(|arg| arg == "--verbose");
+        .iter().any(|arg| arg == "--verbose");
 
     let mut ast = Vec::new();
     let mut line_map = HashMap::new();
@@ -3256,7 +3240,7 @@ mod tests {
         let mut context = crate::utils::create_context();
         let result = parse("print(x)", &mut context);
 
-        assert_eq!(result, Ok(())); // cause prints Null
+        assert_eq!(result, Ok(())); // cause prints null
     }
 
     #[test]
