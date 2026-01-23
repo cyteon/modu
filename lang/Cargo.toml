@@ -3,11 +3,11 @@ name = "modu"
 version = "0.6.1"
 edition = "2021"
 repository = "https://github.com/cyteon/modu"
-homepage = "https://cyteon.tech/modu"
+homepage = "https://modu.cyteon.dev"
 description = "A fast and simple interpreted language"
 documentation = "https://modu.cyteon.dev/docs/quickstart"
 license = "MIT"
-authors = ["Cyteon"]
+authors = ["cyteon"]
 keywords = ["programming-language", "cli", "interpreter", "language"]
 exclude = ["/examples", "/tmp"]
 
@@ -20,7 +20,7 @@ rand = "0.8.5"
 reqwest = { version = "0.13.1", features = ["blocking", "json"] }
 rouille = "3.6.2"
 serde_json = "1.0.134"
-toml = "0.9.8"
+toml = "0.9.11"
 zip = "7.2.0"
 openssl = { version = "0.10", features = ["vendored"] }
 uuid = { version = "1.13.1", features = ["v4"]}

@@ -10,28 +10,22 @@ pub fn repl() {
 
     let context = &mut utils::create_context();
     
-    let mut current_line = 0;
     let mut history: Vec<String> = Vec::new();
     let mut open_functions = 0;
     let mut input = String::new();
 
     loop {
-        current_line += 1;
-
         if open_functions > 0 {
             print!("|{}", " ".repeat(open_functions * 4));
         } else {
             input.clear();
-
             print!("> ");
         }
 
         std::io::stdout().flush().unwrap();
 
         let mut this_input = String::new();
-
         std::io::stdin().read_line(&mut this_input).unwrap();
-
         history.push(input.clone());
 
         if this_input.contains("{") {
@@ -47,7 +41,7 @@ pub fn repl() {
         if open_functions == 0 {
             parse(&input, context).unwrap_or_else(|e| {
                 println!("⚠️  {}", e.0);
-                println!("Believe this is a bug? Report it: https://github.com/Cyteon/modu/issues/new");
+                println!("Believe this is a bug? Report it: https://github.com/cyteon/modu/issues/new");
             });
         }
     }

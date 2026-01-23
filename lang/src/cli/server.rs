@@ -57,7 +57,7 @@ pub fn server() {
                     println!("\n⚠️ {}", e.0);
                     println!("Traceback (most recent call last):");
                     println!("    File \"<stdin>\", line {}", e.1);
-                    println!("Believe this is a bug? Report it: https://github.com/Cyteon/modu/issues/new");
+                    println!("Believe this is a bug? Report it: https://github.com/cyteon/modu/issues/new");
                 });
 
                 let captured = String::from_utf8(

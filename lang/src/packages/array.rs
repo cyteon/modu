@@ -3,7 +3,6 @@ use crate::ast::AST;
 use crate::eval::eval;
 
 pub static IDENTITY: &str = "\x1b \x1b"; // name of the property used to indentify arrays
-pub static BUILTINS: [&str; 6] = ["length", "at", "push", "pop", "shift", "unshift"];
 
 pub fn new(_: Vec<AST>, _: &mut HashMap<String, AST>) -> Result<(AST, AST), String> {
     let mut obj: HashMap<String, AST> = HashMap::new();

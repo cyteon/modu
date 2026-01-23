@@ -37,12 +37,12 @@
 
 <svelte:head>
     <link
-        href="https://rawcdn.githack.com/Cyteon/assets/05f98dd21d2870fe70f1f8d51912ef0e2ee9c9c8/prismjs/css/mocha.css"
+        href="https://rawcdn.githack.com/cyteon/assets/05f98dd21d2870fe70f1f8d51912ef0e2ee9c9c8/prismjs/css/mocha.css"
         rel="stylesheet"
     />
 
     <script
-        src="https://rawcdn.githack.com/Cyteon/assets/d294f053d31b9b61beedab38577934a6bab764d7/prismjs/js/rust-only.js"
+        src="https://rawcdn.githack.com/cyteon/assets/d294f053d31b9b61beedab38577934a6bab764d7/prismjs/js/rust-only.js"
     ></script>
 
     <meta name="title" content="Modu Documentation" />
