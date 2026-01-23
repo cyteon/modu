@@ -32,7 +32,7 @@
 <div class="flex w-full max-w-screen h-screen flex-col max-w-screen overflow-x-hidden">
     <div class="m-auto">
         <div class="h-fit text-center pt-2">
-            <h1 class="text-9xl font-bold inline-block bg-clip-text bg-gradient-to-r from-ctp-red to-ctp-yellow to-75% text-transparent mb-4">Modu</h1>
+            <h1 class="text-9xl font-bold inline-block bg-clip-text bg-gradient-to-r from-ctp-red to-ctp-yellow to-75% text-transparent mb-8">Modu</h1>
             
             <div class="flex space-x-2 justify-center">
                 <a 
@@ -59,16 +59,16 @@
             </div>
         </div>
 
-        <div class="flex flex-col px-2 md:mx-auto mt-4">
-            <div class="mx-auto bg-ctp-mantle p-4 rounded-md border border-ctp-surface0">
+        <div class="flex flex-col px-2 md:mx-auto">
+            <div class="mx-auto bg-ctp-mantle p-4 rounded-md border border-ctp-surface0 my-4">
                 <p class="text-xl whitespace-pre-wrap">
-    Modu is a simple and fast interpreted programming language. 
-    It is designed to be easy to learn and use like python.
-    But with the speed and efficiency of rust :D
-    With streamlined error messages for easy debugging</p>
+Modu is a simple and fast interpreted programming language. 
+It is designed to be easy to learn and use like python.
+But with the speed and efficiency of rust :D
+With streamlined error messages for easy debugging</p>
             </div>
 
-            <div class="mx-auto space-y-2 my-4 flex-col flex md:flex-row md:space-x-4 md:space-y-0">
+            <div class="mx-auto space-y-2 flex-col flex md:flex-row md:space-x-4 md:space-y-0">
                 <a 
                     href={base + "/examples"}
                     class="bg-ctp-blue text-ctp-crust text-xl p-2 rounded-md text-center w-full flex md:w-fit"

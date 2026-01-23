@@ -169,12 +169,12 @@ yap("Hello, World!");
     </div>
 
     <div class="flex p-4 h-full space-y-4 flex-col md:flex-row md:space-x-4 md:space-y-0">
-        <div class="bg-ctp-mantle w-full p-6 pt-4 h-full rounded-md flex flex-col md:w-2/3">
+        <div class="bg-ctp-mantle w-full p-6 pt-4 h-full rounded-md flex flex-col md:w-2/3 border border-ctp-surface0">
             <h1 class="text-3xl font-bold">Input</h1>
             <div id="code" class="mt-4 h-full max-h-[83vh] rounded-md"></div>
         </div>
 
-        <div class="bg-ctp-mantle w-full p-6 pt-4 h-full rounded-md flex flex-col md:w-1/3">
+        <div class="bg-ctp-mantle w-full p-6 pt-4 h-full rounded-md flex flex-col md:w-1/3 border border-ctp-surface0">
             <h1 class="text-3xl font-bold">Output</h1>
             <pre class="p-4 mt-4 text-xl break-words whitespace-pre-wrap bg-ctp-crust h-full rounded-md">{output}</pre>
         </div>
