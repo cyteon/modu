@@ -98,8 +98,116 @@ pub fn post(args: Vec<AST>, context: &mut HashMap<String, AST>) -> Result<(AST, 
                 Err(e) => return Err(e.to_string()),
             };
         }
+        
+        _ => Err("http.post() expects a string".to_string())
+    }
+}
+
+pub fn put(args: Vec<AST>, context: &mut HashMap<String, AST>) -> Result<(AST, AST), String> {
+    if args.len() < 1 {
+        return Err("http.put() expects at least 1 argument".to_string());
+    }
+
+    let url = eval(args[0].clone(), context)?;
+
+    let body = if args.len() >= 2 {
+        match eval(args[1].clone(), context)? {
+            AST::String(s) => s,
+            _ => "".to_string()
+        }
+    } else {
+        "".to_string()
+    };
+
+    match url {
+        AST::String(val) => {
+            let resp = reqwest::blocking::Client::new()
+                .put(&val)
+                .body(body)
+                .send();
+
+            match resp {
+                Ok(r) => {
+                    return handle_response(r);
+                },
+
+                Err(e) => return Err(e.to_string()),
+            };
+        }
 
         _ => Err("http.get() expects a string".to_string())
+    }
+}
+
+pub fn patch(args: Vec<AST>, context: &mut HashMap<String, AST>) -> Result<(AST, AST), String> {
+    if args.len() < 1 {
+        return Err("http.patch() expects at least 1 argument".to_string());
+    }
+
+    let url = eval(args[0].clone(), context)?;
+
+    let body = if args.len() >= 2 {
+        match eval(args[1].clone(), context)? {
+            AST::String(s) => s,
+            _ => "".to_string()
+        }
+    } else {
+        "".to_string()
+    };
+
+    match url {
+        AST::String(val) => {
+            let resp = reqwest::blocking::Client::new()
+                .patch(&val)
+                .body(body)
+                .send();
+
+            match resp {
+                Ok(r) => {
+                    return handle_response(r);
+                },
+
+                Err(e) => return Err(e.to_string()),
+            };
+        }
+
+        _ => Err("http.patch() expects a string".to_string())
+    }
+}
+
+pub fn delete(args: Vec<AST>, context: &mut HashMap<String, AST>) -> Result<(AST, AST), String> {
+    if args.len() < 1 {
+        return Err("http.delete() expects at least 1 argument".to_string());
+    }
+
+    let url = eval(args[0].clone(), context)?;
+
+    let body = if args.len() >= 2 {
+        match eval(args[1].clone(), context)? {
+            AST::String(s) => s,
+            _ => "".to_string()
+        }
+    } else {
+        "".to_string()
+    };
+
+    match url {
+        AST::String(val) => {
+            let resp = reqwest::blocking::Client::new()
+                .delete(&val)
+                .body(body)
+                .send();
+
+            match resp {
+                Ok(r) => {
+                    return handle_response(r);
+                },
+
+                Err(e) => return Err(e.to_string()),
+            };
+        }
+
+        _ => Err("http.delete() expects a string".to_string())
     }
 }
 
@@ -121,6 +229,33 @@ pub fn get_object() -> HashMap<String, AST> {
             name: "post".to_string(),
             args: vec!["__args__".to_string()],
             call_fn: post
+        }
+    );
+
+    object.insert(
+        "put".to_string(),
+        AST::InternalFunction {
+            name: "put".to_string(),
+            args: vec!["__args__".to_string()],
+            call_fn: put
+        }
+    );
+
+    object.insert(
+        "patch".to_string(),
+        AST::InternalFunction {
+            name: "patch".to_string(),
+            args: vec!["__args__".to_string()],
+            call_fn: patch
+        }
+    );
+    
+    object.insert(
+        "delete".to_string(),
+        AST::InternalFunction {
+            name: "delete".to_string(),
+            args: vec!["__args__".to_string()],
+            call_fn: delete
         }
     );
 

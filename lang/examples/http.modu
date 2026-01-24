@@ -17,3 +17,24 @@ let result = http.post("https://httpbin.org/post", json.stringify(data));
 print("Status: ", result.status, " - ", result.status_text);
 print("\nHeaders: ", result.headers);
 print("\nBody:\n", result.body);
+
+print("\nHTTP PUT Request:");
+
+let result = http.put("https://httpbin.org/put", json.stringify(data));
+print("Status: ", result.status, " - ", result.status_text);
+print("\nHeaders: ", result.headers);
+print("\nBody:\n", result.body);
+
+print("\nHTTP PATCH Request:");
+
+let result = http.patch("https://httpbin.org/patch", json.stringify(data));
+print("Status: ", result.status, " - ", result.status_text);
+print("\nHeaders: ", result.headers);
+print("\nBody:\n", result.body);
+
+print("\nHTTP DELETE Request:");
+
+let result = http.delete("https://httpbin.org/delete");
+print("Status: ", result.status, " - ", result.status_text);
+print("\nHeaders: ", result.headers);
+print("\nBody:\n", result.body);
