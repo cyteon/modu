@@ -21,15 +21,15 @@ print(c);
 
 You can import the package with
 ```rust
-import "math" as math
+import "math" as math;
 
-math.div(1,2) // can be used like this
+math.div(1,2); // can be used like this
 ```
 or
 ```rust
-import "math" as * // can be accessed without any prefix
+import "math" as *; // can be accessed without any prefix
 
-div(1,2) // is not a property now
+div(1,2); // is not a property now
 ```
 
 You can do the following with the math package:

@@ -18,7 +18,7 @@ $ modu install package_name
 
 3. Import the package
 ```rust
-import "package_name" as package_name
+import "package_name" as package_name;
 
 package_name.an_function();
 ```

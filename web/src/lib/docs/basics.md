@@ -25,10 +25,10 @@ In addition, you can define variables with math, see [Math](math).
 ## User Input
 User input can be gotten with the built-in function **input()**
 ```rust
-let name = input("What is your name? ") 
+let name = input("What is your name? ");
 // use input() for no question/message on same line
 
-print("Hello, ", name, "!")
+print("Hello, ", name, "!");
 ```
 
 ## Functions

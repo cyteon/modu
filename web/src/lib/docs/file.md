@@ -3,8 +3,8 @@
 
 Start of with importing the File pacakge with either of these two methods:
 ```rust
-import "file" as file
-import "file" as *
+import "file" as file;
+import "file" as *;
 ```
 
 ### Reading files

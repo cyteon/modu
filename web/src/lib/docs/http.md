@@ -16,8 +16,8 @@ body        - string
 ```rust
 import "http" as http;
 
-let result = http.get("https://example.com")
-print("Status: ", result.status, " - ", result.status_text)
-print("\nHeaders: ", result.headers)
-print("\nBody:\n", result.body)
+let result = http.get("https://example.com");
+print("Status: ", result.status, " - ", result.status_text);
+print("\nHeaders: ", result.headers);
+print("\nBody:\n", result.body);
 ```
