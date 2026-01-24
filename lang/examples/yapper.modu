@@ -1,7 +1,7 @@
 let abc = 123;
 
-fn yap(str) {
-    print(str);
+fn yap(v) {
+    print(v);
 }
 
 // Should not output anything

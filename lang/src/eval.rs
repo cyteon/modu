@@ -105,7 +105,6 @@ pub fn eval(expr: AST, context: &mut HashMap<String, AST>) -> Result<AST, String
         }
 
         AST::Import { file, as_, line } => {
-            let args = std::env::args().collect::<Vec<String>>();
             let file: String = match file {
                 Some(f) => f.replace("\"", ""),
                 None => {
@@ -119,12 +118,22 @@ pub fn eval(expr: AST, context: &mut HashMap<String, AST>) -> Result<AST, String
                 }
             };
 
-            let path: PathBuf;
+            let mut path: PathBuf = std::env::current_dir().unwrap();
 
-            if args.len() > 2 {
-                path = std::path::Path::new(&args[2]).parent().unwrap().join(&file);
+            let args = std::env::args().collect::<Vec<String>>();
+            if args.len() > 2 && args[1] == "run" {
+                let run_file_path = PathBuf::from(&args[2]);
+                let run_file_parent = run_file_path.parent().unwrap();
+                path.push(run_file_parent);
+            }
+
+            if context.contains_key("MODU_PACKAGE_NAME") {
+                path.push(".modu");
+                path.push("packages");
+                path.push(context.get("MODU_PACKAGE_NAME").unwrap().to_string().replace("\"", ""));
+                path.push(&file);
             } else {
-                path = file.clone().into();
+                path.push(&file);
             }
 
             if file.ends_with(".modu") {
@@ -183,6 +192,7 @@ pub fn eval(expr: AST, context: &mut HashMap<String, AST>) -> Result<AST, String
                 } else {
                     if std::fs::exists(format!(".modu/packages/{}", file)).unwrap() {
                         let mut new_context = context.clone();
+                        new_context.insert("MODU_PACKAGE_NAME".to_string(), AST::String(file.clone()));
 
                         let content = std::fs::read_to_string(format!(".modu/packages/{}/lib.modu", file)).unwrap();
 
@@ -205,6 +215,8 @@ pub fn eval(expr: AST, context: &mut HashMap<String, AST>) -> Result<AST, String
                                 return Err(format!("Failed to parse package {}", file));
                             }
                         }
+
+                        context.remove("MODU_PACKAGE_NAME");
                     } else {
                         return Err(format!("Package {} not found", file));
                     }
