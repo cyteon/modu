@@ -3,8 +3,8 @@
     made by me
 */
 
-print("lol" /* potato */)
+print("lol" /* potato */);
 
-let a = 1 /* +3472834 */ + 1
+let a = 1 /* +3472834 */ + 1;
 
-print(a)
+print(a);

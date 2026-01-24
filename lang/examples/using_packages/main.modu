@@ -1,3 +1,3 @@
-import "test" as test
+import "test" as test;
 
-print(test.new_feature("abc"))
+print(test.new_feature("abc"));

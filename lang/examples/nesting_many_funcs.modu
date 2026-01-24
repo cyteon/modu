@@ -1,8 +1,8 @@
 // BROKEN
 
-import "time" as time
-import "math" as *
-import "math" as math // yes
+import "time" as time;
+import "math" as *;
+import "math" as math; // yes
 
 print( div( div( math.mul(5, 2), 2 ), 1 ) );                   // should be 5
 print( div( div( div(1, 2), div(1, 2) ), div(1, 2) ) );        // should be 2
@@ -10,7 +10,7 @@ print( div( div( div(-1, -2), div(1, 2) ), div(1, 2) ) );      // should be 2
 
 print(time.to_local_date_time(time.now()));
 
-import "yapper.modu" as yapper
+import "yapper.modu" as yapper;
 
 yapper.yap( time.to_local_date_time(time.now()) )
 yapper.yap( math.div( math.div( math.mul(5, 2), pow(2, 2) ), 1 ) );             // should be 2.5

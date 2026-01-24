@@ -1,8 +1,8 @@
 fn hello() {
-    print("Hello, world!")
+    print("Hello, world!");
 }
 
 fn new_feature(a) {
-    print("yo this is 2.0.0!!!! new features (rea)")
+    print("yo this is 2.0.0!!!! new features (rea)");
     return a;
 }

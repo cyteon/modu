@@ -1,20 +1,20 @@
-import "array" as array
+import "array" as array;
 
-let a = array.new()
-print(a)
+let a = array.new();
+print(a);
 
-a.push(1)
-a.push(true)
-a.push("hello")
-print(a)
+a.push(1);
+a.push(true);
+a.push("hello");
+print(a);
 
-a.pop()
-print(a.shift())
+a.pop();
+print(a.shift());
 
-print(a)
+print(a);
 
-print(a.length)
-print(a.at(0))
-a.unshift(12345)
-print(a)
-print(a.at(0))
+print(a.length);
+print(a.at(0));
+a.unshift(12345);
+print(a);
+print(a.at(0));

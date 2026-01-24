@@ -1,20 +1,20 @@
 import "ffi" as ffi;
 import "os" as os;
 
-let path = "./libffi_test"
+let path = "./libffi_test";
 
 if os.name == "linux" {
-    let path = path + ".so"
+    let path = path + ".so";
 }
 
 if os.name == "macos" {
-    let path = path + ".dylib"
+    let path = path + ".dylib";
 }
 
 if os.name == "windows" {
-    let path = path + ".dll"
+    let path = path + ".dll";
     print("This may error out if you have not built ffi_test and put the .dll in same folder as main.modu!");
-    print("I will remove this message once i add a .dll myself there")
+    print("I will remove this message once i add a .dll myself there");
 }
 
 ffi.call(path, "hello_world");

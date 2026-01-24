@@ -1,9 +1,9 @@
-import "time" as time
+import "time" as time;
 
-let unix = time.now()
-let iso = time.to_iso_8601(unix)
-let local = time.to_local_date_time(unix)
+let unix = time.now();
+let iso = time.to_iso_8601(unix);
+let local = time.to_local_date_time(unix);
 
-print("Unix: ", unix)
-print("ISO: ", iso)
-print("Local: ", local)
+print("Unix: ", unix);
+print("ISO: ", iso);
+print("Local: ", local);

@@ -1,7 +1,7 @@
 fn add_five(a) {
     let b = a + 5;
     return b;
-    print("oh nyo")
+    print("oh nyo");
 }
 
 let a = add_five(5);
