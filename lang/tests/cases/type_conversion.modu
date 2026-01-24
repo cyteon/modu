@@ -1,0 +1,3 @@
+print(str(1))
+print(int(2))
+print(float(2.5))

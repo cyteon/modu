@@ -29,3 +29,13 @@ fn basic_print() {
 fn nesting_funcs() {
     run_test("nesting_funcs");
 }
+
+#[test]
+fn type_conversion() {
+    run_test("type_conversion");
+}
+
+#[test]
+fn file_reading() {
+    run_test("file_reading");
+}
