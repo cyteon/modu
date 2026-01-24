@@ -1110,7 +1110,7 @@ pub fn parse(input: &str, context: &mut HashMap<String, AST>) -> Result<(), (Str
                                     }, AST::Dot)?;
 
                                     temp_ast.push(AST::LetDeclaration {
-                                        name: Some(lexer.slice().to_string()),
+                                        name,
                                         value: Box::new(new_call),
                                         line,
                                     });
@@ -1125,7 +1125,7 @@ pub fn parse(input: &str, context: &mut HashMap<String, AST>) -> Result<(), (Str
                                     }, AST::Dot)?;
 
                                     temp_ast.push(AST::LetDeclaration {
-                                        name: Some(lexer.slice().to_string()),
+                                        name,
                                         value: Box::new(new_call),
                                         line,
                                     });

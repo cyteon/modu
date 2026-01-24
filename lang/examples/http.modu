@@ -3,7 +3,7 @@ import "json" as json;
 
 print("HTTP GET Request:");
 
-let result = http.get("https://example.com");
+let result = http.get("https://httpbin.org/get");
 print("Status: ", result.status, " - ", result.status_text);
 print("\nHeaders: ", result.headers);
 print("\nBody:\n", result.body);

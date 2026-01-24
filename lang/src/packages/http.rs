@@ -73,7 +73,7 @@ pub fn post(args: Vec<AST>, context: &mut HashMap<String, AST>) -> Result<(AST, 
     let body = if args.len() >= 2 {
         match eval(args[1].clone(), context)? {
             AST::String(s) => s,
-            _ => "".to_string(),
+            _ => "".to_string()
         }
     } else {
         "".to_string()
