@@ -35,3 +35,42 @@ print("Status: ", result.status, " - ", result.status_text);
 print("\nHeaders: ", result.headers);
 print("\nBody:\n", result.body);
 ```
+
+## Example put request
+```rust
+import "http" as http;
+import "json" as json;
+
+let data = json.new();
+data.set("name", "modu");
+
+let result = http.put("https://httpbin.org/put", json.stringify(data));
+print("Status: ", result.status, " - ", result.status_text);
+print("\nHeaders: ", result.headers);
+print("\nBody:\n", result.body);
+```
+
+## Example patch request
+```rust
+import "http" as http;
+import "json" as json;
+
+let data = json.new();
+data.set("name", "modu");
+
+let result = http.patch("https://httpbin.org/patch", json.stringify(data));
+print("Status: ", result.status, " - ", result.status_text);
+print("\nHeaders: ", result.headers);
+print("\nBody:\n", result.body);
+```
+
+## Example delete request
+```rust
+import "http" as http;
+import "json" as json;
+
+let result = http.delete("https://httpbin.org/delete");
+print("Status: ", result.status, " - ", result.status_text);
+print("\nHeaders: ", result.headers);
+print("\nBody:\n", result.body);
+```
