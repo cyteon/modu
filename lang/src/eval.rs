@@ -153,9 +153,7 @@ pub fn eval(expr: AST, context: &mut HashMap<String, AST>) -> Result<AST, String
                         }
                     }
     
-                    Err(e) => {
-                        dbg!(path);
-    
+                    Err(e) => {    
                         return Err(e.to_string());
                     }
                 }
