@@ -11,7 +11,6 @@ pub fn get(args: Vec<AST>, context: &mut HashMap<String, AST>) -> Result<(AST, A
             match resp {
                 Ok(r) => {
                     let status = r.status();
-                    let body = r.text().map_err(|e| e.to_string())?;
 
                     let mut properties = HashMap::new();
 	                properties = json::insert_functions(&mut properties);
@@ -22,8 +21,35 @@ pub fn get(args: Vec<AST>, context: &mut HashMap<String, AST>) -> Result<(AST, A
                     );
 
                     properties.insert(
+                        "status_text".to_string(),
+                        AST::String(status.canonical_reason().unwrap_or("").to_string())
+                    );
+
+                    let headers = AST::Object {
+                        properties: r.headers().iter().map(|(k, v)| {
+                            (
+                                k.to_string(),
+                                AST::String(v.to_str().unwrap_or("").to_string())
+                            )
+                        }).collect(),
+                        line: 0,
+                    };
+
+                    properties.insert(
+                        "headers".to_string(),
+                        headers
+                    );
+
+                    let body = r.text().map_err(|e| e.to_string())?;
+
+                    properties.insert(
                         "body".to_string(),
                         AST::String(body)
+                    );
+
+                    properties.insert(
+                        "ok".to_string(),
+                        AST::Boolean(status.is_success())
                     );
 
                     return Ok((AST::Object { properties, line: 0, }, AST::Null));

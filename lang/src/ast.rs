@@ -193,7 +193,15 @@ impl std::fmt::Display for AST {
                             continue;
                         }
 
-                        str.push_str(&format!("\"{}\": {}, ", key, value));
+                        match value {
+                            AST::String(s) => {
+                                str.push_str(&format!("\"{}\": \"{}\", ", key, s.replace("\"", "\\\"").replace("\n", "\\n").replace("\t", "\\t")));
+                            }
+
+                            _ => {
+                                str.push_str(&format!("\"{}\": {}, ", key, value));
+                            }
+                        }
                     }
 
                     if str.len() > 0 {
