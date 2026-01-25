@@ -68,7 +68,7 @@ pub fn get(args: Vec<AST>, context: &mut HashMap<String, AST>) -> Result<(AST, A
 }
 
 pub fn post(args: Vec<AST>, context: &mut HashMap<String, AST>) -> Result<(AST, AST), String> {
-    if args.len() < 1 {
+    if args.is_empty() {
         return Err("http.post() expects at least 1 argument".to_string());
     }
 
@@ -104,7 +104,7 @@ pub fn post(args: Vec<AST>, context: &mut HashMap<String, AST>) -> Result<(AST, 
 }
 
 pub fn put(args: Vec<AST>, context: &mut HashMap<String, AST>) -> Result<(AST, AST), String> {
-    if args.len() < 1 {
+    if args.is_empty() {
         return Err("http.put() expects at least 1 argument".to_string());
     }
 
@@ -135,12 +135,12 @@ pub fn put(args: Vec<AST>, context: &mut HashMap<String, AST>) -> Result<(AST, A
             };
         }
 
-        _ => Err("http.get() expects a string".to_string())
+        _ => Err("http.put() expects a string".to_string())
     }
 }
 
 pub fn patch(args: Vec<AST>, context: &mut HashMap<String, AST>) -> Result<(AST, AST), String> {
-    if args.len() < 1 {
+    if args.is_empty() {
         return Err("http.patch() expects at least 1 argument".to_string());
     }
 
@@ -176,7 +176,7 @@ pub fn patch(args: Vec<AST>, context: &mut HashMap<String, AST>) -> Result<(AST,
 }
 
 pub fn delete(args: Vec<AST>, context: &mut HashMap<String, AST>) -> Result<(AST, AST), String> {
-    if args.len() < 1 {
+    if args.is_empty() {
         return Err("http.delete() expects at least 1 argument".to_string());
     }
 

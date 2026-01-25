@@ -20,7 +20,7 @@ $ modu install package_name
 ```rust
 import "package_name" as package_name;
 
-package_name.an_function();
+package_name.a_function();
 ```
 
 ## Making libraries

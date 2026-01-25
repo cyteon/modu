@@ -1,7 +1,7 @@
 # File I/O
 > Disabled on the server :P
 
-Start of with importing the File pacakge with either of these two methods:
+Start of with importing the File package with either of these two methods:
 ```rust
 import "file" as file;
 import "file" as *;

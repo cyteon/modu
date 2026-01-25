@@ -3,7 +3,7 @@
 
 The JSON library has 3 functions, **.new()**, **.stringify(object)**, and **.parse(string)**.
 ```rust
-import "json" as json; // Alertnatively `as *;` then use new(), etc
+import "json" as json; // Alternatively `as *;` then use new(), etc
 
 json.new(); // Makes a new object
 json.stringify(object); // Turns a object into a string

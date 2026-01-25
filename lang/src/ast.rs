@@ -232,6 +232,14 @@ impl PartialEq for AST {
     fn eq(&self, other: &Self) -> bool {
         match (self, other) {
             (AST::FFILibrary { path: p1, .. }, AST::FFILibrary { path: p2, .. }) => p1 == p2,
+            (AST::Integer(i1), AST::Integer(i2)) => i1 == i2,
+            (AST::String(s1), AST::String(s2)) => s1 == s2,
+            (AST::Boolean(b1), AST::Boolean(b2)) => b1 == b2,
+            (AST::Float(f1), AST::Float(f2)) => f1 == f2,
+
+            (AST::Integer(i1), AST::Float(f2)) => (*i1 as f64) == *f2,
+            (AST::Float(f1), AST::Integer(i2)) => *f1 == (*i2 as f64),
+
             _ => std::mem::discriminant(self) == std::mem::discriminant(other),
         }
     }

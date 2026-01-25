@@ -35,7 +35,7 @@ pub fn execute_ffi_call(
 
     unsafe {
         let func = lib.get::<FFIFunction>(name.as_bytes())
-            .map_err(|e| format!("failed to load function: {}", e))?;
+            .map_err(|e| format!("failed to load FFI function: {}", e))?;
 
         let result = func(ffi_args.len() as i32, ffi_args.as_ptr());
 
@@ -47,7 +47,14 @@ pub fn execute_ffi_call(
             FFIType::Null => Ok(AST::Null),
             FFIType::String => {
                 let c_str = std::ffi::CStr::from_ptr(result.value.string);
-                let str_slice = c_str.to_str().unwrap();
+                let str_slice = match c_str.to_str() {
+                    Ok(s) => s,
+                    Err(_) => {
+                        modu_ffi::ffi_free_string(result.value.string);
+                        return Err("failed to convert FFI string to Rust string".to_string());
+                    }
+                };
+                
                 let string = str_slice.to_string();
 
                 modu_ffi::ffi_free_string(result.value.string);
@@ -77,10 +84,10 @@ pub fn load(args: Vec<AST>, context: &mut HashMap<String, AST>) -> Result<(AST, 
         .unwrap()
         .to_string() + "/";
 
-    let args = std::env::args().collect::<Vec<String>>();
+    let sys_args = std::env::args().collect::<Vec<String>>();
     
-    if args.len() > 2 && args[1] == "run" {
-        let file_path = PathBuf::from(&args[2]);
+    if sys_args.len() > 2 && sys_args[1] == "run" {
+        let file_path = PathBuf::from(&sys_args[2]);
         let parent = file_path.parent().unwrap();
         let parent_str = parent.to_str().unwrap();
         full_path = parent_str.to_string() + "/";
