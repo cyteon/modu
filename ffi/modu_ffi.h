@@ -13,16 +13,16 @@ typedef enum FFIType {
   Boolean,
 } FFIType;
 
-typedef struct FFIValueUnion {
+typedef union FFIValueUnion {
   char *string;
   int64_t integer;
-  double float_;
+  double float;
   bool boolean;
 } FFIValueUnion;
 
 typedef struct FFIValue {
   enum FFIType ty;
-  struct FFIValueUnion value;
+  union FFIValueUnion value;
 } FFIValue;
 
 void ffi_free_string(char *ptr);

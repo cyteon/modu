@@ -1,4 +1,4 @@
-use std::ffi::c_char;
+use std::ffi::{c_char, c_double};
 
 #[repr(C)]
 #[derive(Copy, Clone)]
@@ -14,7 +14,7 @@ pub enum FFIType {
 pub union FFIValueUnion {
     pub string: *mut c_char,
     pub integer: i64,
-    pub float: f64,
+    pub float: c_double,
     pub boolean: bool,
 }
 
