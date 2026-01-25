@@ -57,8 +57,6 @@ print(lib.add(2, 5));
 // 7
 ```
 
-As you can see, we use string arguments, even for numbers, any other will cause errors.
-
 Here is the code for the library:
 ```rust
 // https://crates.io/crates/modu_ffi

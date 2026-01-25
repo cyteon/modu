@@ -10,7 +10,7 @@ GET  /     - Can be used to check if server on
 POST /eval - Used to run code
 ```
 
-In order to run some code, make a post requets to /eval with the code as raw text in the body, like:
+In order to run some code, make a post requests to /eval with the code as raw text in the body, like:
 ```bash
 curl --location 'http://localhost:2424/eval' \
     --header 'Content-Type: text/plain' \

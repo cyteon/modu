@@ -19,7 +19,7 @@ pub fn execute_ffi_call(
         match eval(arg, context)? {
             AST::Null => ffi_args.push(FFIValue::null()),
             AST::String(v) => {
-                let c = std::ffi::CString::new(v).unwrap();
+                let c = std::ffi::CString::new(v).map_err(|e| format!("invalid string for FFI: {}", e))?;
                 let ptr = c.into_raw();
 
                 owned_strings.push(ptr);
