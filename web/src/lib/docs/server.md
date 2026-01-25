@@ -10,28 +10,30 @@ GET  /     - Can be used to check if server on
 POST /eval - Used to run code
 ```
 
-In order to run some code, make a post requets to /eval with the code as raw text in the body, like:
+In order to run some code, make a post requests to /eval with the code as raw text in the body, like:
 ```bash
 curl --location 'http://localhost:2424/eval' \
-     --header 'Content-Type: text/plain' \
-     --data 'let a = 1;
-     print(a);
+    --header 'Content-Type: text/plain' \
+    --data '
+        let a = 1;
+        print(a);
 
-     print("YOOOOO");
+        print("yay");
 
-     if a == 1 {
-         print("LES GOOOO");
-     }
+        if a == 1 {
+            print("it works :O");
+        }
 
-     print(a);'
+        print(a);
+    '
 ```
 
 This will return a response in plaintext like
 
 ```
 1
-YOOOOO
-LES GOOOO
+yay
+it works :O
 1
 
 ```
@@ -40,9 +42,8 @@ LES GOOOO
 **input()** will not work, as when running code its sent to the server, executed there, and sent back. And we have currently not added any way to make input() work, which would be extremely hard. \
 **exit()** has been disabled so people dont try to crash the server.
 
-
-
-The following (built-in) packages has been disabled on the server:
+The following (built-in) packages have been disabled on the server:
 - OS
 - File
 - FFI
+- HTTP

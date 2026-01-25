@@ -1,33 +1,30 @@
 import "ffi" as ffi;
 import "os" as os;
 
-let path = "./libffi_test"
+let path = "./libffi_test";
 
 if os.name == "linux" {
-    let path = path + ".so"
+    let path = path + ".so";
 }
 
 if os.name == "macos" {
-    let path = path + ".dylib"
+    let path = path + ".dylib";
+    print("This may error out if you have not built ffi_test and put the .dylib in same folder as main.modu!");
+    print("I will remove this message once i add a .dylib myself there");
 }
 
 if os.name == "windows" {
-    let path = path + ".dll"
+    let path = path + ".dll";
     print("This may error out if you have not built ffi_test and put the .dll in same folder as main.modu!");
-    print("I will remove this message once i add a .dll myself there")
+    print("I will remove this message once i add a .dll myself there");
 }
 
-ffi.call(path, "hello_world");
+let lib = ffi.load(path);
 
-print(ffi.call(path, "a", "5"));
-print(ffi.call(path, "one"));
+lib.hello_world();
+print(lib.one());
 
-// due to some arg issues, ffi calls cant accept numbers
-print(ffi.call(path, "add", str(5), str(2)));
-print(ffi.call(path, "string"));
+print(lib.add(2, 5));
+print(lib.string());
 
-ffi.call(path, "print", "test");
-ffi.call(path, "print2", "test1", " test2");
-
-
-// ffi.call(path, "add", 1, 2, 3); // panic test
+lib.print("test");

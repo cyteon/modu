@@ -55,21 +55,21 @@ pub fn int(args: Vec<AST>, context: &mut HashMap<String, AST>) -> Result<(AST, A
             match v {
                 AST::String(value) => {
                     match value.parse::<i64>() {
-                        Ok(value) => { return Ok((AST::Number(value), AST::Null)); },
+                        Ok(value) => { return Ok((AST::Integer(value), AST::Null)); },
                         Err(_) => (),
                     }
 
                     match value.parse::<f64>() {
-                        Ok(value) => { return Ok((AST::Number(value as i64), AST::Null)); },
+                        Ok(value) => { return Ok((AST::Integer(value as i64), AST::Null)); },
                         Err(_) => (),
                     }
 
                     return Err("int() requires a string or boolean".to_string());
                 }
 
-                AST::Boolean(value) => Ok((AST::Number(if value {1} else {0}), AST::Null)),
+                AST::Boolean(value) => Ok((AST::Integer(if value {1} else {0}), AST::Null)),
         
-                AST::Number(value) => Ok((AST::Number(value), AST::Null)),
+                AST::Integer(value) => Ok((AST::Integer(value), AST::Null)),
         
                 _ => Err("int() requires a string or boolean".to_string())
             }
@@ -92,7 +92,7 @@ pub fn float(args: Vec<AST>, context: &mut HashMap<String, AST>) -> Result<(AST,
 
                 AST::Boolean(value) => Ok((AST::Float(if value {1.0} else {0.0}), AST::Null)),
         
-                AST::Number(value) => Ok((AST::Float(value as f64), AST::Null)),
+                AST::Integer(value) => Ok((AST::Float(value as f64), AST::Null)),
                 AST::Float(value) => Ok((AST::Float(value), AST::Null)),
         
                 _ => Err("float() requires a string or boolean".to_string())
@@ -109,7 +109,7 @@ pub fn str(args: Vec<AST>, context: &mut HashMap<String, AST>) -> Result<(AST, A
             match v {
                 AST::String(value) => Ok((AST::String(value), AST::Null)),
         
-                AST::Number(value) => Ok((AST::String(value.to_string()), AST::Null)),
+                AST::Integer(value) => Ok((AST::String(value.to_string()), AST::Null)),
                 AST::Float(value) => Ok((AST::String(value.to_string()), AST::Null)),
                 AST::Boolean(value) => Ok((AST::String(value.to_string()), AST::Null)),
                 AST::Null => Ok((AST::String("null".to_string()), AST::Null)),

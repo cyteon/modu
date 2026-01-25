@@ -14,7 +14,7 @@ pub fn new(_: Vec<AST>, _: &mut HashMap<String, AST>) -> Result<(AST, AST), Stri
 
     obj.insert(
         "length".to_string(),
-        AST::Number(0)
+        AST::Integer(0)
     );
 
     obj.insert(
@@ -89,7 +89,7 @@ pub fn at(args: Vec<AST>, context: &mut HashMap<String, AST>) -> Result<(AST, AS
     let index = eval(args[1].clone(), context)?;
     
     match (arr, index) {
-        (AST::Object { properties: obj, line: _ }, AST::Number(i)) => {
+        (AST::Object { properties: obj, line: _ }, AST::Integer(i)) => {
             if !check_array(obj.clone()) {
                 return Err("first argument is not an array".to_string())
             }
@@ -121,13 +121,13 @@ pub fn push(args: Vec<AST>, context: &mut HashMap<String, AST>) -> Result<(AST, 
             let len = lenornone.unwrap();
 
             match len {
-                AST::Number(length) => {
+                AST::Integer(length) => {
                     obj.insert(
                         length.to_string(),
                         item
                     );
 
-                    obj.insert("length".to_string(), AST::Number(length+1));
+                    obj.insert("length".to_string(), AST::Integer(length+1));
 
                     Ok((AST::Null, AST::Object { properties: obj, line: 0 }))
                 }
@@ -158,7 +158,7 @@ pub fn pop(args: Vec<AST>, context: &mut HashMap<String, AST>) -> Result<(AST, A
             let len = lenornone.unwrap();
 
             match len {
-                AST::Number(length) => {
+                AST::Integer(length) => {
                     if *length < 1 {
                         return Err("empty array".to_string());
                     }
@@ -172,7 +172,7 @@ pub fn pop(args: Vec<AST>, context: &mut HashMap<String, AST>) -> Result<(AST, A
                     let last = lastornone.unwrap();
 
                     obj.remove(&(length-1).to_string());
-                    obj.insert("length".to_string(), AST::Number(length-1));
+                    obj.insert("length".to_string(), AST::Integer(length-1));
 
                     Ok((last.clone(), AST::Object { properties: obj, line: 0 }))
                 }
@@ -203,7 +203,7 @@ pub fn shift(args: Vec<AST>, context: &mut HashMap<String, AST>) -> Result<(AST,
             let len = lenornone.unwrap();
 
             match len {
-                AST::Number(length) => {
+                AST::Integer(length) => {
                     if *length < 1 {
                         return Err("empty array".to_string());
                     }
@@ -253,7 +253,7 @@ pub fn shift(args: Vec<AST>, context: &mut HashMap<String, AST>) -> Result<(AST,
                         _ => {}
                     }
 
-                    obj.insert("length".to_string(), AST::Number(length-1));
+                    obj.insert("length".to_string(), AST::Integer(length-1));
 
                     Ok((first.clone(), AST::Object { properties: obj, line: 0 }))
                 }
@@ -286,7 +286,7 @@ pub fn unshift(args: Vec<AST>, context: &mut HashMap<String, AST>) -> Result<(AS
             let len = lenornone.unwrap();
 
             match len {
-                AST::Number(length) => {
+                AST::Integer(length) => {
                     let mut elems: Vec<AST> = vec![];
 
                     if *length > 0 {
@@ -326,7 +326,7 @@ pub fn unshift(args: Vec<AST>, context: &mut HashMap<String, AST>) -> Result<(AS
                         _ => {}
                     }
 
-                    obj.insert("length".to_string(), AST::Number(length+1));
+                    obj.insert("length".to_string(), AST::Integer(length+1));
 
                     Ok((AST::Null, AST::Object { properties: obj, line: 0 }))
                 }

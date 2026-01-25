@@ -11,13 +11,13 @@ pub fn now(_: Vec<AST>,  _: &mut HashMap<String, AST>) -> Result<(AST, AST), Str
         .duration_since(time::UNIX_EPOCH)
         .map_err(|e| e.to_string())?;
 
-    Ok((AST::Number(now.as_secs() as i64), AST::Null))
+    Ok((AST::Integer(now.as_secs() as i64), AST::Null))
 }
 
 
 pub fn to_iso_8601(args: Vec<AST>, context: &mut HashMap<String, AST>) -> Result<(AST, AST), String> {
     let time = match eval(args[0].clone(), context) {
-        Ok(AST::Number(time)) => time,
+        Ok(AST::Integer(time)) => time,
         Ok(AST::Float(time)) => time as i64,
         
         Ok(_) => return Err("to_iso_8601() expects a number".to_string()),
@@ -34,7 +34,7 @@ pub fn to_iso_8601(args: Vec<AST>, context: &mut HashMap<String, AST>) -> Result
 
 pub fn to_local_date_time(args: Vec<AST>, context: &mut HashMap<String, AST>) -> Result<(AST, AST), String> {
     let time = match eval(args[0].clone(), context) {
-        Ok(AST::Number(time)) => time,
+        Ok(AST::Integer(time)) => time,
         Ok(AST::Float(time)) => time as i64,
         
         Ok(_) => return Err("to_iso_8601() expects a number".to_string()),
@@ -87,7 +87,7 @@ mod tests {
         
         assert_eq!(
             time,
-            AST::Number(
+            AST::Integer(
                 time::SystemTime::now()
                     .duration_since(time::UNIX_EPOCH)
                     .unwrap()

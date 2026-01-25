@@ -1,0 +1,5 @@
+language = "C"
+pragma_once = true
+
+[export]
+include = ["FFIValue", "FFIType", "ffi_free_string"]

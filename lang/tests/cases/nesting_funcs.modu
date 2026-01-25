@@ -1,0 +1,7 @@
+import "time" as time;
+import "math" as *;
+import "math" as math;
+
+print( div( div( math.mul(5, 2), 2 ), 1 ) );
+print( div( div( math.div(1, 2), div(1, 2) ), div(1, 2) ) );
+print( div( div( div(-1, -2), div(1, 2) ), math.div(1, 2) ) );

@@ -3,7 +3,7 @@ use std::collections::HashMap;
 use crate::ast::AST;
 use crate::eval::eval;
 
-fn insert_functions(properties: &mut HashMap<String, AST>) -> HashMap<String, AST> {
+pub fn insert_functions(properties: &mut HashMap<String, AST>) -> HashMap<String, AST> {
 	properties.insert(
 		"set".to_string(),
 		AST::InternalFunction {
@@ -82,10 +82,6 @@ fn make_stuff_string(value: AST) -> String {
 }
 
 pub fn stringify(args: Vec<AST>, context: &mut HashMap<String, AST>) -> Result<(AST, AST), String> {
-	if args.len() != 1 {
-		return Err("json.stringify requires exactly one argument".to_string());
-	}
-
 	let value = eval(args[0].clone(), context)?;
 
 	match value {
@@ -126,7 +122,7 @@ fn parse_obj(obj: &mut HashMap<String, serde_json::Value>) -> HashMap<String, AS
 				if number.as_i64().is_none() {
 					map.insert(key.clone(), AST::Float(number.as_f64().unwrap()));
 				} else {
-					map.insert(key.clone(), AST::Number(number.as_i64().unwrap()));
+					map.insert(key.clone(), AST::Integer(number.as_i64().unwrap()));
 				}
 			}
 
@@ -344,7 +340,7 @@ mod tests {
 		let object = AST::Object {
 			properties: vec![
 				("key".to_string(), AST::String("value".to_string())),
-				("key2".to_string(), AST::Number(1)),
+				("key2".to_string(), AST::Integer(1)),
 			].iter().cloned().collect(),
 			line: 0,
 		};

@@ -13,14 +13,14 @@ $ modu init
 
 2. Install the package
 ```bash
-$ modu install package_name # example: modu install basic_loops
+$ modu install package_name
 ```
 
 3. Import the package
 ```rust
-import "package_name" as package_name // or anything else
+import "package_name" as package_name;
 
-package_name.cool_function();
+package_name.a_function();
 ```
 
 ## Making libraries
@@ -59,6 +59,6 @@ $ modu publish
 ```
 
 ## Package repos
-https://mpm.cyteon.dev | Owner: [cyteon](https://github.com/cyteon)     - Offical \
+https://mpm.cyteon.dev | Owner: [cyteon](https://github.com/cyteon)     - Offical
 
 Want to list yours? Make a PR to modify [this file](https://github.com/cyteon/modu/blob/main/web/src/lib/docs/libraries.md)

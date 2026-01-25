@@ -2,7 +2,7 @@
   "name": "modu-lang",
   "displayName": "Modu Lang",
   "description": "Syntax highlightning for the Modu Programming Language",
-  "version": "0.0.2",
+  "version": "1.0.0",
   "repository": {
     "type": "git",
     "url": "https://github.com/cyteon/modu"
@@ -20,7 +20,7 @@
   ],
   "scripts": {
     "test-vscode": "vscode-test",
-    "install": "vsce package && code --install-extension ./modu-lang-0.0.2.vsix",
+    "install": "vsce package && code --install-extension ./modu-lang-1.0.0.vsix",
     "vsce": "vsce package",
     "test": "npm run vsce && npm run install"
   },
@@ -47,7 +47,7 @@
     ]
   },
   "devDependencies": {
-    "@vscode/test-cli": "^0.0.10",
-    "@vscode/test-electron": "^2.4.1"
+    "@vscode/test-cli": "^0.0.12",
+    "@vscode/test-electron": "^2.5.2"
   }
 }

@@ -4,7 +4,7 @@ use std::{collections::HashMap, path::PathBuf};
 use crate::utils;
 use crate::packages::get_package;
 
-static DISABLED_ON_SERVER: [&str; 3] = ["file", "os", "ffi"];
+static DISABLED_ON_SERVER: [&str; 4] = ["file", "os", "ffi", "http"];
 
 pub fn eval(expr: AST, context: &mut HashMap<String, AST>) -> Result<AST, String> {
     match expr {
@@ -105,7 +105,6 @@ pub fn eval(expr: AST, context: &mut HashMap<String, AST>) -> Result<AST, String
         }
 
         AST::Import { file, as_, line } => {
-            let args = std::env::args().collect::<Vec<String>>();
             let file: String = match file {
                 Some(f) => f.replace("\"", ""),
                 None => {
@@ -119,12 +118,22 @@ pub fn eval(expr: AST, context: &mut HashMap<String, AST>) -> Result<AST, String
                 }
             };
 
-            let path: PathBuf;
+            let mut path: PathBuf = std::env::current_dir().unwrap();
 
-            if args.len() > 2 {
-                path = std::path::Path::new(&args[2]).parent().unwrap().join(&file);
+            let args = std::env::args().collect::<Vec<String>>();
+            if args.len() > 2 && args[1] == "run" {
+                let run_file_path = PathBuf::from(&args[2]);
+                let run_file_parent = run_file_path.parent().unwrap();
+                path.push(run_file_parent);
+            }
+
+            if context.contains_key("MODU_PACKAGE_NAME") {
+                path.push(".modu");
+                path.push("packages");
+                path.push(context.get("MODU_PACKAGE_NAME").unwrap().to_string().replace("\"", ""));
+                path.push(&file);
             } else {
-                path = file.clone().into();
+                path.push(&file);
             }
 
             if file.ends_with(".modu") {
@@ -153,9 +162,7 @@ pub fn eval(expr: AST, context: &mut HashMap<String, AST>) -> Result<AST, String
                         }
                     }
     
-                    Err(e) => {
-                        dbg!(path);
-    
+                    Err(e) => {    
                         return Err(e.to_string());
                     }
                 }
@@ -185,6 +192,7 @@ pub fn eval(expr: AST, context: &mut HashMap<String, AST>) -> Result<AST, String
                 } else {
                     if std::fs::exists(format!(".modu/packages/{}", file)).unwrap() {
                         let mut new_context = context.clone();
+                        new_context.insert("MODU_PACKAGE_NAME".to_string(), AST::String(file.clone()));
 
                         let content = std::fs::read_to_string(format!(".modu/packages/{}/lib.modu", file)).unwrap();
 
@@ -207,6 +215,8 @@ pub fn eval(expr: AST, context: &mut HashMap<String, AST>) -> Result<AST, String
                                 return Err(format!("Failed to parse package {}", file));
                             }
                         }
+
+                        context.remove("MODU_PACKAGE_NAME");
                     } else {
                         return Err(format!("Package {} not found", file));
                     }
@@ -294,6 +304,12 @@ pub fn eval(expr: AST, context: &mut HashMap<String, AST>) -> Result<AST, String
                                     }
                                 }
 
+                                AST::FFILibrary { path, lib } => {
+                                    let result = crate::packages::ffi::execute_ffi_call(lib.clone(), property.as_ref().unwrap(), args, context)?;
+
+                                    return Ok(result);
+                                }
+
                                 _ => {
                                     return Err(format!("{} is not an object", name));
                                 }
@@ -314,7 +330,7 @@ pub fn eval(expr: AST, context: &mut HashMap<String, AST>) -> Result<AST, String
 
         AST::IsEqual { left, right, line: _ } => {
             match (eval(*left, context)?, eval(*right, context)?) {
-                (AST::Number(l), AST::Number(r)) => {
+                (AST::Integer(l), AST::Integer(r)) => {
                     return Ok(AST::Boolean(l == r));
                 }
 
@@ -338,7 +354,7 @@ pub fn eval(expr: AST, context: &mut HashMap<String, AST>) -> Result<AST, String
 
         AST::IsUnequal { left, right, line: _ } => {
             match (eval(*left, context)?, eval(*right, context)?) {
-                (AST::Number(l), AST::Number(r)) => {
+                (AST::Integer(l), AST::Integer(r)) => {
                     return Ok(AST::Boolean(l != r));
                 }
 
@@ -362,7 +378,7 @@ pub fn eval(expr: AST, context: &mut HashMap<String, AST>) -> Result<AST, String
 
         AST::LessThan { left, right, line: _ } => {
             match (eval(*left, context)?, eval(*right, context)?) {
-                (AST::Number(l), AST::Number(r)) => {
+                (AST::Integer(l), AST::Integer(r)) => {
                     return Ok(AST::Boolean(l < r));
                 }
 
@@ -378,7 +394,7 @@ pub fn eval(expr: AST, context: &mut HashMap<String, AST>) -> Result<AST, String
 
         AST::GreaterThan { left, right, line: _ } => {
             match (eval(*left, context)?, eval(*right, context)?) {
-                (AST::Number(l), AST::Number(r)) => {
+                (AST::Integer(l), AST::Integer(r)) => {
                     return Ok(AST::Boolean(l > r));
                 }
 
@@ -394,7 +410,7 @@ pub fn eval(expr: AST, context: &mut HashMap<String, AST>) -> Result<AST, String
 
         AST::LessThanOrEqual { left, right, line: _ } => {
             match (eval(*left, context)?, eval(*right, context)?) {
-                (AST::Number(l), AST::Number(r)) => {
+                (AST::Integer(l), AST::Integer(r)) => {
                     return Ok(AST::Boolean(l <= r));
                 }
 
@@ -410,7 +426,7 @@ pub fn eval(expr: AST, context: &mut HashMap<String, AST>) -> Result<AST, String
 
         AST::GreaterThanOrEqual { left, right, line: _ } => {
             match (eval(*left, context)?, eval(*right, context)?) {
-                (AST::Number(l), AST::Number(r)) => {
+                (AST::Integer(l), AST::Integer(r)) => {
                     return Ok(AST::Boolean(l >= r));
                 }
 
@@ -460,7 +476,7 @@ pub fn eval(expr: AST, context: &mut HashMap<String, AST>) -> Result<AST, String
             }
         }
 
-        AST::Number(_) | AST::Boolean(_) | AST::Float(_) | AST::Object { .. } | AST::Null => {
+        AST::Integer(_) | AST::Boolean(_) | AST::Float(_) | AST::Object { .. } | AST::Null => {
             return Ok(expr);
         }
 
@@ -470,19 +486,19 @@ pub fn eval(expr: AST, context: &mut HashMap<String, AST>) -> Result<AST, String
 
         AST::Addition { left, right, line: _ } => {
             match (eval(*left.clone(), context)?, eval(*right.clone(), context)?) {
-                (AST::Number(l), AST::Number(r)) => {
-                    return Ok(AST::Number(l + r));
+                (AST::Integer(l), AST::Integer(r)) => {
+                    return Ok(AST::Integer(l + r));
                 }
 
                 (AST::Float(l), AST::Float(r)) => {
                     return Ok(AST::Float(l + r));
                 }
 
-                (AST::Number(l), AST::Float(r)) => {
+                (AST::Integer(l), AST::Float(r)) => {
                     return Ok(AST::Float(l as f64 + r));
                 }
 
-                (AST::Float(l), AST::Number(r)) => {
+                (AST::Float(l), AST::Integer(r)) => {
                     return Ok(AST::Float(l + r as f64));
                 }
 
@@ -498,32 +514,32 @@ pub fn eval(expr: AST, context: &mut HashMap<String, AST>) -> Result<AST, String
 
         AST::Subtraction { left, right, line: _ } => {
             match (eval(*left.clone(), context)?, eval(*right.clone(), context)?) {
-                (AST::Number(l), AST::Number(r)) => {
-                    return Ok(AST::Number(l - r));
+                (AST::Integer(l), AST::Integer(r)) => {
+                    return Ok(AST::Integer(l - r));
                 }
 
                 (AST::Float(l), AST::Float(r)) => {
                     return Ok(AST::Float(l - r));
                 }
 
-                (AST::Number(l), AST::Float(r)) => {
+                (AST::Integer(l), AST::Float(r)) => {
                     return Ok(AST::Float(l as f64 - r));
                 }
 
-                (AST::Float(l), AST::Number(r)) => {
+                (AST::Float(l), AST::Integer(r)) => {
                     return Ok(AST::Float(l - r as f64));
                 }
 
-                (AST::Null, AST::Number(r)) => {
-                    return Ok(AST::Number(-r));
+                (AST::Null, AST::Integer(r)) => {
+                    return Ok(AST::Integer(-r));
                 }
 
                 (AST::Null, AST::Float(r)) => {
                     return Ok(AST::Float(-r));
                 }
 
-                (AST::Number(l), AST::Null) => {
-                    return Ok(AST::Number(l));
+                (AST::Integer(l), AST::Null) => {
+                    return Ok(AST::Integer(l));
                 }
 
                 (AST::Float(l), AST::Null) => {
@@ -630,27 +646,27 @@ mod tests {
     fn addition() {
         let mut context = crate::utils::create_context();
 
-        let expr = AST::Addition { left: Box::new(AST::Number(1)), right: Box::new(AST::Number(2)), line: 0 };
+        let expr = AST::Addition { left: Box::new(AST::Integer(1)), right: Box::new(AST::Integer(2)), line: 0 };
 
-        assert_eq!(eval(expr, &mut context).unwrap(), AST::Number(3));
+        assert_eq!(eval(expr, &mut context).unwrap(), AST::Integer(3));
     }
 
     #[test]
     fn subtraction() {
         let mut context = crate::utils::create_context();
 
-        let expr = AST::Subtraction { left: Box::new(AST::Number(1)), right: Box::new(AST::Number(2)), line: 0 };
+        let expr = AST::Subtraction { left: Box::new(AST::Integer(1)), right: Box::new(AST::Integer(2)), line: 0 };
 
-        assert_eq!(eval(expr, &mut context).unwrap(), AST::Number(-1));
+        assert_eq!(eval(expr, &mut context).unwrap(), AST::Integer(-1));
     }
 
     #[test]
     fn negative_num() {
         let mut context = crate::utils::create_context();
 
-        let expr = AST::Subtraction { left: Box::new(AST::Null), right: Box::new(AST::Number(2)), line: 0 };
+        let expr = AST::Subtraction { left: Box::new(AST::Null), right: Box::new(AST::Integer(2)), line: 0 };
 
-        assert_eq!(eval(expr, &mut context).unwrap(), AST::Number(-2));
+        assert_eq!(eval(expr, &mut context).unwrap(), AST::Integer(-2));
     }
 
     #[test]
@@ -675,7 +691,7 @@ mod tests {
     fn add_float_and_int() {
         let mut context = crate::utils::create_context();
 
-        let expr = AST::Addition { left: Box::new(AST::Float(1.0)), right: Box::new(AST::Number(2)), line: 0 };
+        let expr = AST::Addition { left: Box::new(AST::Float(1.0)), right: Box::new(AST::Integer(2)), line: 0 };
 
         assert_eq!(eval(expr, &mut context).unwrap(), AST::Float(3.0));
     }
@@ -684,7 +700,7 @@ mod tests {
     fn add_int_and_string() {
         let mut context = crate::utils::create_context();
 
-        let expr = AST::Addition { left: Box::new(AST::Number(1)), right: Box::new(AST::String(" cookie".to_string())), line: 0 };
+        let expr = AST::Addition { left: Box::new(AST::Integer(1)), right: Box::new(AST::String("cookie".to_string())), line: 0 };
 
         match eval(expr, &mut context) {
             Ok(_) => {
@@ -692,7 +708,7 @@ mod tests {
             }
 
             Err(e) => {
-                assert_eq!(e, "Cannot add Number(1) and String(\" cookie\")");
+                assert_eq!(e, "Cannot add Integer(1) and String(\"cookie\")");
             }
         }
     }

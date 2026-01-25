@@ -2,10 +2,11 @@ mod math;
 mod file;
 mod time;
 mod os;
-mod ffi;
+pub mod ffi;
 pub mod json;
 pub mod array;
 mod uuid;
+mod http;
 
 use crate::ast::AST;
 
@@ -28,7 +29,8 @@ pub fn get_package(name: &str) -> Option<AST> {
 		"file" => {
 			let args = std::env::args().collect::<Vec<String>>();
 
-			if args.len() > 1 && args[1] == "server" { // fallback incase the stop in eval.rs explodes for some reason
+			// fallback incase the stop in eval.rs explodes for some reason
+			if args.len() > 1 && args[1] == "server" {
 				return None;
 			}
 
@@ -38,15 +40,31 @@ pub fn get_package(name: &str) -> Option<AST> {
 			})
 		}
 
-		"os" => Some(AST::Object {
-			properties: os::get_object(),
-			line: 0
-		}),
+		"os" => {
+			let args = std::env::args().collect::<Vec<String>>();
 
-		"ffi" => Some(AST::Object {
-			properties: ffi::get_object(),
-			line: 0
-		}),
+			if args.len() > 1 && args[1] == "server" {
+				return None;
+			}
+
+			Some(AST::Object {
+				properties: os::get_object(),
+				line: 0,
+			})
+		}
+
+		"ffi" => {
+			let args = std::env::args().collect::<Vec<String>>();
+
+			if args.len() > 1 && args[1] == "server" {
+				return None;
+			}
+
+			Some(AST::Object {
+				properties: ffi::get_object(),
+				line: 0,
+			})
+		}
 
 		"json" => Some(AST::Object {
 			properties: json::get_object(),
@@ -62,6 +80,19 @@ pub fn get_package(name: &str) -> Option<AST> {
 			properties: uuid::get_object(),
 			line: 0
 		}),
+
+		"http" => {
+			let args = std::env::args().collect::<Vec<String>>();
+
+			if args.len() > 1 && args[1] == "server" {
+				return None;
+			}
+
+			Some(AST::Object {
+				properties: http::get_object(),
+				line: 0,
+			})
+		}
 
 		_ => None
 	}

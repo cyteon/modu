@@ -1,18 +1,18 @@
-let name = input("What is your name? ") 
+let name = input("What is your name? ");
 // use input() for no question/message on same line
 
-print("Hello, ", name, "!")
+print("Hello, ", name, "!");
 
-let age = int(input("How old are you? ", name, "? "))
+let age = int(input("How old are you? ", name, "? "));
 
 if age == 0 {
-    print("nuh uh i dont think so")
+    print("nuh uh i dont think so");
 }
 
 if age > 200 {
-    print("you're too old")
+    print("you're too old");
 }
 
 if age < 18 {
-    print("bro cant drive")
+    print("bro cant drive");
 }

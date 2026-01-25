@@ -1110,7 +1110,7 @@ pub fn parse(input: &str, context: &mut HashMap<String, AST>) -> Result<(), (Str
                                     }, AST::Dot)?;
 
                                     temp_ast.push(AST::LetDeclaration {
-                                        name: Some(lexer.slice().to_string()),
+                                        name,
                                         value: Box::new(new_call),
                                         line,
                                     });
@@ -1125,7 +1125,7 @@ pub fn parse(input: &str, context: &mut HashMap<String, AST>) -> Result<(), (Str
                                     }, AST::Dot)?;
 
                                     temp_ast.push(AST::LetDeclaration {
-                                        name: Some(lexer.slice().to_string()),
+                                        name,
                                         value: Box::new(new_call),
                                         line,
                                     });
@@ -1619,6 +1619,19 @@ pub fn parse(input: &str, context: &mut HashMap<String, AST>) -> Result<(), (Str
                                     name,
                                     value: Box::new(new_call),
                                     line,
+                                });                                
+                            } else if let AST::PropertyCall { object, property, args, line } = *value {
+                                let new_call = handle_nested_arguments(AST::PropertyCall {
+                                    object,
+                                    property,
+                                    args,
+                                    line,
+                                }, AST::Lparen)?;
+
+                                temp_ast.push(AST::LetDeclaration {
+                                    name,
+                                    value: Box::new(new_call),
+                                    line,
                                 });
                             } else {
                                 return Err(("Expected a function call before '()'".to_string(), current_line));
@@ -1858,9 +1871,9 @@ pub fn parse(input: &str, context: &mut HashMap<String, AST>) -> Result<(), (Str
                     let value = temp_ast.pop().unwrap_or(AST::Null);
 
                     match value {
-                        AST::Number(n) => {
+                        AST::Integer(n) => {
                             temp_ast.push(AST::Addition {
-                                left: Box::new(AST::Number(n)),
+                                left: Box::new(AST::Integer(n)),
                                 right: Box::new(AST::Null),
                                 line: current_line,
                             });
@@ -2045,9 +2058,9 @@ pub fn parse(input: &str, context: &mut HashMap<String, AST>) -> Result<(), (Str
                     let value = temp_ast.pop().unwrap_or(AST::Null);
 
                     match value {
-                        AST::Number(n) => {
+                        AST::Integer(n) => {
                             temp_ast.push(AST::Subtraction {
-                                left: Box::new(AST::Number(n)),
+                                left: Box::new(AST::Integer(n)),
                                 right: Box::new(AST::Null),
                                 line: current_line,
                             });
@@ -2240,7 +2253,7 @@ pub fn parse(input: &str, context: &mut HashMap<String, AST>) -> Result<(), (Str
                     }
                 }
 
-                Ok(Token::Number(n)) => {
+                Ok(Token::Integer(n)) => {
                     let value = temp_ast.pop().unwrap_or(AST::Null);
 
                     match value {
@@ -2249,7 +2262,7 @@ pub fn parse(input: &str, context: &mut HashMap<String, AST>) -> Result<(), (Str
                                 name,
                                 args,
                                 line,
-                            }, AST::Number(n))?;
+                            }, AST::Integer(n))?;
 
                             temp_ast.push(new_call);
                         }
@@ -2260,7 +2273,7 @@ pub fn parse(input: &str, context: &mut HashMap<String, AST>) -> Result<(), (Str
                                 property,
                                 args,
                                 line,
-                            }, AST::Number(n))?;
+                            }, AST::Integer(n))?;
 
                             temp_ast.push(new_call);
                         }
@@ -2271,7 +2284,7 @@ pub fn parse(input: &str, context: &mut HashMap<String, AST>) -> Result<(), (Str
                                     name,
                                     value: Box::new(AST::Addition {
                                         left,
-                                        right: Box::new(AST::Number(n)),
+                                        right: Box::new(AST::Integer(n)),
                                         line,
                                     }),
                                     line,
@@ -2282,7 +2295,7 @@ pub fn parse(input: &str, context: &mut HashMap<String, AST>) -> Result<(), (Str
                                         name,
                                         value: Box::new(AST::Subtraction {
                                             left,
-                                            right: Box::new(AST::Number(n)),
+                                            right: Box::new(AST::Integer(n)),
                                             line,
                                         }),
                                         line,
@@ -2293,7 +2306,7 @@ pub fn parse(input: &str, context: &mut HashMap<String, AST>) -> Result<(), (Str
                                     name: call_name,
                                     args,
                                     line,
-                                }, AST::Number(n))?;
+                                }, AST::Integer(n))?;
 
                                 temp_ast.push(AST::LetDeclaration {
                                     name,
@@ -2306,7 +2319,7 @@ pub fn parse(input: &str, context: &mut HashMap<String, AST>) -> Result<(), (Str
                                     property,
                                     args,
                                     line,
-                                }, AST::Number(n))?;
+                                }, AST::Integer(n))?;
 
                                 temp_ast.push(AST::LetDeclaration {
                                     name,
@@ -2316,7 +2329,7 @@ pub fn parse(input: &str, context: &mut HashMap<String, AST>) -> Result<(), (Str
                             } else {
                                 temp_ast.push(AST::LetDeclaration {
                                     name,
-                                    value: Box::new(AST::Number(n)),
+                                    value: Box::new(AST::Integer(n)),
                                     line,
                                 });
                             }
@@ -2326,7 +2339,7 @@ pub fn parse(input: &str, context: &mut HashMap<String, AST>) -> Result<(), (Str
                             if let AST::Null = *right {
                                 temp_ast.push(AST::Addition {
                                     left,
-                                    right: Box::new(AST::Number(n)),
+                                    right: Box::new(AST::Integer(n)),
                                     line,
                                 });
                             } else {
@@ -2337,7 +2350,7 @@ pub fn parse(input: &str, context: &mut HashMap<String, AST>) -> Result<(), (Str
                         AST::Subtraction { left, right: _, line } => {
                             temp_ast.push(AST::Subtraction {
                                 left,
-                                right: Box::new(AST::Number(n)),
+                                right: Box::new(AST::Integer(n)),
                                 line,
                             });
                         }
@@ -2384,7 +2397,7 @@ pub fn parse(input: &str, context: &mut HashMap<String, AST>) -> Result<(), (Str
                                         line,
                                     });
                 
-                                    temp_ast.push(AST::Number(n));
+                                    temp_ast.push(AST::Integer(n));
 
                                     continue;
                                 }
@@ -2392,13 +2405,13 @@ pub fn parse(input: &str, context: &mut HashMap<String, AST>) -> Result<(), (Str
 
                             match *right.clone() {
                                 AST::Null => {
-                                    right = Box::new(AST::Number(n));
+                                    right = Box::new(AST::Integer(n));
                                 }
 
                                 AST::Addition { left: r_left, right: _, line } => {
                                     right = Box::new(AST::Addition {
                                         left: r_left,
-                                        right: Box::new(AST::Number(n)),
+                                        right: Box::new(AST::Integer(n)),
                                         line,
                                     });
                                 }
@@ -2406,7 +2419,7 @@ pub fn parse(input: &str, context: &mut HashMap<String, AST>) -> Result<(), (Str
                                 AST::Subtraction { left: r_left, right: _, line } => {
                                     right = Box::new(AST::Subtraction {
                                         left: r_left,
-                                        right: Box::new(AST::Number(n)),
+                                        right: Box::new(AST::Integer(n)),
                                         line,
                                     });
                                 }
@@ -2480,14 +2493,14 @@ pub fn parse(input: &str, context: &mut HashMap<String, AST>) -> Result<(), (Str
                         AST::Return { value, line } => {
                             if let AST::Null = *value {
                                 temp_ast.push(AST::Return {
-                                    value: Box::new(AST::Number(n)),
+                                    value: Box::new(AST::Integer(n)),
                                     line,
                                 });
                             } else if let AST::Addition { left, right: _, line } = *value {
                                 temp_ast.push(AST::Return {
                                     value: Box::new(AST::Addition {
                                         left,
-                                        right: Box::new(AST::Number(n)),
+                                        right: Box::new(AST::Integer(n)),
                                         line,
                                     }),
                                     line,
@@ -2496,7 +2509,7 @@ pub fn parse(input: &str, context: &mut HashMap<String, AST>) -> Result<(), (Str
                                 temp_ast.push(AST::Return {
                                     value: Box::new(AST::Subtraction {
                                         left,
-                                        right: Box::new(AST::Number(n)),
+                                        right: Box::new(AST::Integer(n)),
                                         line,
                                     }),
                                     line,
@@ -3131,7 +3144,7 @@ fn print_res(res: AST) {
             println!("{}", v);
         }
 
-        AST::Number(v) => {
+        AST::Integer(v) => {
             println!("{}", v);
         }
 

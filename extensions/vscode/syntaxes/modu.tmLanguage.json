@@ -25,18 +25,26 @@
 		"strings": {
 			"patterns": [
 				{
+				"name": "string.quoted.double.modu",
+				"begin": "\"",
+				"end": "\"",
+				"patterns": [
+					{
 					"name": "constant.character.escape.modu",
-					"match": "\\\\."
+					"match": "\\\\[nrt0\\\\\"']"
+					}
+				]
 				},
 				{
-					"name": "string.quoted.double.modu",
-					"begin": "\"",
-					"end": "\""
-				},
-				{
-					"name": "string.quoted.single.modu",
-					"begin": "'",
-					"end": "'"
+				"name": "string.quoted.single.modu",
+				"begin": "'",
+				"end": "'",
+				"patterns": [
+					{
+					"name": "constant.character.escape.modu",
+					"match": "\\\\[nrt0\\\\\"']"
+					}
+				]
 				}
 			]
 		},
@@ -53,7 +61,7 @@
 
 		"number": {
 			"name": "constant.numeric.modu",
-			"match": "\\b\\d+\\b"
+			"match": "\\b\\d(?:_?\\d)*\\b"
 		},
 
 		"operators": {

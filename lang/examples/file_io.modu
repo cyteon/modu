@@ -1,13 +1,13 @@
-import "file" as file
+import "file" as file;
 
 let path = input("Enter the path to the file: ");
-let content = file.read(path)
+let content = file.read(path);
 
-print("File content:")
-print(content)
+print("File content:");
+print(content);
 
-let new_content = input("Enter new content: ")
-file.write(path, new_content)
+let new_content = input("Enter new content: ");
+file.write(path, new_content);
 
-let append_content = input("Enter content to append: ")
-file.write_append(path, append_content)
+let append_content = input("Enter content to append: ");
+file.write_append(path, append_content);

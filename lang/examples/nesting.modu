@@ -50,4 +50,4 @@ fn test_nesting(a, b, c) {
     }
 }
 
-test_nesting(1, 1, 3)
+test_nesting(1, 1, 3);

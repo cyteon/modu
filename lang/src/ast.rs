@@ -1,8 +1,11 @@
 
 use std::collections::HashMap;
+use libloading::Library;
+use std::sync::Arc;
+
 use crate::packages::array;
 
-#[derive(Debug, PartialEq, Clone)]
+#[derive(Debug, Clone)]
 pub enum AST {
     LetDeclaration {
         name: Option<String>,
@@ -64,6 +67,11 @@ pub enum AST {
         call_fn: fn(Vec<AST>, &mut HashMap<String, AST>) -> Result<(AST, AST), String>,
     },
 
+    FFILibrary {
+        path: String,
+        lib: Arc<Library>,
+    },
+
     Exists {
         value: Box<AST>,
         line: usize,
@@ -118,7 +126,7 @@ pub enum AST {
     },
 
     Identifer(String),
-    Number(i64),
+    Integer(i64),
     String(String),
     Boolean(bool),
     Float(f64),
@@ -154,7 +162,7 @@ impl std::fmt::Display for AST {
                 write!(f, "{}", s)
             },
 
-            AST::Number(n) => write!(f, "{}", n),
+            AST::Integer(n) => write!(f, "{}", n),
             AST::Float(n) => write!(f, "{}", n),
             AST::Boolean(b) => write!(f, "{}", b),
             AST::Null => write!(f, "null"),
@@ -193,7 +201,15 @@ impl std::fmt::Display for AST {
                             continue;
                         }
 
-                        str.push_str(&format!("\"{}\": {}, ", key, value));
+                        match value {
+                            AST::String(s) => {
+                                str.push_str(&format!("\"{}\": \"{}\", ", key, s.replace("\"", "\\\"").replace("\n", "\\n").replace("\t", "\\t")));
+                            }
+
+                            _ => {
+                                str.push_str(&format!("\"{}\": {}, ", key, value));
+                            }
+                        }
                     }
 
                     if str.len() > 0 {
@@ -208,6 +224,23 @@ impl std::fmt::Display for AST {
             }
 
             _ => write!(f, "{:?}", self),
+        }
+    }
+}
+
+impl PartialEq for AST {
+    fn eq(&self, other: &Self) -> bool {
+        match (self, other) {
+            (AST::FFILibrary { path: p1, .. }, AST::FFILibrary { path: p2, .. }) => p1 == p2,
+            (AST::Integer(i1), AST::Integer(i2)) => i1 == i2,
+            (AST::String(s1), AST::String(s2)) => s1 == s2,
+            (AST::Boolean(b1), AST::Boolean(b2)) => b1 == b2,
+            (AST::Float(f1), AST::Float(f2)) => f1 == f2,
+
+            (AST::Integer(i1), AST::Float(f2)) => (*i1 as f64) == *f2,
+            (AST::Float(f1), AST::Integer(i2)) => *f1 == (*i2 as f64),
+
+            _ => std::mem::discriminant(self) == std::mem::discriminant(other),
         }
     }
 }
