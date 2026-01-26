@@ -1,6 +1,6 @@
 [package]
 name = "modu"
-version = "1.1.0"
+version = "1.1.1"
 edition = "2024"
 repository = "https://github.com/cyteon/modu"
 homepage = "https://modu.cyteon.dev"
@@ -9,7 +9,7 @@ documentation = "https://modu.cyteon.dev/docs/quickstart"
 license = "MIT"
 authors = ["cyteon"]
 keywords = ["programming-language", "cli", "interpreter", "language"]
-exclude = ["/examples", "/tmp"]
+exclude = ["/examples", "/tmp", "/tests"]
 
 [dependencies]
 bat = "0.26.1"
