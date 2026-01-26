@@ -1,6 +1,6 @@
-let a = 1
-let b = 2
-let c = "potato"
+let a = 1;
+let b = 2;
+let c = "potato";
 
 if a == 1 {
     print("a == 1");

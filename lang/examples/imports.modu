@@ -1,4 +1,4 @@
-import "yapper.modu" as yapper
+import "yapper.modu" as yapper;
 
 yapper.yap("Hello, World!");
 print(yapper.abc);

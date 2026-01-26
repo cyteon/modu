@@ -1,8 +1,6 @@
-// BROKEN
-
 import "time" as time;
 import "math" as *;
-import "math" as math; // yes
+import "math" as math;
 
 print( div( div( math.mul(5, 2), 2 ), 1 ) );                   // should be 5
 print( div( div( div(1, 2), div(1, 2) ), div(1, 2) ) );        // should be 2

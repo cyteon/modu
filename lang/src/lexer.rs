@@ -55,6 +55,9 @@ pub enum Token {
     #[token("if")]
     If,
 
+    #[token("loop")]
+    Loop,
+
     #[token(".")]
     Dot,
 
@@ -169,11 +172,12 @@ mod tests {
 
     #[test]
     fn expr() {
-        let lexer = Token::lexer("print(\"Hello, world!\")");
+        let mut lexer = Token::lexer("print(\"Hello, world!\")");
 
-        for token in lexer {
-            println!("{:?}", token);
-        }
+        assert_eq!(lexer.next(), Some(Ok(Token::Identifer)));
+        assert_eq!(lexer.next(), Some(Ok(Token::LParen)));
+        assert_eq!(lexer.next(), Some(Ok(Token::String)));
+        assert_eq!(lexer.next(), Some(Ok(Token::RParen)));
     }
 
     #[test]

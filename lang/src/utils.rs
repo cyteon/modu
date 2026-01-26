@@ -4,7 +4,7 @@ use crate::ast::AST;
 
 pub fn is_reserved(name: &str) -> bool {
     match name {
-        "let" | "fn" | "import" | "if" | "null" | "return" | "as" => true,
+        "let" | "fn" | "import" | "if" | "null" | "return" | "as" | "loop" => true,
         _ => false,
     }
 }
