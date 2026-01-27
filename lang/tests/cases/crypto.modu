@@ -1,0 +1,16 @@
+import "crypto" as crypto;
+
+print(crypto.sha256("test"));
+print(crypto.sha512("test"));
+print(crypto.blake3("test"));
+
+let bcrypt_hash = crypto.bcrypt_hash("test");
+let argon2_hash = crypto.argon2_hash("test");
+// let scrypt_hash = crypto.scrypt_hash("test"); // too slow
+
+print(crypto.bcrypt_verify("test", bcrypt_hash));
+print(crypto.bcrypt_verify("wrong", bcrypt_hash));
+print(crypto.argon2_verify("test", argon2_hash));
+print(crypto.argon2_verify("wrong", argon2_hash));
+// print(crypto.scrypt_verify("test", scrypt_hash)); // too slow
+// print(crypto.scrypt_verify("wrong", scrypt_hash)); // too slow

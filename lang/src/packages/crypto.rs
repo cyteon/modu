@@ -241,6 +241,6 @@ mod tests {
     fn get_time_package() {
         let object = get_object();
 
-        assert_eq!(object.len(), 2);
+        assert_eq!(object.len(), 9);
     }
 }
