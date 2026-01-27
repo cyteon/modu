@@ -1,4 +1,4 @@
-import { Home, Baseline, File, FileBox, Equal, Server, Library, AppWindowIcon, Box, Braces, Wifi, Repeat2 } from "lucide-svelte"
+import { Home, Baseline, File, FileBox, Equal, Server, Library, AppWindowIcon, Box, Braces, Wifi, Repeat2, CaseLower, MessageSquareLock } from "lucide-svelte"
 
 export default {
     pages: [
@@ -56,6 +56,16 @@ export default {
             "path": "loops",
             "title": "Loops",
             "icon": Repeat2,
+        },
+        {
+            "path": "encoding",
+            "title": "Encoding",
+            "icon": CaseLower,
+        },
+        {
+            "path": "cryptography",
+            "title": "Cryptography",
+            "icon": MessageSquareLock,
         },
         {
             "path": "server",
