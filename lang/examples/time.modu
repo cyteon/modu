@@ -1,9 +1,17 @@
 import "time" as time;
 
-let unix = time.now();
+let unix = time.now_unix();
+let now_utc = time.now_utc();
+let now_local = time.now_local();
 let iso = time.to_iso_8601(unix);
+let rfc_2822 = time.to_rfc_2822(unix);
 let local = time.to_local_date_time(unix);
+let utc = time.to_utc_date_time(unix);
 
-print("Unix: ", unix);
-print("ISO: ", iso);
-print("Local: ", local);
+print("time.now_unix: ", unix);
+print("time.now_utc: ", now_utc);
+print("time.now_local: ", now_local);
+print("time.to_iso_8601: ", iso);
+print("time.to_rfc_2822: ", rfc_2822);
+print("time.to_local_date_time: ", local);
+print("time.to_local_date_time: ", utc);
