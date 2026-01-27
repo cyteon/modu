@@ -2,7 +2,7 @@ use std::collections::HashMap;
 use crate::ast::AST;
 use crate::eval::eval;
 
-pub static IDENTITY: &str = "\x1b \x1b"; // name of the property used to indentify arrays
+pub static IDENTITY: &str = "\x1b \x1b"; // the property used to indentify arrays
 
 pub fn new(_: Vec<AST>, _: &mut HashMap<String, AST>) -> Result<(AST, AST), String> {
     let mut obj: HashMap<String, AST> = HashMap::new();

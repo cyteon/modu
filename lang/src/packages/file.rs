@@ -63,7 +63,6 @@ pub fn write_append(args: Vec<AST>, context: &mut HashMap<String, AST>) -> Resul
     }
 }
 
-
 pub fn get_object() -> HashMap<String, AST> {
     let mut object = HashMap::new();
 
