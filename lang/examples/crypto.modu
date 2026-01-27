@@ -7,6 +7,7 @@ print("Base16: ", encoding.base16_encode(string));
 print("SHA-256: ", crypto.sha256(string));
 print("SHA-512: ", crypto.sha512(string));
 print("BLAKE3: ", crypto.blake3(string));
+print("MD5 (legacy, insecure): ", crypto.legacy_md5(string));
 print("Bcrypt: ", crypto.bcrypt_hash(string));
 print("Argon2: ", crypto.argon2_hash(string));
 // print("Scrypt: ", crypto.scrypt_hash(string)); // too slow

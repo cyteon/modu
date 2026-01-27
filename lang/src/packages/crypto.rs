@@ -146,6 +146,20 @@ fn scrypt_verify(args: Vec<AST>, context: &mut HashMap<String, AST>) -> Result<(
     Ok((AST::Boolean(verified), AST::Null))
 }
 
+// LEGACY
+
+fn legacy_md5(args: Vec<AST>, context: &mut HashMap<String, AST>) -> Result<(AST, AST), String> {
+    let input = match eval(args[0].clone(), context)? {
+        AST::String(str) => str,
+        _ => return Err("crypto.md5() expects a string argument".to_string()),
+    };
+
+    let hashed = md5::compute(input.as_bytes());
+    let hashed = format!("{:x}", hashed);
+
+    Ok((AST::String(hashed), AST::Null))
+}
+
 pub fn get_object() -> HashMap<String, AST> {
     let mut object = HashMap::new();
 
@@ -228,6 +242,16 @@ pub fn get_object() -> HashMap<String, AST> {
             args: vec!["password".to_string(), "hash".to_string()],
             call_fn: scrypt_verify
         } 
+    );
+
+    // LEGACY
+    object.insert(
+        "legacy_md5".to_string(),
+        AST::InternalFunction { 
+            name: "legacy_md5".to_string(), 
+            args: vec!["str".to_string()], 
+            call_fn: legacy_md5 
+        }
     );
 
     return object;

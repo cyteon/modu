@@ -33,6 +33,7 @@ bcrypt = "0.18.0"
 argon2 = "0.5.3"
 scrypt = "0.11.0"
 base16 = "0.2.1"
+md5 = "0.8.0"
 
 [dev-dependencies]
 assert_cmd = "2.1.2"
