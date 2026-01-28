@@ -50,6 +50,20 @@ pub enum Token {
     #[regex(r"[0-9]+\.[0-9]+", |lex| lex.slice().parse::<f64>())]
     Float(f64),
 
+    #[regex(r#""([^"\\]|\\.)*""#, |lex| {
+        lex.slice()[1..lex.slice().len()-1].to_string()
+    })]
+    String(String),
+
+    #[token(",")]
+    Comma,
+
+    #[token("(")]
+    LParen,
+
+    #[token(")")]
+    RParen,
+
     #[regex(r"[ \t\n\f]+", logos::skip)]
     Whitespace,
 }

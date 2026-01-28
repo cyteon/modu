@@ -1,2 +1,5 @@
 let a = 1;
 let b = 1.5;
+let c = "hi";
+
+print(a);

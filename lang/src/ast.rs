@@ -2,9 +2,13 @@
 pub enum Expr {
     Int(i64),
     Float(f64),
-    Var(String),
+    String(String),
+    Identifier(String),
 
-    Call(String, Vec<Expr>),
+    Call {
+        name: String,
+        args: Vec<Expr>,
+    },
 
     Let {
         name: String,
