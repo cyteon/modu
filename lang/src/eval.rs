@@ -615,13 +615,11 @@ pub fn eval(expr: AST, context: &mut HashMap<String, AST>) -> Result<AST, String
         AST::PropertyAccess { object, property, line: _ } => {
             match object {
                 Some(name) => {
-                    let evaluated_property = eval(*property, context)?;
-
                     match context.get(&name) {
                         Some(value) => {
                             match value {
                                 AST::Object { properties, line: _ } => {
-                                    match evaluated_property {
+                                    match *property {
                                         AST::Identifer(prop_name) => {
                                             match properties.get(&prop_name) {
                                                 Some(value) => {
@@ -634,14 +632,26 @@ pub fn eval(expr: AST, context: &mut HashMap<String, AST>) -> Result<AST, String
                                             }
                                         }
 
-                                        _ => {
-                                            return Err(format!("Property name must be a string or identifier, got {:?}", evaluated_property));
+                                        AST::String(prop_name) => {
+                                            match properties.get(&prop_name) {
+                                                Some(value) => {
+                                                    return Ok(value.clone());
+                                                }
+
+                                                None => {
+                                                    return Err(format!("Property {} not found in object {}", prop_name, name));
+                                                }
+                                            }
+                                        }
+
+                                        v => {
+                                            return Err(format!("Property name must be a string or identifier, got {:?}", v));
                                         }
                                     }
                                 }
 
                                 AST::Array(elements) => {
-                                    match evaluated_property {
+                                    match *property {
                                         AST::Integer(index) => {
                                             if index < 0 || (index as usize) >= elements.len() {
                                                 return Err(format!("Index {} out of bounds for array of length {}", index, elements.len()));
