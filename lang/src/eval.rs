@@ -304,7 +304,7 @@ pub fn eval(expr: AST, context: &mut HashMap<String, AST>) -> Result<AST, String
                                     }
                                 }
 
-                                AST::FFILibrary { path, lib } => {
+                                AST::FFILibrary { path: _, lib } => {
                                     let result = crate::packages::ffi::execute_ffi_call(lib.clone(), property.as_ref().unwrap(), args, context)?;
 
                                     return Ok(result);
