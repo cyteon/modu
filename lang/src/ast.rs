@@ -35,7 +35,7 @@ pub enum AST {
 
     PropertyAccess {
         object: Option<String>,
-        property: Option<String>,
+        property: Box<AST>, // so we can also support numbers, for indexes
         line: usize,
     },
 

@@ -211,6 +211,72 @@ pub fn insert_right_bracket(obj: AST) -> AST {
     }
 }
 
+pub fn insert_right_square_bracket(obj: AST) -> AST {
+    match obj {
+        AST::Array { elements, line } => {
+            AST::Array {
+                elements,
+                line,
+            }
+        }
+
+        AST::Call { name, mut args, line } => {
+            let last = args.pop().unwrap_or(AST::Null);
+
+            match last {
+                AST::Array { elements, line: array_line } => {
+                    let new_array = AST::Array {
+                        elements,
+                        line: array_line,
+                    };
+
+                    args.push(new_array);
+                }
+
+                val => {
+                    args.push(val);
+                }
+            }
+
+            return AST::Call {
+                name,
+                args,
+                line,
+            };
+        }
+
+        AST::PropertyCall { object, property, mut args, line } => {
+            let last = args.pop().unwrap_or(AST::Null);
+
+            match last {
+                AST::Array { elements, line: array_line } => {
+                    let new_array = AST::Array {
+                        elements,
+                        line: array_line,
+                    };
+
+                    args.push(new_array);
+                }
+
+                val => {
+                    args.push(val);
+                }
+            }
+
+            return AST::PropertyCall {
+                object,
+                property,
+                args,
+                line,
+            };
+        }
+
+        _ => {
+            return obj;
+        }
+    }
+}
+
 pub fn handle_nested_ast(mut ast: Vec<AST>, temp_ast: Vec<AST>, current_line: usize) -> Result<Vec<AST>, (String, usize)> {
     if ast.is_empty() {
         return Ok(temp_ast);
@@ -826,7 +892,15 @@ pub fn handle_nested_arguments(last: AST, arg: AST) -> Result<AST, (String, usiz
         (AST::PropertyAccess { object, property: _, line }, AST::Identifer(name)) => {
             args.push(AST::PropertyAccess {
                 object,
-                property: Some(name.clone()),
+                property: Box::new(AST::Identifer(name)),
+                line,
+            });
+        }
+
+        (AST::PropertyAccess { object, property, line }, AST::Integer(index)) => {
+            args.push(AST::PropertyAccess {
+                object,
+                property: Box::new(AST::Integer(index)),
                 line,
             });
         }
@@ -834,7 +908,11 @@ pub fn handle_nested_arguments(last: AST, arg: AST) -> Result<AST, (String, usiz
         (AST::PropertyAccess { object, property, line }, AST::Lparen) => {
             args.push(AST::PropertyCall {
                 object,
-                property,
+                property: if let AST::Identifer(name) = *property {
+                    Some(name)
+                } else {
+                    None
+                },
                 args: vec![],
                 line,
             });
@@ -847,7 +925,7 @@ pub fn handle_nested_arguments(last: AST, arg: AST) -> Result<AST, (String, usiz
         (AST::Identifer(ident), AST::Dot) => {
             args.push(AST::PropertyAccess {
                 object: Some(ident.clone()),
-                property: None,
+                property: Box::new(AST::Null),
                 line,
             });
         }
@@ -1387,7 +1465,7 @@ pub fn parse(input: &str, context: &mut HashMap<String, AST>) -> Result<(), (Str
                         AST::Identifer(name) => {
                             temp_ast.push(AST::PropertyAccess {
                                 object: Some(name),
-                                property: None,
+                                property: Box::new(AST::Null),
                                 line: current_line,
                             });
                         }
@@ -1439,7 +1517,7 @@ pub fn parse(input: &str, context: &mut HashMap<String, AST>) -> Result<(), (Str
                                         name,
                                         value: Box::new(AST::PropertyAccess {
                                             object: Some(ident),
-                                            property: None,
+                                            property: Box::new(AST::Null),
                                             line,
                                         }),
                                         line,
@@ -1547,7 +1625,7 @@ pub fn parse(input: &str, context: &mut HashMap<String, AST>) -> Result<(), (Str
                                             name,
                                             value: Box::new(AST::PropertyAccess {
                                                 object,
-                                                property: Some(lexer.slice().to_string()),
+                                                property: Box::new(AST::Identifer(lexer.slice().to_string())),
                                                 line,
                                             }),
                                             line,
@@ -1610,7 +1688,7 @@ pub fn parse(input: &str, context: &mut HashMap<String, AST>) -> Result<(), (Str
                                 AST::PropertyAccess { object, property: _, line } => {
                                     args.push(AST::PropertyAccess {
                                         object,
-                                        property: Some(lexer.slice().to_string()),
+                                        property: Box::new(AST::Identifer(lexer.slice().to_string())),
                                         line,
                                     });
                                 }
@@ -1677,7 +1755,7 @@ pub fn parse(input: &str, context: &mut HashMap<String, AST>) -> Result<(), (Str
                                 AST::PropertyAccess { object, property: _, line } => {
                                     args.push(AST::PropertyAccess {
                                         object,
-                                        property: Some(lexer.slice().to_string()),
+                                        property: Box::new(AST::Identifer(lexer.slice().to_string())),
                                         line,
                                     });
                                 }
@@ -1760,7 +1838,7 @@ pub fn parse(input: &str, context: &mut HashMap<String, AST>) -> Result<(), (Str
                         AST::PropertyAccess { object, property: _, line } => {
                             temp_ast.push(AST::PropertyAccess {
                                 object,
-                                property: Some(lexer.slice().to_string()),
+                                property: Box::new(AST::Identifer(lexer.slice().to_string())),
                                 line,
                             });
                         }
@@ -1999,7 +2077,11 @@ pub fn parse(input: &str, context: &mut HashMap<String, AST>) -> Result<(), (Str
                         AST::PropertyAccess { object, property, line } => {
                             temp_ast.push(AST::PropertyCall {
                                 object,
-                                property,
+                                property: if let AST::Identifer(name) = *property {
+                                    Some(name)
+                                } else {
+                                    None
+                                },
                                 args: Vec::new(),
                                 line,
                             });
@@ -2021,7 +2103,11 @@ pub fn parse(input: &str, context: &mut HashMap<String, AST>) -> Result<(), (Str
                                     name: name,
                                     value: Box::new(AST::PropertyCall {
                                         object,
-                                        property,
+                                        property: if let AST::Identifer(name) = *property {
+                                            Some(name)
+                                        } else {
+                                            None
+                                        },
                                         args: Vec::new(),
                                         line,
                                     }),
@@ -3482,6 +3568,32 @@ pub fn parse(input: &str, context: &mut HashMap<String, AST>) -> Result<(), (Str
                             });
                         }
 
+                        AST::Call { name, mut args, line } => {
+                            match args.pop() {
+                                Some(AST::Identifer(array_name)) => {
+                                    args.push(AST::PropertyAccess {
+                                        object: Some(array_name),
+                                        property: Box::new(AST::Null),
+                                        line: current_line,
+                                    });
+
+                                    temp_ast.push(AST::Call {
+                                        name,
+                                        args,
+                                        line,
+                                    });
+                                }
+
+                                Some(v) => {
+                                    return Err((format!("Unexpected value before '[' in call args: {:?}", v), current_line));
+                                }
+
+                                None => {
+                                    return Err((format!("Unexpected end of args before '[' in call args"), current_line));
+                                }
+                            }
+                        }
+
                         _ => {
                             return Err((format!("Unexpected value before '[': {:?}", last), current_line));
                         }
@@ -3508,7 +3620,9 @@ pub fn parse(input: &str, context: &mut HashMap<String, AST>) -> Result<(), (Str
                         }
 
                         _ => {
-                            return Err((format!("Unexpected value before ']': {:?}", last), current_line));
+                            let new_obj = insert_right_square_bracket(last);
+
+                            temp_ast.push(new_obj);
                         }
                     }
                 }

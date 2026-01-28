@@ -1,4 +1,5 @@
-let a = "a";
+let a = "hello, world";
 
 let array = [a, 1, 1.5, true, null];
 print("Array: ", array);
+print("First element: ", array[0]);

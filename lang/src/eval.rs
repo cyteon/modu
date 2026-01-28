@@ -619,13 +619,37 @@ pub fn eval(expr: AST, context: &mut HashMap<String, AST>) -> Result<AST, String
                         Some(value) => {
                             match value {
                                 AST::Object { properties, line: _ } => {
-                                    match properties.get(property.as_ref().unwrap()) {
-                                        Some(value) => {
-                                            return Ok(value.clone());
+                                    match *property {
+                                        AST::Identifer(prop_name) => {
+                                            match properties.get(&prop_name) {
+                                                Some(value) => {
+                                                    return Ok(value.clone());
+                                                }
+
+                                                None => {
+                                                    return Err(format!("Property {} not found in object {}", prop_name, name));
+                                                }
+                                            }
                                         }
 
-                                        None => {
-                                            return Err(format!("Property {:?} not found", property));
+                                        _ => {
+                                            return Err("Property name must be an identifier".to_string());
+                                        }
+                                    }
+                                }
+
+                                AST::Array { elements, line } => {
+                                    match *property {
+                                        AST::Integer(index) => {
+                                            if index < 0 || (index as usize) >= elements.len() {
+                                                return Err(format!("Index {} out of bounds for array of length {}", index, elements.len()));
+                                            }
+
+                                            return Ok(elements[index as usize].clone());
+                                        }
+
+                                        _ => {
+                                            return Err("Property name must be an identifier".to_string());
                                         }
                                     }
                                 }
