@@ -12,7 +12,8 @@
 		{ "include": "#semicolon" },
 		{ "include": "#null" },
 		{ "include": "#boolean" },
-		{ "include": "#variable" }
+		{ "include": "#variable" },
+		{ "include": "#brackets" }
 	],
 	"repository": {
 		"keywords": {
@@ -72,7 +73,7 @@
 				},
 				{
 					"name": "keyword.operator.comparison.modu",
-					"match": "\\==|!="
+					"match": "\\==|!=|<=|>=|<|>"
 				},
 				{
 					"name": "keyword.operator.assignment.modu",
@@ -110,6 +111,11 @@
 		"boolean": {
 			"name": "constant.language.modu",
 			"match": "\\b(true|false)\\b"
+		},
+
+		"brackets": {
+			"name": "punctuation.section.brackets.modu",
+			"match": "[\\[\\]]"
 		}
 	},
 	"scopeName": "source.modu"

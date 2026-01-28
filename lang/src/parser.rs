@@ -3234,7 +3234,7 @@ pub fn parse(input: &str, context: &mut HashMap<String, AST>) -> Result<(), (Str
                             }
                         }
 
-                        AST::Subtraction(left, right) => {
+                        AST::Subtraction(left, _) => {
                             temp_ast.push(AST::Subtraction(
                                 left,
                                 Box::new(AST::Float(f)),
