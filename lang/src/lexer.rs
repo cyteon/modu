@@ -18,6 +18,12 @@ impl From<std::num::ParseIntError> for LexingError {
     }
 }
 
+impl From<std::num::ParseFloatError> for LexingError {
+    fn from(_err: std::num::ParseFloatError) -> Self {
+        LexingError::InvalidInteger("Float parsing error".to_string())
+    }
+}
+
 #[derive(Logos, Debug, PartialEq, Clone)]
 #[logos(error = LexingError)]
 #[logos(skip r"[ \t\n\f\r]+")]
@@ -87,14 +93,26 @@ pub enum Token {
     })]
     Integer(i64),
 
-    #[regex("[0-9]+\\.[0-9]+")]
-    Float,
+    #[regex("[0-9]+\\.[0-9]+", |lex| {
+        lex.slice().parse::<f64>()
+    })]
+    Float(f64),
 
-    #[regex(r#""([^"\\]|\\.)*"|'([^'\\]|\\.)*'"#)]
-    String,
+    #[regex(r#""([^"\\]|\\.)*"|'([^'\\]|\\.)*'"#, |lex| {
+        let slice = lex.slice();
+        let len = slice.len();
+        slice[1..len-1].to_string()
+    })]
+    String(String),
 
-    #[regex("true|false")]
-    Boolean,
+    #[regex("true|false", |lex| {
+        match lex.slice() {
+            "true" => true,
+            "false" => false,
+            _ => unreachable!(),
+        }
+    })]
+    Boolean(bool),
 
     #[token("(")]
     LParen,
@@ -143,13 +161,13 @@ mod tests {
     #[test]
     fn string_1() {
         let mut lexer = Token::lexer("\"Hello, world!\"");
-        assert_eq!(lexer.next(), Some(Ok(Token::String)));
+        assert_eq!(lexer.next(), Some(Ok(Token::String("Hello, world!".to_string()))));
     }
 
     #[test]
     fn string_2() {
         let mut lexer = Token::lexer("'Hello, world!'");
-        assert_eq!(lexer.next(), Some(Ok(Token::String)));
+        assert_eq!(lexer.next(), Some(Ok(Token::String("Hello, world!".to_string()))));
     }
 
     #[test]
@@ -164,7 +182,7 @@ mod tests {
         assert_eq!(lexer.next(), Some(Ok(Token::Let)));
         assert_eq!(lexer.next(), Some(Ok(Token::Identifer)));
         assert_eq!(lexer.next(), Some(Ok(Token::Assign)));
-        assert_eq!(lexer.next(), Some(Ok(Token::String)));
+        assert_eq!(lexer.next(), Some(Ok(Token::String("test".to_string()))));
     }
 
     #[test]
@@ -182,7 +200,7 @@ mod tests {
         assert_eq!(lexer.next(), Some(Ok(Token::Let)));
         assert_eq!(lexer.next(), Some(Ok(Token::Identifer)));
         assert_eq!(lexer.next(), Some(Ok(Token::Assign)));
-        assert_eq!(lexer.next(), Some(Ok(Token::Boolean)));
+        assert_eq!(lexer.next(), Some(Ok(Token::Boolean(true))));
     }
 
     #[test]
@@ -191,7 +209,7 @@ mod tests {
 
         assert_eq!(lexer.next(), Some(Ok(Token::Identifer)));
         assert_eq!(lexer.next(), Some(Ok(Token::LParen)));
-        assert_eq!(lexer.next(), Some(Ok(Token::String)));
+        assert_eq!(lexer.next(), Some(Ok(Token::String("Hello, world!".to_string()))));
         assert_eq!(lexer.next(), Some(Ok(Token::RParen)));
     }
 
