@@ -1893,12 +1893,11 @@ pub fn parse(input: &str, context: &mut HashMap<String, AST>) -> Result<(), (Str
                             }
                         }
 
-                        AST::Return { value, line } => {
+                        AST::Return(value) => {
                             if let AST::Null = *value {
-                                temp_ast.push(AST::Return {
-                                    value: Box::new(AST::Identifer(lexer.slice().to_string())),
-                                    line,
-                                });
+                                temp_ast.push(AST::Return(
+                                    Box::new(AST::Identifer(lexer.slice().to_string())),
+                                ));
                             } else {
                                 return Err(("Unexpected identifier after 'return'".to_string(), current_line));
                             }
@@ -2337,12 +2336,9 @@ pub fn parse(input: &str, context: &mut HashMap<String, AST>) -> Result<(), (Str
                             }
                         }
 
-                        AST::Return { value, line } => {
+                        AST::Return(value) => {
                             if let AST::Null = *value {
-                                temp_ast.push(AST::Return {
-                                    value: Box::new(AST::String(s)),
-                                    line,
-                                });
+                                temp_ast.push(AST::Return(Box::new(AST::String(s))));
                             } else {
                                 return Err(("Unexpected string after 'return'".to_string(), current_line));
                             }
@@ -2520,18 +2516,17 @@ pub fn parse(input: &str, context: &mut HashMap<String, AST>) -> Result<(), (Str
                             });
                         }
 
-                        AST::Return { value, line } => {
+                        AST::Return(value) => {
                             if let AST::Null = *value {
                                 return Err(("Unexpected '+' after 'return'".to_string(), current_line));
                             } else {
-                                temp_ast.push(AST::Return {
-                                    value: Box::new(AST::Addition {
+                                temp_ast.push(AST::Return(
+                                    Box::new(AST::Addition {
                                         left: value,
                                         right: Box::new(AST::Null),
-                                        line,
+                                        line: current_line,
                                     }),
-                                    line,
-                                });
+                                ));
                             }
                         }
 
@@ -2723,15 +2718,14 @@ pub fn parse(input: &str, context: &mut HashMap<String, AST>) -> Result<(), (Str
                             });
                         }
 
-                        AST::Return { value, line } => {
-                            temp_ast.push(AST::Return {
-                                value: Box::new(AST::Subtraction {
+                        AST::Return(value) => {
+                            temp_ast.push(AST::Return(
+                                Box::new(AST::Subtraction {
                                     left: value,
                                     right: Box::new(AST::Null),
-                                    line,
+                                    line: current_line,
                                 }),
-                                line,
-                            });
+                            ));
                         }
 
                         _ => {
@@ -2995,30 +2989,25 @@ pub fn parse(input: &str, context: &mut HashMap<String, AST>) -> Result<(), (Str
                             });
                         }
 
-                        AST::Return { value, line } => {
+                        AST::Return(value) => {
                             if let AST::Null = *value {
-                                temp_ast.push(AST::Return {
-                                    value: Box::new(AST::Integer(n)),
-                                    line,
-                                });
+                                temp_ast.push(AST::Return(Box::new(AST::Integer(n))));
                             } else if let AST::Addition { left, right: _, line } = *value {
-                                temp_ast.push(AST::Return {
-                                    value: Box::new(AST::Addition {
+                                temp_ast.push(AST::Return(
+                                    Box::new(AST::Addition {
                                         left,
                                         right: Box::new(AST::Integer(n)),
                                         line,
                                     }),
-                                    line,
-                                });
+                                ));
                             } else if let AST::Subtraction { left, right: _, line } = *value {
-                                temp_ast.push(AST::Return {
-                                    value: Box::new(AST::Subtraction {
+                                temp_ast.push(AST::Return(
+                                    Box::new(AST::Subtraction {
                                         left,
                                         right: Box::new(AST::Integer(n)),
                                         line,
                                     }),
-                                    line,
-                                });
+                                ));
                             } else {
                                 return Err(("Unexpected integer after 'return'".to_string(), current_line));
                             }
@@ -3170,12 +3159,9 @@ pub fn parse(input: &str, context: &mut HashMap<String, AST>) -> Result<(), (Str
                             }
                         }
 
-                        AST::Return { value, line } => {
+                        AST::Return(value) => {
                             if let AST::Null = *value {
-                                temp_ast.push(AST::Return {
-                                    value: Box::new(AST::Boolean(b)),
-                                    line,
-                                });
+                                temp_ast.push(AST::Return(Box::new(AST::Boolean(b))));
                             } else {
                                 return Err(("Unexpected boolean after 'return'".to_string(), current_line));
                             }
@@ -3192,10 +3178,7 @@ pub fn parse(input: &str, context: &mut HashMap<String, AST>) -> Result<(), (Str
                         return Err(("Unexpected return statement".to_string(), current_line));
                     }
 
-                    temp_ast.push(AST::Return {
-                        value: Box::new(AST::Null),
-                        line: current_line,
-                    });
+                    temp_ast.push(AST::Return(Box::new(AST::Null)));
                 }
     
                 Ok(Token::Float(f)) => {
@@ -3308,12 +3291,9 @@ pub fn parse(input: &str, context: &mut HashMap<String, AST>) -> Result<(), (Str
                             temp_ast.push(AST::Float(f));
                         }
 
-                        AST::Return { value, line } => {
+                        AST::Return(value) => {
                             if let AST::Null = *value {
-                                temp_ast.push(AST::Return {
-                                    value: Box::new(AST::Float(f)),
-                                    line,
-                                });
+                                temp_ast.push(AST::Return(Box::new(AST::Float(f))));
                             } else {
                                 return Err(("Unexpected float after 'return'".to_string(), current_line));
                             }

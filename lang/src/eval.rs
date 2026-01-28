@@ -29,7 +29,7 @@ pub fn eval(expr: AST, context: &mut HashMap<String, AST>) -> Result<AST, String
                                                 return Err("Maximum recursion depth exceeded".to_string());
                                             }
 
-                                            if let AST::Return { value, line: _ } = expr {
+                                            if let AST::Return(value) = expr {
                                                 return eval(*value.clone(), &mut new_context);
                                             }
 
@@ -37,7 +37,7 @@ pub fn eval(expr: AST, context: &mut HashMap<String, AST>) -> Result<AST, String
 
                                             let ast: AST = eval(expr.clone(), &mut new_context)?;
 
-                                            if let AST::Return { value, line: _ } = ast {
+                                            if let AST::Return(value) = ast {
                                                 return Ok(*value);
                                             }
                                         }
@@ -249,13 +249,13 @@ pub fn eval(expr: AST, context: &mut HashMap<String, AST>) -> Result<AST, String
                                                         }
 
                                                         for expr in body {
-                                                            if let AST::Return { value, line: _ } = expr {
+                                                            if let AST::Return(value) = expr {
                                                                 return eval(*value.clone(), &mut new_context);
                                                             }
 
                                                             let ast = eval(expr.clone(), &mut new_context)?;
 
-                                                            if let AST::Return { value, line: _ } = ast {
+                                                            if let AST::Return(value) = ast {
                                                                 return Ok(*value);
                                                             }
                                                         }
@@ -525,7 +525,7 @@ pub fn eval(expr: AST, context: &mut HashMap<String, AST>) -> Result<AST, String
                         for expr in body {
                             let result = eval(expr, context)?;
 
-                            if let AST::Return { value, line: _ } = result {
+                            if let AST::Return(value) = result {
                                 return Ok(*value);
                             } else if let AST::Break = result {
                                 return Ok(AST::Break);
@@ -702,7 +702,7 @@ pub fn eval(expr: AST, context: &mut HashMap<String, AST>) -> Result<AST, String
             }
         }
 
-        AST::Return { value, line: _ } => {
+        AST::Return(value) => {
             return Ok(*value);
         }
 

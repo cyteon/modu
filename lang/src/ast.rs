@@ -56,10 +56,7 @@ pub enum AST {
         line: usize,
     },
 
-    Return {
-        value: Box<AST>,
-        line: usize,
-    },
+    Return(Box<AST>),
 
     InternalFunction {
         name: String,
