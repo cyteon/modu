@@ -1,23 +1,25 @@
 use std::collections::HashMap;
 use ariadne::{Color, Label, Report, ReportKind, Source};
 use chumsky::prelude::*;
-use crate::{ast::Expr, lexer::{Span, Token, lex}};
+use crate::{ast::{Expr, SpannedExpr}, evaulator, lexer::{Span, Token, lex}};
 
 fn parser<'src>() -> impl Parser<
     'src, 
     &'src [(Token, Span)],
-    Vec<Expr>,
+    Vec<SpannedExpr>,
     extra::Err<Rich<'src, (Token, Span), Span>>> 
 {
     let expr = recursive(|expr| {
         let atom = select! {
-            (Token::Int(n), _) => Expr::Int(n),
-            (Token::Float(f), _) => Expr::Float(f),
-            (Token::String(name), _) => Expr::String(name),
-            (Token::Identifier(name), _) => Expr::Identifier(name),
+            (Token::Int(n), span) => SpannedExpr { node: Expr::Int(n), span },
+            (Token::Float(f), span) => SpannedExpr { node: Expr::Float(f), span },
+            (Token::String(name), span) => SpannedExpr { node: Expr::String(name), span },
+            (Token::Identifier(name), span) => SpannedExpr { node: Expr::Identifier(name), span },
+            (Token::Bool(b), span) => SpannedExpr { node: Expr::Bool(b), span },
+            (Token::Null, span) => SpannedExpr { node: Expr::Null, span },
         };
 
-        let call = select! { (Token::Identifier(name), _) => name }
+        let call = select! { (Token::Identifier(name), span) => (name, span) }
             .then_ignore(select! { (Token::LParen, _) => () })
             .then(
                 expr.clone()
@@ -25,25 +27,36 @@ fn parser<'src>() -> impl Parser<
                     .allow_trailing()
                     .collect::<Vec<_>>()
             )
-            .then_ignore(select! { (Token::RParen, _) => () })
-            .map(|(name, args)| Expr::Call { name, args });
+            .then(select! { (Token::RParen, span) => span })
+            .map(|(((name, start), args), end): (((String, Span), Vec<SpannedExpr>), Span)| SpannedExpr {
+                node: Expr::Call { name, args },
+                span: Span::from(start.start..end.end),
+            });
 
         call.or(atom)
     });
 
-    let let_stmt = select! { (Token::Let, _) => () }
-        .ignore_then(select! { (Token::Identifier(name), _) => name })
+    let let_stmt = select! { (Token::Let, span) => span }
+        .then(select! { (Token::Identifier(name), _) => name })
         .then_ignore(select! { (Token::Equals, _) => () })
         .then(expr.clone())
-        .then_ignore(select! { (Token::Semicolon, _) => () })
-        .map(|(name, value)| Expr::Let { name, value: Box::new(value) });
+        .then(select! { (Token::Semicolon, span) => span })
+        .map(|(((start, name), value), end): (((Span, String), SpannedExpr), Span)| SpannedExpr {
+            node: Expr::Let { name, value: Box::new(value) },
+            span: Span::from(start.start..end.end),
+        });
 
-    let expr_stmt = expr.clone().then_ignore(select! { (Token::Semicolon, _) => () });
+    let expr_stmt = expr.clone()
+        .then(select! { (Token::Semicolon, span) => span })
+        .map(|(mut expr, end)| {
+            expr.span = Span::from(expr.span);
+            expr
+        });
 
     let_stmt.or(expr_stmt).repeated().collect().then_ignore(end())
 }
 
-pub fn parse(input: &str, filename: &str, _context: &mut HashMap<String, Expr>) {
+pub fn parse(input: &str, filename: &str, context: &mut HashMap<String, Expr>) {
     let tokens = match lex(input) {
         Ok(toks) => toks,
         Err(e) => {
@@ -65,7 +78,35 @@ pub fn parse(input: &str, filename: &str, _context: &mut HashMap<String, Expr>) 
 
     match parser().parse(&tokens).into_result() {
         Ok(ast) => {
-            println!("Parsed AST:\n{:#?}", ast);
+            let sys_args = std::env::args().collect::<Vec<String>>();
+
+            if sys_args.contains(&"--debug".to_string()) {
+                println!("AST: {:#?}", ast);
+            }
+
+            for expr in ast {
+                match evaulator::eval(&expr, context) {
+                    Ok(result) => {
+                        if sys_args.contains(&"--debug".to_string()) {
+                            println!("Result: {:?}", result);
+                        }
+                    }
+
+                    Err(e) => {
+                        Report::build(ReportKind::Error, (filename, e.span.into_range()))
+                            .with_code(1)
+                            .with_message(format!("Evaluation error: {}", e.message))
+                            .with_label(
+                                Label::new((filename, e.span.into_range()))
+                                    .with_color(Color::Red)
+                                    .with_message(format!("{}", e.message)),
+                            )
+                            .finish()
+                            .print((filename, Source::from(input)))
+                            .unwrap();
+                    }
+                }
+            }
         }
 
         Err(e) => {
@@ -79,7 +120,7 @@ pub fn parse(input: &str, filename: &str, _context: &mut HashMap<String, Expr>) 
                         }
 
                         Report::build(ReportKind::Error, (filename, span.into_range()))
-                            .with_code(1)
+                            .with_code(2)
                             .with_message(format!("{:?}", err.reason()))
                             .with_label(
                                     Label::new((filename, span.into_range()))

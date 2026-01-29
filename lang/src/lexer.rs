@@ -55,6 +55,12 @@ pub enum Token {
     })]
     String(String),
 
+    #[regex("true|false", |lex| lex.slice() == "true")]
+    Bool(bool),
+
+    #[token("null")]
+    Null,
+
     #[token(",")]
     Comma,
 
