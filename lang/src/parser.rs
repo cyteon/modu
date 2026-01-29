@@ -33,19 +33,19 @@ fn parser<'src>() -> impl Parser<
                 span: Span::from(start.start..end.end),
             });
         
-        let block = select! { (Token::LBracket, span) => span }
-            .then(expr.clone().repeated().collect::<Vec<SpannedExpr>>())
-            .then(select! { (Token::RBracket, span) => span })
+        let block = select! { (Token::LBrace, span) => span }
+            .then(expr.clone().then_ignore( select! { (Token::Semicolon, _) => () } ).repeated().collect::<Vec<SpannedExpr>>())
+            .then(select! { (Token::RBrace, span) => span })
             .map(|((start, exprs), end): ((Span, Vec<SpannedExpr>), Span)| SpannedExpr {
                 node: Expr::Block(exprs),
                 span: Span::from(start.start..end.end),
             });
 
         let primary = call
-            .or(atom)
-            .or(block);
+            .or(block)
+            .or(atom);
 
-        let primary = select! { (Token::Minus, span) => span }
+        let unary = select! { (Token::Minus, span) => span }
             .repeated()
             .collect::<Vec<Span>>()
             .then(primary)
@@ -60,11 +60,11 @@ fn parser<'src>() -> impl Parser<
                 expr
             });
 
-        primary.clone()
+        unary.clone()
             .foldl(
                 choice((
-                    select! { (Token::Plus, span) => span }.then(primary.clone()).map(|(span, right)| (Token::Plus, span, right)),
-                    select! { (Token::Minus, span) => span }.then(primary.clone()).map(|(span, right)| (Token::Minus, span, right)),
+                    select! { (Token::Plus, span) => span }.then(unary.clone()).map(|(span, right)| (Token::Plus, span, right)),
+                    select! { (Token::Minus, span) => span }.then(unary.clone()).map(|(span, right)| (Token::Minus, span, right)),
                 ))
                 .repeated(),
 
