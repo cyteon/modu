@@ -7,8 +7,8 @@ fn parser<'src>() -> impl Parser<
     'src, 
     &'src [(Token, Span)],
     Vec<SpannedExpr>,
-    extra::Err<Rich<'src, (Token, Span), Span>>> 
-{
+    extra::Err<Rich<'src, (Token, Span), Span>>
+> {
     let expr = recursive(|expr| {
         let atom = select! {
             (Token::Int(n), span) => SpannedExpr { node: Expr::Int(n), span },
@@ -32,18 +32,10 @@ fn parser<'src>() -> impl Parser<
                 node: Expr::Call { name, args },
                 span: Span::from(start.start..end.end),
             });
-        
-        let block = select! { (Token::LBrace, span) => span }
-            .then(expr.clone().then_ignore( select! { (Token::Semicolon, _) => () } ).repeated().collect::<Vec<SpannedExpr>>())
-            .then(select! { (Token::RBrace, span) => span })
-            .map(|((start, exprs), end): ((Span, Vec<SpannedExpr>), Span)| SpannedExpr {
-                node: Expr::Block(exprs),
-                span: Span::from(start.start..end.end),
-            });
 
-        let primary = call
-            .or(block)
-            .or(atom);
+        let primary = 
+            call
+                .or(atom);
 
         let unary = select! { (Token::Minus, span) => span }
             .repeated()
@@ -79,24 +71,38 @@ fn parser<'src>() -> impl Parser<
             )
     });
 
-    let let_stmt = select! { (Token::Let, span) => span }
-        .then(select! { (Token::Identifier(name), _) => name })
-        .then_ignore(select! { (Token::Equals, _) => () })
-        .then(expr.clone())
-        .then(select! { (Token::Semicolon, span) => span })
-        .map(|(((start, name), value), end): (((Span, String), SpannedExpr), Span)| SpannedExpr {
-            node: Expr::Let { name, value: Box::new(value) },
-            span: Span::from(start.start..end.end),
-        });
+    let stmt = recursive(|stmt| {
+        let let_stmt = select! { (Token::Let, span) => span }
+            .then(select! { (Token::Identifier(name), _) => name })
+            .then_ignore(select! { (Token::Equals, _) => () })
+            .then(expr.clone())
+            .then(select! { (Token::Semicolon, span) => span })
+            .map(|(((start, name), value), end): (((Span, String), SpannedExpr), Span)| SpannedExpr {
+                node: Expr::Let { name, value: Box::new(value) },
+                span: Span::from(start.start..end.end),
+            });
 
-    let expr_stmt = expr.clone()
-        .then(select! { (Token::Semicolon, span) => span })
-        .map(|(mut expr, end)| {
-            expr.span = Span::from(expr.span);
-            expr
-        });
+        let expr_stmt = expr.clone()
+            .then(select! { (Token::Semicolon, span) => span })
+            .map(|(mut expr, end): (SpannedExpr, Span)| {
+                expr.span = Span::from(expr.span.start..end.end);
+                expr
+            });
+        
+        let block = select! { (Token::LBrace, span) => span }
+            .then(stmt.clone().repeated().collect::<Vec<_>>())
+            .then(select! { (Token::RBrace, span) => span })
+            .map(|((start, stmts), end): ((Span, Vec<SpannedExpr>), Span)| SpannedExpr {
+                node: Expr::Block(stmts),
+                span: Span::from(start.start..end.end),
+            });
+        
+        let_stmt
+            .or(expr_stmt)
+            .or(block)
+    });
 
-    let_stmt.or(expr_stmt).repeated().collect().then_ignore(end())
+    stmt.repeated().collect::<Vec<_>>().then_ignore(end())
 }
 
 pub fn parse(input: &str, filename: &str, context: &mut HashMap<String, Expr>) {
