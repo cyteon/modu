@@ -36,7 +36,7 @@ pub enum Token {
     Let,
 
     #[token("=")]
-    Equals,
+    Assign,
 
     #[token(";")]
     Semicolon,
@@ -58,14 +58,29 @@ pub enum Token {
     #[regex("true|false", |lex| lex.slice() == "true")]
     Bool(bool),
 
-    #[token("return")]
-    Return,
-
     #[token("null")]
     Null,
 
+    #[token("return")]
+    Return,
+
+    #[token("break")]
+    Break,
+
     #[token("fn")]
     Function,
+
+    #[token("if")]
+    If,
+
+    #[token("else")]
+    Else,
+
+    #[token("loop")]
+    Loop,
+
+    #[token("for")]
+    For,
 
     #[token(",")]
     Comma,
@@ -87,6 +102,30 @@ pub enum Token {
 
     #[token("}")]
     RBrace,
+
+    #[token("..")]
+    Range,
+
+    #[token("..=")]
+    InclusiveRange,
+
+    #[token("==")]
+    DoubleEqual,
+
+    #[token("!=")]
+    NotEqual,
+
+    #[token("<")]
+    LessThan,
+
+    #[token("<=")]
+    LessThanOrEqual,
+
+    #[token(">")]
+    GreaterThan,
+
+    #[token(">=")]
+    GreaterThanOrEqual,
 
     #[regex(r"[ \t\n\f]+", logos::skip)]
     Whitespace,

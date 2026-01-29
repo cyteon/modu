@@ -37,7 +37,20 @@ fn return_with_null() {
     print("this should not print either");
 }
 
+for n = 0..2 {
+    print("n is ", n);
+}
 
-return; // should error
+for n = 2..=5 {
+    print("n is ", n);
+}
 
-print("this should not print");
+let i = 0;
+loop {
+    if i > 3 {
+        break;
+    }
+
+    print("i is ", i);
+    let i = i + 1;
+}

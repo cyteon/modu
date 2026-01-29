@@ -22,6 +22,7 @@ pub enum Expr {
     Bool(bool),
     Return(Box<Spanned<Expr>>),
     Null,
+    Break,
 
     Neg(Box<Spanned<Expr>>),
     Add(Box<Spanned<Expr>>, Box<Spanned<Expr>>),
@@ -50,6 +51,39 @@ pub enum Expr {
         args: Vec<String>,
         body: Box<Spanned<Expr>>,
     },
+
+    If {
+        condition: Box<Spanned<Expr>>,
+        then_branch: Box<Spanned<Expr>>,
+        else_branch: Option<Box<Spanned<Expr>>>,
+    },
+
+    InfiniteLoop {
+        body: Box<Spanned<Expr>>,
+    },
+
+    ForLoop {
+        iterator_name: String,
+        iterator_range: Box<Spanned<Expr>>,
+        body: Box<Spanned<Expr>>,
+    },
+
+    Range {
+        start: Box<Spanned<Expr>>,
+        end: Box<Spanned<Expr>>,
+    },
+
+    InclusiveRange {
+        start: Box<Spanned<Expr>>,
+        end: Box<Spanned<Expr>>,
+    },
+    
+    Equal(Box<Spanned<Expr>>, Box<Spanned<Expr>>),
+    NotEqual(Box<Spanned<Expr>>, Box<Spanned<Expr>>),
+    LessThan(Box<Spanned<Expr>>, Box<Spanned<Expr>>),
+    LessThanOrEqual(Box<Spanned<Expr>>, Box<Spanned<Expr>>),
+    GreaterThan(Box<Spanned<Expr>>, Box<Spanned<Expr>>),
+    GreaterThanOrEqual(Box<Spanned<Expr>>, Box<Spanned<Expr>>),
 }
 
 impl std::fmt::Display for Expr {

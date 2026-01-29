@@ -1,7 +1,5 @@
 use std::collections::HashMap;
 
-use serde::de::value;
-
 use crate::ast::{Expr, SpannedExpr};
 use crate::lexer::Span;
 
@@ -16,12 +14,14 @@ pub struct EvalError {
 pub enum Flow {
     Continue(Expr),
     Return(Expr),
+    Break,
 }
 
 impl Flow {
     fn unwrap(self) -> Expr {
         match self {
             Flow::Continue(v) | Flow::Return(v) => v,
+            Flow::Break => Expr::Null,
         }
     }
 }
@@ -102,6 +102,20 @@ pub fn eval<'src>(expr: &'src SpannedExpr, context: &mut HashMap<String, Expr>) 
             }
         }
 
+        Expr::Range { start, end } => {
+            Ok(Flow::Continue(Expr::Range {
+                start: start.clone(),
+                end: end.clone(),
+            }))
+        }
+
+        Expr::InclusiveRange { start, end } => {
+            Ok(Flow::Continue(Expr::InclusiveRange {
+                start: start.clone(),
+                end: end.clone(),
+            }))
+        }
+
         Expr::Call { name, args } => {
             let evaluated_args: Result<Vec<SpannedExpr>, EvalError> = args.iter()
                 .map(|arg| {
@@ -156,6 +170,11 @@ pub fn eval<'src>(expr: &'src SpannedExpr, context: &mut HashMap<String, Expr>) 
                             match eval(body, &mut new_context)? {
                                 Flow::Continue(v) => Ok(Flow::Continue(v)),
                                 Flow::Return(v) => Ok(Flow::Continue(v)),
+                                Flow::Break => Err(EvalError {
+                                    message: "Unexpected break in function".to_string(),
+                                    message_short: "unexpected break".to_string(),
+                                    span: expr.span,
+                                }),
                             }
                         }
 
@@ -200,6 +219,7 @@ pub fn eval<'src>(expr: &'src SpannedExpr, context: &mut HashMap<String, Expr>) 
                 match eval(e, context)? {
                     Flow::Continue(_) => {},
                     Flow::Return(v) => return Ok(Flow::Return(v)),
+                    Flow::Break => return Ok(Flow::Break),
                 }
             }
 
@@ -212,10 +232,218 @@ pub fn eval<'src>(expr: &'src SpannedExpr, context: &mut HashMap<String, Expr>) 
             Ok(Flow::Continue(Expr::Null))
         }
 
+        Expr::InfiniteLoop { body } => {
+            loop {
+                match eval(body, context)? {
+                    Flow::Continue(_) => {},
+                    Flow::Return(v) => return Ok(Flow::Return(v)),
+                    Flow::Break => return Ok(Flow::Continue(Expr::Null)),
+                }
+            }
+        }
+
+        Expr::ForLoop { iterator_name, iterator_range, body } => {
+            let range_value = eval(iterator_range, context)?.unwrap();
+
+            match range_value {
+                Expr::Range { start, end } => {
+                    let start = match eval(&start, context)?.unwrap() {
+                        Expr::Int(n) => n,
+
+                        _ => {
+                            return Err(EvalError {
+                                message: format!("Range start must be an integer, got {:?}", start),
+                                message_short: "invalid range start".to_string(),
+                                span: expr.span,
+                            });
+                        }
+                    };
+
+                    let end = match eval(&end, context)?.unwrap() {
+                        Expr::Int(n) => n,
+
+                        _ => {
+                            return Err(EvalError {
+                                message: format!("Range end must be an integer, got {:?}", end),
+                                message_short: "invalid range end".to_string(),
+                                span: expr.span,
+                            });
+                        }
+                    };
+
+                    for i in start..end {
+                        context.insert(iterator_name.clone(), Expr::Int(i));
+
+                        match eval(body, context)? {
+                            Flow::Continue(_) => {},
+                            Flow::Return(v) => return Ok(Flow::Return(v)),
+                            Flow::Break => break,
+                        }
+                    }
+
+                    Ok(Flow::Continue(Expr::Null))
+                }
+
+                Expr::InclusiveRange { start, end } => {
+                    let start = match eval(&start, context)?.unwrap() {
+                        Expr::Int(n) => n,
+
+                        _ => {
+                            return Err(EvalError {
+                                message: format!("Range start must be an integer, got {:?}", start),
+                                message_short: "invalid range start".to_string(),
+                                span: expr.span,
+                            });
+                        }
+                    };
+
+                    let end = match eval(&end, context)?.unwrap() {
+                        Expr::Int(n) => n,
+
+                        _ => {
+                            return Err(EvalError {
+                                message: format!("Range end must be an integer, got {:?}", end),
+                                message_short: "invalid range end".to_string(),
+                                span: expr.span,
+                            });
+                        }
+                    };
+
+                    for i in start..=end {
+                        context.insert(iterator_name.clone(), Expr::Int(i));
+
+                        match eval(body, context)? {
+                            Flow::Continue(_) => {},
+                            Flow::Return(v) => return Ok(Flow::Return(v)),
+                            Flow::Break => break,
+                        }
+                    }
+
+                    Ok(Flow::Continue(Expr::Null))
+                }
+
+                _ => Err(EvalError {
+                    message: format!("Cannot iterate over value: {:?}", range_value),
+                    message_short: "cannot iterate".to_string(),
+                    span: expr.span,
+                }),
+            }
+        }
+
         Expr::Return(value) => {
             let return_value = eval(value, context)?.unwrap();
             Ok(Flow::Return(return_value))
         }
+
+        Expr::Break => {
+            Ok(Flow::Break)
+        },
+
+        Expr::Equal(left, right) => {
+            let left_value = eval(left, context)?.unwrap();
+            let right_value = eval(right, context)?.unwrap();
+
+            match (left_value, right_value) {
+                (Expr::Int(l), Expr::Int(r)) => Ok(Flow::Continue(Expr::Bool(l == r))),
+                (Expr::Float(l), Expr::Float(r)) => Ok(Flow::Continue(Expr::Bool(l == r))),
+                (Expr::Int(l), Expr::Float(r)) => Ok(Flow::Continue(Expr::Bool((l as f64) == r))),
+                (Expr::Float(l), Expr::Int(r)) => Ok(Flow::Continue(Expr::Bool(l == (r as f64)))),
+                (Expr::Bool(l), Expr::Bool(r)) => Ok(Flow::Continue(Expr::Bool(l == r))),
+                (Expr::String(l), Expr::String(r)) => Ok(Flow::Continue(Expr::Bool(l == r))),
+                (Expr::Null, Expr::Null) => Ok(Flow::Continue(Expr::Bool(true))),
+
+                _ => Ok(Flow::Continue(Expr::Bool(false))),
+            }
+        },
+
+        Expr::NotEqual(left, right) => {
+            let left_value = eval(left, context)?.unwrap();
+            let right_value = eval(right, context)?.unwrap();
+
+            match (left_value, right_value) {
+                (Expr::Int(l), Expr::Int(r)) => Ok(Flow::Continue(Expr::Bool(l != r))),
+                (Expr::Float(l), Expr::Float(r)) => Ok(Flow::Continue(Expr::Bool(l != r))),
+                (Expr::Int(l), Expr::Float(r)) => Ok(Flow::Continue(Expr::Bool((l as f64) != r))),
+                (Expr::Float(l), Expr::Int(r)) => Ok(Flow::Continue(Expr::Bool(l != (r as f64)))),
+                (Expr::Bool(l), Expr::Bool(r)) => Ok(Flow::Continue(Expr::Bool(l != r))),
+                (Expr::String(l), Expr::String(r)) => Ok(Flow::Continue(Expr::Bool(l != r))),
+                (Expr::Null, Expr::Null) => Ok(Flow::Continue(Expr::Bool(false))),
+
+                _ => Ok(Flow::Continue(Expr::Bool(true))),
+            }
+        },
+
+        Expr::LessThan(left, right) => {
+            let left_value = eval(left, context)?.unwrap();
+            let right_value = eval(right, context)?.unwrap();
+
+            match (left_value, right_value) {
+                (Expr::Int(l), Expr::Int(r)) => Ok(Flow::Continue(Expr::Bool(l < r))),
+                (Expr::Float(l), Expr::Float(r)) => Ok(Flow::Continue(Expr::Bool(l < r))),
+                (Expr::Int(l), Expr::Float(r)) => Ok(Flow::Continue(Expr::Bool((l as f64) < r))),
+                (Expr::Float(l), Expr::Int(r)) => Ok(Flow::Continue(Expr::Bool(l < (r as f64)))),
+
+                _ => Err(EvalError {
+                    message: format!("Cannot compare values: {:?} < {:?}", left.node, right.node),
+                    message_short: "cannot compare".to_string(),
+                    span: expr.span,
+                }),
+            }
+        },
+
+        Expr::LessThanOrEqual(left, right) => {
+            let left_value = eval(left, context)?.unwrap(); 
+            let right_value = eval(right, context)?.unwrap();
+
+            match (left_value, right_value) {
+                (Expr::Int(l), Expr::Int(r)) => Ok(Flow::Continue(Expr::Bool(l <= r))),
+                (Expr::Float(l), Expr::Float(r)) => Ok(Flow::Continue(Expr::Bool(l <= r))),
+                (Expr::Int(l), Expr::Float(r)) => Ok(Flow::Continue(Expr::Bool((l as f64) <= r))),
+                (Expr::Float(l), Expr::Int(r)) => Ok(Flow::Continue(Expr::Bool(l <= (r as f64)))),
+
+                _ => Err(EvalError {
+                    message: format!("Cannot compare values: {:?} <= {:?}", left.node, right.node),
+                    message_short: "cannot compare".to_string(),
+                    span: expr.span,
+                }),
+            }
+        },
+
+        Expr::GreaterThan(left, right) => {
+            let left_value = eval(left, context)?.unwrap();
+            let right_value = eval(right, context)?.unwrap();
+
+            match (left_value, right_value) {
+                (Expr::Int(l), Expr::Int(r)) => Ok(Flow::Continue(Expr::Bool(l > r))),
+                (Expr::Float(l), Expr::Float(r)) => Ok(Flow::Continue(Expr::Bool(l > r))),
+                (Expr::Int(l), Expr::Float(r)) => Ok(Flow::Continue(Expr::Bool((l as f64) > r))),
+                (Expr::Float(l), Expr::Int(r)) => Ok(Flow::Continue(Expr::Bool(l > (r as f64)))),
+
+                _ => Err(EvalError {
+                    message: format!("Cannot compare values: {:?} > {:?}", left.node, right.node),
+                    message_short: "cannot compare".to_string(),
+                    span: expr.span,
+                }),
+            }
+        },
+
+        Expr::GreaterThanOrEqual(left, right) => {
+            let left_value = eval(left, context)?.unwrap();
+            let right_value = eval(right, context)?.unwrap();
+
+            match (left_value, right_value) {
+                (Expr::Int(l), Expr::Int(r)) => Ok(Flow::Continue(Expr::Bool(l >= r))),
+                (Expr::Float(l), Expr::Float(r)) => Ok(Flow::Continue(Expr::Bool(l >= r))),
+                (Expr::Int(l), Expr::Float(r)) => Ok(Flow::Continue(Expr::Bool((l as f64) >= r))),
+                (Expr::Float(l), Expr::Int(r)) => Ok(Flow::Continue(Expr::Bool(l >= (r as f64)))),
+
+                _ => Err(EvalError {
+                    message: format!("Cannot compare values: {:?} >= {:?}", left.node, right.node),
+                    message_short: "cannot compare".to_string(),
+                    span: expr.span,
+                }),
+            }
+        },
 
         v => {
             Err(EvalError {

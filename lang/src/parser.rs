@@ -17,6 +17,7 @@ fn parser<'src>() -> impl Parser<
             (Token::Identifier(name), span) => SpannedExpr { node: Expr::Identifier(name), span },
             (Token::Bool(b), span) => SpannedExpr { node: Expr::Bool(b), span },
             (Token::Null, span) => SpannedExpr { node: Expr::Null, span },
+            (Token::Break, span) => SpannedExpr { node: Expr::Break, span },
         };
 
         let call = select! { (Token::Identifier(name), span) => (name, span) }
@@ -33,9 +34,7 @@ fn parser<'src>() -> impl Parser<
                 span: Span::from(start.start..end.end),
             });
 
-        let primary = 
-            call
-                .or(atom);
+        let primary = call.or(atom);
 
         let unary = select! { (Token::Minus, span) => span }
             .repeated()
@@ -52,7 +51,7 @@ fn parser<'src>() -> impl Parser<
                 expr
             });
 
-        unary.clone()
+        let additive = unary.clone()
             .foldl(
                 choice((
                     select! { (Token::Plus, span) => span }.then(unary.clone()).map(|(span, right)| (Token::Plus, span, right)),
@@ -68,26 +67,94 @@ fn parser<'src>() -> impl Parser<
                     },
                     span: Span::from(left.span.start..right.span.end),
                 }
+            );
+        
+        let range = additive.clone()
+            .then(
+                select! { (Token::Range, span) => span }
+                    .then(additive.clone())
+                    .or_not()
+            )
+            .map(|(start, range)| {
+                match range {
+                    Some((_, end)) => SpannedExpr {
+                        node: Expr::Range {
+                            start: Box::new(start.clone()),
+                            end: Box::new(end.clone()),
+                        },
+                        span: Span::from(start.span.start..end.span.end),
+                    },
+
+                    None => start,
+                }
+            });
+        
+        let inclusive_range = range.clone()
+            .then(
+                select! { (Token::InclusiveRange, span) => span }
+                    .then(range.clone())
+                    .or_not()
+            )
+            .map(|(start, range)| {
+                match range {
+                    Some((_, end)) => SpannedExpr {
+                        node: Expr::InclusiveRange {
+                            start: Box::new(start.clone()),
+                            end: Box::new(end.clone()),
+                        },
+                        span: Span::from(start.span.start..end.span.end),
+                    },
+                    None => start,
+                }
+            });
+        
+        inclusive_range.clone()
+            .foldl(
+                choice((
+                    select! { (Token::DoubleEqual, span) => span }.then(inclusive_range.clone()).map(|(span, right)| (Token::DoubleEqual, span, right)),
+                    select! { (Token::NotEqual, span) => span }.then(inclusive_range.clone()).map(|(span, right)| (Token::NotEqual, span, right)),
+                    select! { (Token::LessThan, span) => span }.then(inclusive_range.clone()).map(|(span, right)| (Token::LessThan, span, right)),
+                    select! { (Token::LessThanOrEqual, span) => span }.then(inclusive_range.clone()).map(|(span, right)| (Token::LessThanOrEqual, span, right)),
+                    select! { (Token::GreaterThan, span) => span }.then(inclusive_range.clone()).map(|(span, right)| (Token::GreaterThan, span, right)),
+                    select! { (Token::GreaterThanOrEqual, span) => span }.then(inclusive_range.clone()).map(|(span, right)| (Token::GreaterThanOrEqual, span, right)),
+                )).repeated(),
+
+                |left, (op, _, right)| SpannedExpr {
+                    node: match op {
+                        Token::DoubleEqual => Expr::Equal(Box::new(left.clone()), Box::new(right.clone())),
+                        Token::NotEqual => Expr::NotEqual(Box::new(left.clone()), Box::new(right.clone())),
+                        Token::LessThan => Expr::LessThan(Box::new(left.clone()), Box::new(right.clone())),
+                        Token::LessThanOrEqual => Expr::LessThanOrEqual(Box::new(left.clone()), Box::new(right.clone())),
+                        Token::GreaterThan => Expr::GreaterThan(Box::new(left.clone()), Box::new(right.clone())),
+                        Token::GreaterThanOrEqual => Expr::GreaterThanOrEqual(Box::new(left.clone()), Box::new(right.clone())),
+                        _ => unreachable!(),
+                    },
+                    span: Span::from(left.span.start..right.span.end),
+                }
             )
     });
 
     let stmt = recursive(|stmt| {
         let let_stmt = select! { (Token::Let, span) => span }
             .then(select! { (Token::Identifier(name), _) => name })
-            .then_ignore(select! { (Token::Equals, _) => () })
+            .then_ignore(select! { (Token::Assign, _) => () })
             .then(expr.clone())
-            .then(select! { (Token::Semicolon, span) => span })
+            .then(select! { (Token::Semicolon, span) => span }.labelled("semicolon"))
             .map(|(((start, name), value), end): (((Span, String), SpannedExpr), Span)| SpannedExpr {
                 node: Expr::Let { name, value: Box::new(value) },
                 span: Span::from(start.start..end.end),
             });
 
         let expr_stmt = expr.clone()
-            .then(select! { (Token::Semicolon, span) => span })
-            .map(|(mut expr, end): (SpannedExpr, Span)| {
-                expr.span = Span::from(expr.span.start..end.end);
-                expr
-            });
+            .map_with(|expr, e| (expr, e.span()))
+            .then(select! { (Token::Semicolon, span) => span }.labelled("semicolon"))
+            .map(|((expr, expr_span), end): ((SpannedExpr, SimpleSpan), Span)| {
+                SpannedExpr {
+                    node: expr.node,
+                    span: Span::from(expr.span.start..end.end),
+                }
+            })
+            .labelled("statement");
         
         let block = select! { (Token::LBrace, span) => span }
             .then(stmt.clone().repeated().collect::<Vec<_>>())
@@ -113,9 +180,30 @@ fn parser<'src>() -> impl Parser<
                 span: Span::from(start.start..body.span.end),
             });
         
+        let infinite_loop_stmt = select! { (Token::Loop, span) => span }
+            .then(block.clone())
+            .map(|(start, body): (Span, SpannedExpr)| SpannedExpr {
+                node: Expr::InfiniteLoop { body: Box::new(body.clone()) },
+                span: Span::from(start.start..body.span.end),
+            });
+        
+        let for_loop_stmt = select! { (Token::For, span) => span }
+            .then(select! { (Token::Identifier(name), _) => name })
+            .then_ignore(select! { (Token::Assign, _) => () })
+            .then(expr.clone())
+            .then(block.clone())
+            .map(|(((start, iterator_name), iterator_range), body): (((Span, String), SpannedExpr), SpannedExpr)| SpannedExpr {
+                node: Expr::ForLoop {
+                    iterator_name,
+                    iterator_range: Box::new(iterator_range.clone()),
+                    body: Box::new(body.clone()),
+                },
+                span: Span::from(start.start..body.span.end),
+            });
+        
         let retun_stmt = select! { (Token::Return, span) => span }
             .then(expr.clone().or_not())
-            .then(select! { (Token::Semicolon, span) => span })
+            .then(select! { (Token::Semicolon, span) => span }.labelled("semicolon"))
             .map(|((start, value), end): ((Span, Option<SpannedExpr>), Span)| SpannedExpr {
                 node: Expr::Return(
                     match value {
@@ -130,10 +218,12 @@ fn parser<'src>() -> impl Parser<
             });
                 
         let_stmt
-            .or(expr_stmt)
-            .or(block)
             .or(fn_stmt)
+            .or(infinite_loop_stmt)
+            .or(for_loop_stmt)
             .or(retun_stmt)
+            .or(block)
+            .or(expr_stmt)
     });
 
     stmt.repeated().collect::<Vec<_>>().then_ignore(end())
@@ -179,6 +269,24 @@ pub fn parse(input: &str, filename: &str, context: &mut HashMap<String, Expr>) {
                                     .with_color(Color::Red)
                                     .with_message("unexpected return statement"),
                             )
+                            .with_help("Return statements can only be used inside functions")
+                            .finish()
+                            .print((filename, Source::from(input)))
+                            .unwrap();
+
+                        return;
+                    }
+
+                    Expr::Break => {
+                        Report::build(ReportKind::Error, (filename, expr.span.into_range()))
+                            .with_code(4)
+                            .with_message("Break statement not allowed in top-level")
+                            .with_label(
+                                Label::new((filename, expr.span.into_range()))
+                                    .with_color(Color::Red)
+                                    .with_message("unexpected break statement"),
+                            )
+                            .with_help("Break statements can only be used inside loops")
                             .finish()
                             .print((filename, Source::from(input)))
                             .unwrap();
@@ -215,19 +323,27 @@ pub fn parse(input: &str, filename: &str, context: &mut HashMap<String, Expr>) {
 
         Err(e) => {
             for err in e {
-               let mut span = err.span();
+               let span = err.span();
 
                match err.reason() {
                     chumsky::error::RichReason::ExpectedFound { expected, found } => {
-                        if let Some(found) = found {
-                            span = &found.1;
-                        }
+                        let (found_str, error_span) = match found {
+                            Some(chumsky::util::MaybeRef::Val((tok, tok_span))) => {
+                                (format!("{:?}", tok), tok_span.clone())
+                            },
+                            Some(chumsky::util::MaybeRef::Ref((tok, tok_span))) => {
+                                (format!("{:?}", tok), tok_span.clone())
+                            },
+                            None => {
+                                ("end of input".to_string(), Span::from(input.len()-1..input.len()-1))
+                            }
+                        };
 
-                        Report::build(ReportKind::Error, (filename, span.into_range()))
+                        Report::build(ReportKind::Error, (filename, error_span.into_range()))
                             .with_code(2)
-                            .with_message(format!("I expected {:?}, but found {:?}", expected, found.clone().map(|f| f.0.clone())))
+                            .with_message(format!("I expected {:?}, but found {}", expected, found_str))
                             .with_label(
-                                    Label::new((filename, span.into_range()))
+                                    Label::new((filename, error_span.into_range()))
                                         .with_color(Color::Red)
                                         .with_message(format!("expected {:?}", expected)),
                             )
