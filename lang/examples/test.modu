@@ -5,5 +5,4 @@ let d = true;
 let e = null;
 
 print(a);
-print(test);
 print("Hello, ", "world!");
