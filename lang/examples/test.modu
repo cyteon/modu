@@ -11,4 +11,7 @@ print(int("5"));
 print(str(6.7));
 print(float(6));
 print(bool("true"));
-print(this_dosent_exist);
+
+{
+    print(a + b);
+}

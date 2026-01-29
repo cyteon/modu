@@ -32,8 +32,18 @@ fn parser<'src>() -> impl Parser<
                 node: Expr::Call { name, args },
                 span: Span::from(start.start..end.end),
             });
+        
+        let block = select! { (Token::LBracket, span) => span }
+            .then(expr.clone().repeated().collect::<Vec<SpannedExpr>>())
+            .then(select! { (Token::RBracket, span) => span })
+            .map(|((start, exprs), end): ((Span, Vec<SpannedExpr>), Span)| SpannedExpr {
+                node: Expr::Block(exprs),
+                span: Span::from(start.start..end.end),
+            });
 
-        let primary = call.or(atom);
+        let primary = call
+            .or(atom)
+            .or(block);
 
         let primary = select! { (Token::Minus, span) => span }
             .repeated()

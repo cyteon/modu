@@ -76,6 +76,12 @@ pub enum Token {
     #[token(")")]
     RParen,
 
+    #[token("{")]
+    LBracket,
+
+    #[token("}")]
+    RBracket,
+
     #[regex(r"[ \t\n\f]+", logos::skip)]
     Whitespace,
 

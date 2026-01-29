@@ -26,15 +26,17 @@ pub enum Expr {
     Add(Box<Spanned<Expr>>, Box<Spanned<Expr>>),
     Sub(Box<Spanned<Expr>>, Box<Spanned<Expr>>),
 
+    Let {
+        name: String,
+        value: Box<Spanned<Expr>>,
+    },
+
     Call {
         name: String,
         args: Vec<Spanned<Expr>>,
     },
 
-    Let {
-        name: String,
-        value: Box<Spanned<Expr>>,
-    },
+    Block(Vec<Spanned<Expr>>),
 
     InternalFunction {
         name: String,
