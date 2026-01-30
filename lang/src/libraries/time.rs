@@ -10,10 +10,7 @@ pub fn now_unix(_: Vec<Spanned<Expr>>) -> Result<InternalFunctionResponse, (Stri
         .as_secs() as i64;
 
     Ok(InternalFunctionResponse {
-        return_value: SpannedExpr {
-            node: Expr::Int(now),
-            span: Span::default(),
-        },
+        return_value: Expr::Int(now),
         replace_self: None,
     })
 }
@@ -23,10 +20,7 @@ pub fn now_utc(_: Vec<Spanned<Expr>>) -> Result<InternalFunctionResponse, (Strin
     let datetime: DateTime<chrono::Utc> = now.into();
 
     Ok(InternalFunctionResponse {
-        return_value: SpannedExpr {
-            node: Expr::String(format!("{}", datetime.format("%c"))),
-            span: Span::default(),
-        },
+        return_value: Expr::String(format!("{}", datetime.format("%c"))),
         replace_self: None,
     })
 }
@@ -36,10 +30,7 @@ pub fn now_local(_: Vec<Spanned<Expr>>) -> Result<InternalFunctionResponse, (Str
     let datetime: DateTime<chrono::Local> = now.into();
 
     Ok(InternalFunctionResponse {
-        return_value: SpannedExpr {
-            node: Expr::String(format!("{}", datetime.format("%c"))),
-            span: Span::default(),
-        },
+        return_value: Expr::String(format!("{}", datetime.format("%c"))),
         replace_self: None,
     })
 }
@@ -54,10 +45,7 @@ pub fn to_iso_8601(args: Vec<Spanned<Expr>>) -> Result<InternalFunctionResponse,
     let time: DateTime<Local> = time.into();
     
     Ok(InternalFunctionResponse {
-        return_value: SpannedExpr {
-            node: Expr::String(time.to_rfc3339()),
-            span: Span::default(),
-        },
+        return_value: Expr::String(time.to_rfc3339()),
         replace_self: None,
     })
 }
@@ -72,10 +60,7 @@ pub fn to_rfc_2822(args: Vec<Spanned<Expr>>) -> Result<InternalFunctionResponse,
     let time: DateTime<Local> = time.into();
     
     Ok(InternalFunctionResponse {
-        return_value: SpannedExpr {
-            node: Expr::String(time.to_rfc2822()),
-            span: Span::default(),
-        },
+        return_value: Expr::String(time.to_rfc2822()),
         replace_self: None,
     })
 }
@@ -90,10 +75,7 @@ pub fn to_local_date_time(args: Vec<Spanned<Expr>>) -> Result<InternalFunctionRe
     let time: DateTime<Local> = time.into();
     
     Ok(InternalFunctionResponse {
-        return_value: SpannedExpr {
-            node: Expr::String(format!("{}", time.format("%c"))),
-            span: Span::default(),
-        },
+        return_value: Expr::String(format!("{}", time.format("%c"))),
         replace_self: None,
     })
 }
@@ -108,10 +90,7 @@ pub fn to_utc_date_time(args: Vec<Spanned<Expr>>) -> Result<InternalFunctionResp
     let time: DateTime<chrono::Utc> = time.into();
     
     Ok(InternalFunctionResponse {
-        return_value: SpannedExpr {
-            node: Expr::String(format!("{}", time.format("%c"))),
-            span: Span::default(),
-        },
+        return_value: Expr::String(format!("{}", time.format("%c"))),
         replace_self: None,
     })
 }

@@ -1,18 +1,15 @@
 import "json" as json;
 
 let obj = json.new();
-let obj2 = json.new();
 
-obj2.set("name", "test2");
-obj2.set("age", 500);
 obj.set("name", "test");
-obj.set("obj", obj2);
+obj.set("age", 67);
 
 print(obj.name);
 print(obj);
 print(json.new());
-print(json.stringify(obj));
-print(json.stringify(json.new()));
+print(obj.stringify());
+print(json.new().stringify());
 
 let everything = json.new();
 everything.set("string", "hello");
@@ -24,7 +21,7 @@ everything.set("obj", obj);
 
 print();
 
-let string = json.stringify(everything);
+let string = everything.stringify();
 let parsed = json.parse(string);
 
 print(parsed.get("string"));

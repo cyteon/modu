@@ -10,8 +10,8 @@ pub struct Spanned<T> {
 
 #[derive(Debug, Clone)]
 pub struct InternalFunctionResponse {
-    pub return_value: Spanned<Expr>,
-    pub replace_self: Option<Spanned<Expr>>,
+    pub return_value: Expr,
+    pub replace_self: Option<Expr>,
 }
 
 #[derive(Debug, Clone)]
@@ -70,6 +70,10 @@ pub enum Expr {
 
     Module {
         symbols: HashMap<String, Spanned<Expr>>,
+    },
+
+    Object {
+        properties: HashMap<String, Expr>,
     },
 
     If {

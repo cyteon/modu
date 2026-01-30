@@ -56,10 +56,7 @@ pub fn exec(args: Vec<Spanned<Expr>>) -> Result<InternalFunctionResponse, (Strin
     let combined_output = format!("{}{}", stdout, stderr);
 
     Ok(InternalFunctionResponse {
-        return_value: SpannedExpr {
-            node: Expr::String(combined_output),
-            span: crate::lexer::Span::default(),
-        },
+        return_value: Expr::String(combined_output),
         replace_self: None,
     })
 }

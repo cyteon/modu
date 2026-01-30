@@ -56,6 +56,22 @@ pub fn eval<'src>(expr: &'src SpannedExpr, context: &mut HashMap<String, Expr>) 
                         }),
                     }
                 }
+                
+                Expr::Object { properties } => {
+                    match properties.get(property) {
+                        Some(value) => Ok(Flow::Continue(value.clone())),
+                        None => {
+                            match crate::builtins::object::get_fn(property) {
+                                Some(value) => Ok(Flow::Continue(value)),
+                                None => Err(EvalError {
+                                    message: format!("Object has no property named {}", property),
+                                    message_short: "no such property".to_string(),
+                                    span: expr.span,
+                                }),
+                            }
+                        }
+                    }
+                }
 
                 _ => Err(EvalError {
                     message: format!("Cannot access property {} of {:?}", property, object),
@@ -142,7 +158,7 @@ pub fn eval<'src>(expr: &'src SpannedExpr, context: &mut HashMap<String, Expr>) 
         }
 
         Expr::Call { callee, args } => {
-            let evaluated_args: Result<Vec<SpannedExpr>, EvalError> = args.iter()
+            let mut evaluated_args: Vec<SpannedExpr> = args.iter()
                 .map(|arg| {
                     match eval(arg, context) {
                         Ok(v) => Ok(SpannedExpr {
@@ -153,29 +169,63 @@ pub fn eval<'src>(expr: &'src SpannedExpr, context: &mut HashMap<String, Expr>) 
                         Err(e) => Err(e),
                     }
                 })
-                .collect();
+                .collect::<Result<Vec<SpannedExpr>, EvalError>>()?;
 
             match eval(callee, context)?.unwrap() {
                 Expr::InternalFunction { name, args, func } => {
-                    if !args.contains(&"__args__".to_string()) && args.len() != evaluated_args.as_ref().map_or(0, |a| a.len()) {
-                        let error_span = if evaluated_args.as_ref().map_or(0, |a| a.len()) > args.len() {
-                            let extra_args = evaluated_args.as_ref().unwrap();
+                    if args.contains(&"self".to_string()) {
+                        match &callee.node {
+                            Expr::PropertyAccess { object, .. } => {
+                                evaluated_args.insert(0, SpannedExpr {
+                                    node: eval(object, context)?.unwrap(),
+                                    span: object.span,
+                                });
+                            }
+
+                            _ => { }
+                        }
+                    }
+
+                    if !args.contains(&"__args__".to_string()) && args.len() != evaluated_args.len() {
+                        let error_span = if evaluated_args.len() > args.len() {
                             SimpleSpan::from(
-                                extra_args[args.len()].span.start..extra_args[extra_args.len() - 1].span.end
+                                evaluated_args[args.len()].span.start..evaluated_args[evaluated_args.len() - 1].span.end
                             )
                         } else {
                             expr.span
                         };
                         
-                        return Err(EvalError {
-                            message: format!("Function {} expects {} arguments, got {}", name, args.len(), evaluated_args.as_ref().map_or(0, |a| a.len())),
-                            message_short: format!("got {} arguments too many", evaluated_args.as_ref().map_or(0, |a| a.len()) - args.len()),
-                            span: error_span,
-                        });
+                        if evaluated_args.len() > args.len() {
+                            return Err(EvalError {
+                                message: format!("Function {} expects {} arguments, got {}", name, args.len(), evaluated_args.len()),
+                                message_short: format!("{} arguments too many", evaluated_args.len() - args.len()),
+                                span: error_span,
+                            });
+                        } else {
+                            return Err(EvalError {
+                                message: format!("Function {} expects {} arguments, got {}", name, args.len(), evaluated_args.len()),
+                                message_short: format!("{} arguments too few", args.len() - evaluated_args.len()),
+                                span: error_span,
+                            });
+                        }
                     }
 
-                    match func(evaluated_args?) {
-                        Ok(response) => Ok(Flow::Continue(response.return_value.node)),
+                    match func(evaluated_args) {
+                        Ok(response) => {
+                            if let Some(replace_self) = response.replace_self {
+                                match &callee.node {
+                                    Expr::PropertyAccess { object, property } => {
+                                        if let Expr::Identifier(obj_name) = &object.node {
+                                            context.insert(obj_name.clone(), replace_self);
+                                        }
+                                    }
+                                    
+                                    _ => {}
+                                }
+                            }
+
+                            Ok(Flow::Continue(response.return_value))
+                        },
                         Err((msg, span)) => Err(EvalError {
                             message: msg.clone(),
                             message_short: msg,
@@ -185,18 +235,34 @@ pub fn eval<'src>(expr: &'src SpannedExpr, context: &mut HashMap<String, Expr>) 
                 }
 
                 Expr::Function { name, args, body } => {
-                    if args.len() != evaluated_args.as_ref().map_or(0, |a| a.len()) {
-                        return Err(EvalError {
-                            message: format!("Function {} expects {} arguments, got {}", name, args.len(), evaluated_args.as_ref().map_or(0, |a| a.len())),
-                            message_short: format!("got {} arguments too many", evaluated_args.as_ref().map_or(0, |a| a.len()) - args.len()),
-                            span: expr.span,
-                        });
+                    if args.len() != evaluated_args.len() {
+                        let error_span = if evaluated_args.len() > args.len() {
+                            SimpleSpan::from(
+                                evaluated_args[args.len()].span.start..evaluated_args[evaluated_args.len() - 1].span.end
+                            )
+                        } else {
+                            expr.span
+                        };
+
+                        if evaluated_args.len() > args.len() {
+                            return Err(EvalError {
+                                message: format!("Function {} expects {} arguments, got {}", name, args.len(), evaluated_args.len()),
+                                message_short: format!("{} arguments too many", evaluated_args.len() - args.len()),
+                                span: error_span,
+                            });
+                        } else {
+                            return Err(EvalError {
+                                message: format!("Function {} expects {} arguments, got {}", name, args.len(), evaluated_args.len()),
+                                message_short: format!("{} arguments too few", args.len() - evaluated_args.len()),
+                                span: error_span,
+                            });
+                        }
                     }
 
                     let mut new_context = context.clone();
 
                     for (i, arg_name) in args.iter().enumerate() {
-                        new_context.insert(arg_name.clone(), evaluated_args.as_ref().unwrap()[i].node.clone());
+                        new_context.insert(arg_name.clone(), evaluated_args[i].node.clone());
                     }
 
                     match eval(&*body, &mut new_context)? {

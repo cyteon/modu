@@ -16,10 +16,7 @@ pub fn str(args: Vec<Spanned<Expr>>) -> Result<InternalFunctionResponse, (String
     }; 
 
     Ok(InternalFunctionResponse {
-        return_value: SpannedExpr {
-            node: Expr::String(string),
-            span: Span::default(),
-        },
+        return_value: Expr::String(string),
         replace_self: None,
     })
 }
@@ -40,10 +37,7 @@ pub fn int(args: Vec<Spanned<Expr>>) -> Result<InternalFunctionResponse, (String
     }; 
 
     Ok(InternalFunctionResponse {
-        return_value: SpannedExpr {
-            node: Expr::Int(integer),
-            span: Span::default(),
-        },
+        return_value: Expr::Int(integer),
         replace_self: None,
     })
 }
@@ -64,10 +58,7 @@ pub fn float(args: Vec<Spanned<Expr>>) -> Result<InternalFunctionResponse, (Stri
     }; 
 
     Ok(InternalFunctionResponse {
-        return_value: SpannedExpr {
-            node: Expr::Float(float),
-            span: Span::default(),
-        },
+        return_value: Expr::Float(float),
         replace_self: None,
     })
 }
@@ -86,10 +77,7 @@ pub fn bool(args: Vec<Spanned<Expr>>) -> Result<InternalFunctionResponse, (Strin
     }; 
 
     Ok(InternalFunctionResponse {
-        return_value: SpannedExpr {
-            node: Expr::Bool(boolean),
-            span: Span::default(),
-        },
+        return_value: Expr::Bool(boolean),
         replace_self: None,
     })
 }

@@ -8,6 +8,7 @@ mod cli;
 mod utils;
 mod functions;
 mod libraries;
+mod builtins;
 
 fn main() {
     let args = std::env::args().collect::<Vec<String>>();

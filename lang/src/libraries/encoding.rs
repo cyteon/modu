@@ -14,10 +14,7 @@ pub fn encode_base64(args: Vec<Spanned<Expr>>) -> Result<InternalFunctionRespons
     let encoded = base64::encode(input);
 
     Ok(InternalFunctionResponse {
-        return_value: SpannedExpr {
-            node: Expr::String(encoded),
-            span: Span::default(),
-        },
+        return_value: Expr::String(encoded),
         replace_self: None,
     })
 }
@@ -42,10 +39,7 @@ pub fn decode_base64(args: Vec<Spanned<Expr>>) -> Result<InternalFunctionRespons
     ))?;
 
     Ok(InternalFunctionResponse {
-        return_value: SpannedExpr {
-            node: Expr::String(decoded),
-            span: Span::default(),
-        },
+        return_value: Expr::String(decoded),
         replace_self: None,
     })
 }
@@ -62,10 +56,7 @@ pub fn encode_base16(args: Vec<Spanned<Expr>>) -> Result<InternalFunctionRespons
     let encoded = base16::encode_lower(input.as_bytes());
 
     Ok(InternalFunctionResponse {
-        return_value: SpannedExpr {
-            node: Expr::String(encoded),
-            span: Span::default(),
-        },
+        return_value: Expr::String(encoded),
         replace_self: None,
     })
 }
@@ -90,10 +81,7 @@ pub fn decode_base16(args: Vec<Spanned<Expr>>) -> Result<InternalFunctionRespons
     ))?;
 
     Ok(InternalFunctionResponse {
-        return_value: SpannedExpr {
-            node: Expr::String(decoded),
-            span: Span::default(),
-        },
+        return_value: Expr::String(decoded),
         replace_self: None,
     })
 }

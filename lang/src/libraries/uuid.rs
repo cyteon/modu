@@ -1,25 +1,19 @@
 use crate::{ast::{Expr, InternalFunctionResponse, Spanned, SpannedExpr}, lexer::Span};
 
-pub fn v4(_: Vec<Spanned<Expr>>) -> Result<InternalFunctionResponse, (String, crate::lexer::Span)> {
+pub fn v4(_: Vec<Spanned<Expr>>) -> Result<InternalFunctionResponse, (String, Span)> {
     let uuid = uuid::Uuid::new_v4();
 
     Ok(InternalFunctionResponse {
-        return_value: SpannedExpr {
-            node: Expr::String(uuid.to_string()),
-            span: crate::lexer::Span::default(),
-        },
+        return_value: Expr::String(uuid.to_string()),
         replace_self: None,
     })
 }
 
-pub fn v7(_: Vec<Spanned<Expr>>) -> Result<InternalFunctionResponse, (String, crate::lexer::Span)> {
+pub fn v7(_: Vec<Spanned<Expr>>) -> Result<InternalFunctionResponse, (String, Span)> {
     let uuid = uuid::Uuid::now_v7();
 
     Ok(InternalFunctionResponse {
-        return_value: SpannedExpr {
-            node: Expr::String(uuid.to_string()),
-            span: crate::lexer::Span::default(),
-        },
+        return_value: Expr::String(uuid.to_string()),
         replace_self: None,
     })
 }

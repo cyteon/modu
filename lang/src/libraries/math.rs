@@ -12,10 +12,7 @@ pub fn mul(args: Vec<Spanned<Expr>>) -> Result<InternalFunctionResponse, (String
         (Expr::Int(a), Expr::Int(b)) => {
             let result = a * b;
             Ok(InternalFunctionResponse {
-                return_value: SpannedExpr {
-                    node: Expr::Int(result),
-                    span: Span::default(),
-                },
+                return_value: Expr::Int(result),
                 replace_self: None,
             })
         }
@@ -23,10 +20,7 @@ pub fn mul(args: Vec<Spanned<Expr>>) -> Result<InternalFunctionResponse, (String
         (Expr::Float(a), Expr::Float(b)) => {
             let result = a * b;
             Ok(InternalFunctionResponse {
-                return_value: SpannedExpr {
-                    node: Expr::Float(result),
-                    span: Span::default(),
-                },
+                return_value: Expr::Float(result),
                 replace_self: None,
             })
         }
@@ -34,10 +28,7 @@ pub fn mul(args: Vec<Spanned<Expr>>) -> Result<InternalFunctionResponse, (String
         (Expr::Int(a), Expr::Float(b)) => {
             let result = (*a as f64) * b;
             Ok(InternalFunctionResponse {
-                return_value: SpannedExpr {
-                    node: Expr::Float(result),
-                    span: Span::default(),
-                },
+                return_value: Expr::Float(result),
                 replace_self: None,
             })
         }
@@ -45,10 +36,7 @@ pub fn mul(args: Vec<Spanned<Expr>>) -> Result<InternalFunctionResponse, (String
         (Expr::Float(a), Expr::Int(b)) => {
             let result = a * (*b as f64);
             Ok(InternalFunctionResponse {
-                return_value: SpannedExpr {
-                    node: Expr::Float(result),
-                    span: Span::default(),
-                },
+                return_value: Expr::Float(result),
                 replace_self: None,
             })
         }
@@ -78,10 +66,7 @@ pub fn div(args: Vec<Spanned<Expr>>) -> Result<InternalFunctionResponse, (String
             }
             let result = (*a as f64) / (*b as f64);
             Ok(InternalFunctionResponse {
-                return_value: SpannedExpr {
-                    node: Expr::Float(result),
-                    span: Span::default(),
-                },
+                return_value: Expr::Float(result),
                 replace_self: None,
             })
         }
@@ -95,10 +80,7 @@ pub fn div(args: Vec<Spanned<Expr>>) -> Result<InternalFunctionResponse, (String
             }
             let result = a / b;
             Ok(InternalFunctionResponse {
-                return_value: SpannedExpr {
-                    node: Expr::Float(result),
-                    span: Span::default(),
-                },
+                return_value: Expr::Float(result),
                 replace_self: None,
             })
         }
@@ -112,10 +94,7 @@ pub fn div(args: Vec<Spanned<Expr>>) -> Result<InternalFunctionResponse, (String
             }
             let result = (*a as f64) / b;
             Ok(InternalFunctionResponse {
-                return_value: SpannedExpr {
-                    node: Expr::Float(result),
-                    span: Span::default(),
-                },
+                return_value: Expr::Float(result),
                 replace_self: None,
             })
         }
@@ -129,10 +108,7 @@ pub fn div(args: Vec<Spanned<Expr>>) -> Result<InternalFunctionResponse, (String
             }
             let result = a / (*b as f64);
             Ok(InternalFunctionResponse {
-                return_value: SpannedExpr {
-                    node: Expr::Float(result),
-                    span: Span::default(),
-                },
+                return_value: Expr::Float(result),
                 replace_self: None,
             })
         }
@@ -156,10 +132,7 @@ pub fn abs(args: Vec<Spanned<Expr>>) -> Result<InternalFunctionResponse, (String
         Expr::Int(n) => {
             let abs_value = n.abs();
             Ok(InternalFunctionResponse {
-                return_value: SpannedExpr {
-                    node: Expr::Int(abs_value),
-                    span: Span::default(),
-                },
+                return_value: Expr::Int(abs_value),
                 replace_self: None,
             })
         }
@@ -167,10 +140,7 @@ pub fn abs(args: Vec<Spanned<Expr>>) -> Result<InternalFunctionResponse, (String
         Expr::Float(f) => {
             let abs_value = f.abs();
             Ok(InternalFunctionResponse {
-                return_value: SpannedExpr {
-                    node: Expr::Float(abs_value),
-                    span: Span::default(),
-                },
+                return_value: Expr::Float(abs_value),
                 replace_self: None,
             })
         }

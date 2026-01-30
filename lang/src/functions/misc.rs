@@ -9,10 +9,7 @@ pub fn print(args: Vec<Spanned<Expr>>) -> Result<InternalFunctionResponse, (Stri
     println!();
 
     Ok(InternalFunctionResponse {
-        return_value: SpannedExpr {
-            node: Expr::Null,
-            span: Span::default(),
-        },
+        return_value: Expr::Null,
         replace_self: None,
     })
 }
@@ -37,10 +34,7 @@ pub fn input(args: Vec<Spanned<Expr>>) -> Result<InternalFunctionResponse, (Stri
     io::stdin().read_line(&mut input).unwrap();
 
     Ok(InternalFunctionResponse {
-        return_value: SpannedExpr {
-            node: Expr::String(input.trim_end().to_string()),
-            span: Span::default(),
-        },
+        return_value: Expr::String(input.trim_end().to_string()),
         replace_self: None,
     })
 }
