@@ -34,6 +34,13 @@ pub fn parse_obj(obj: &mut HashMap<String, serde_json::Value>) -> HashMap<String
                 map.insert(key, Expr::String(s));
             }
 
+            serde_json::Value::Object(o) => {
+                let mut hashmap: HashMap<String, serde_json::Value> = o.into_iter().collect();
+
+                let properties = parse_obj(&mut hashmap);
+                map.insert(key, Expr::Object { properties });
+            }
+
             v => {
                 map.insert(key, Expr::String(v.to_string()));
             }
