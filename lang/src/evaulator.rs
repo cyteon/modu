@@ -1,4 +1,5 @@
 use std::collections::HashMap;
+use chumsky::span::SimpleSpan;
 
 use crate::ast::{Expr, SpannedExpr};
 use crate::lexer::Span;
@@ -157,10 +158,19 @@ pub fn eval<'src>(expr: &'src SpannedExpr, context: &mut HashMap<String, Expr>) 
             match eval(callee, context)?.unwrap() {
                 Expr::InternalFunction { name, args, func } => {
                     if !args.contains(&"__args__".to_string()) && args.len() != evaluated_args.as_ref().map_or(0, |a| a.len()) {
+                        let error_span = if evaluated_args.as_ref().map_or(0, |a| a.len()) > args.len() {
+                            let extra_args = evaluated_args.as_ref().unwrap();
+                            SimpleSpan::from(
+                                extra_args[args.len()].span.start..extra_args[extra_args.len() - 1].span.end
+                            )
+                        } else {
+                            expr.span
+                        };
+                        
                         return Err(EvalError {
                             message: format!("Function {} expects {} arguments, got {}", name, args.len(), evaluated_args.as_ref().map_or(0, |a| a.len())),
                             message_short: format!("got {} arguments too many", evaluated_args.as_ref().map_or(0, |a| a.len()) - args.len()),
-                            span: expr.span,
+                            span: error_span,
                         });
                     }
 
