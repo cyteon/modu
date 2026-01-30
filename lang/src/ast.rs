@@ -37,8 +37,13 @@ pub enum Expr {
     },
 
     Call {
-        name: String,
+        callee: Box<Spanned<Expr>>,
         args: Vec<Spanned<Expr>>,
+    },
+
+    PropertyAccess {
+        object: Box<Spanned<Expr>>,
+        property: String,
     },
 
     Block(Vec<Spanned<Expr>>),

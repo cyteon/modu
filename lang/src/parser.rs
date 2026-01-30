@@ -21,26 +21,50 @@ fn parser<'src>() -> impl Parser<
             (Token::Continue, span) => SpannedExpr { node: Expr::Continue, span },
         };
 
-        let call = select! { (Token::Identifier(name), span) => (name, span) }
-            .then_ignore(select! { (Token::LParen, _) => () })
-            .then(
-                expr.clone()
-                    .separated_by(select! { (Token::Comma, _) => () })
-                    .allow_trailing()
-                    .collect::<Vec<_>>()
-            )
-            .then(select! { (Token::RParen, span) => span })
-            .map(|(((name, start), args), end): (((String, Span), Vec<SpannedExpr>), Span)| SpannedExpr {
-                node: Expr::Call { name, args },
-                span: Span::from(start.start..end.end),
-            });
+        let primary = atom.or(
+            select! { (Token::LParen, _) => () }
+                .ignore_then(expr.clone())
+                .then_ignore(select! { (Token::RParen, _) => () })
+        );
 
-        let primary = call.or(atom);
+        let postfix = primary
+            .foldl(
+                select! { (Token::Dot, _) => () }
+                    .ignore_then(select! { (Token::Identifier(name), span) => (name, span) })
+                    .repeated(),
+                |obj: SpannedExpr, prop: (String, Span)| SpannedExpr {
+                    node: Expr::PropertyAccess {
+                        object: Box::new(obj.clone()),
+                        property: prop.0,
+                    },
+                    span: Span::from(obj.span.start..prop.1.end),
+                }
+            );
+        
+        let call = postfix
+            .foldl(
+                select! { (Token::LParen, _) => () }
+                    .ignore_then(
+                        expr.clone()
+                            .separated_by(select! { (Token::Comma, _) => () })
+                            .allow_trailing()
+                            .collect::<Vec<_>>()
+                    )
+                    .then_ignore(select! { (Token::RParen, _) => () })
+                    .repeated(),
+                |callee: SpannedExpr, args: Vec<SpannedExpr>| SpannedExpr {
+                    span: callee.span.clone(),
+                    node: Expr::Call {
+                        callee: Box::new(callee),
+                        args,
+                    },
+                }
+            );
 
         let unary = select! { (Token::Minus, span) => span }
             .repeated()
             .collect::<Vec<Span>>()
-            .then(primary)
+            .then(call)
             .map(|(neg, mut expr)| {
                 for neg_span in neg.into_iter().rev() {
                     expr = SpannedExpr {

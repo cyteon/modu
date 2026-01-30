@@ -41,6 +41,29 @@ pub fn eval<'src>(expr: &'src SpannedExpr, context: &mut HashMap<String, Expr>) 
         Expr::Bool(b) => Ok(Flow::Continue(Expr::Bool(*b))),
         Expr::Null => Ok(Flow::Continue(Expr::Null)),
 
+        Expr::PropertyAccess { object, property } => {
+            let object = eval(object, context)?.unwrap();
+
+            match object {
+                Expr::Module { symbols } => {
+                    match symbols.get(property) {
+                        Some(value) => Ok(Flow::Continue(value.node.clone())),
+                        None => Err(EvalError {
+                            message: format!("Module has no property named {}", property),
+                            message_short: "no such property".to_string(),
+                            span: expr.span,
+                        }),
+                    }
+                }
+
+                _ => Err(EvalError {
+                    message: format!("Cannot access property {} of {:?}", property, object),
+                    message_short: "cannot access property".to_string(),
+                    span: expr.span,
+                }),
+            }
+        }
+
         Expr::Neg(inner) => {
             let value = eval(inner, context)?.unwrap();
 
@@ -117,7 +140,7 @@ pub fn eval<'src>(expr: &'src SpannedExpr, context: &mut HashMap<String, Expr>) 
             }))
         }
 
-        Expr::Call { name, args } => {
+        Expr::Call { callee, args } => {
             let evaluated_args: Result<Vec<SpannedExpr>, EvalError> = args.iter()
                 .map(|arg| {
                     match eval(arg, context) {
@@ -131,72 +154,62 @@ pub fn eval<'src>(expr: &'src SpannedExpr, context: &mut HashMap<String, Expr>) 
                 })
                 .collect();
 
-            match context.get(name) {
-                Some(v) => {
-                    match v {
-                        Expr::InternalFunction { name, args, func } => {
-                            if !args.contains(&"__args__".to_string()) && args.len() != evaluated_args.as_ref().map_or(0, |a| a.len()) {
-                                return Err(EvalError {
-                                    message: format!("Function {} expects {} arguments, got {}", name, args.len(), evaluated_args.as_ref().map_or(0, |a| a.len())),
-                                    message_short: format!("got {} arguments too many", evaluated_args.as_ref().map_or(0, |a| a.len()) - args.len()),
-                                    span: expr.span,
-                                });
-                            }
-
-                            match func(evaluated_args?) {
-                                Ok(response) => Ok(Flow::Continue(response.return_value.node)),
-                                Err((msg, span)) => Err(EvalError {
-                                    message: msg.clone(),
-                                    message_short: msg,
-                                    span,
-                                }),
-                            }
-                        }
-
-                        Expr::Function { name, args, body } => {
-                            if args.len() != evaluated_args.as_ref().map_or(0, |a| a.len()) {
-                                return Err(EvalError {
-                                    message: format!("Function {} expects {} arguments, got {}", name, args.len(), evaluated_args.as_ref().map_or(0, |a| a.len())),
-                                    message_short: format!("got {} arguments too many", evaluated_args.as_ref().map_or(0, |a| a.len()) - args.len()),
-                                    span: expr.span,
-                                });
-                            }
-
-                            let mut new_context = context.clone();
-
-                            for (i, arg_name) in args.iter().enumerate() {
-                                new_context.insert(arg_name.clone(), evaluated_args.as_ref().unwrap()[i].node.clone());
-                            }
-
-                            match eval(body, &mut new_context)? {
-                                Flow::Continue(v) => Ok(Flow::Continue(v)),
-                                Flow::Return(v) => Ok(Flow::Continue(v)),
-                                Flow::Break => Err(EvalError {
-                                    message: "Unexpected break in function".to_string(),
-                                    message_short: "unexpected break".to_string(),
-                                    span: expr.span,
-                                }),
-                                Flow::Skip => Err(EvalError {
-                                    message: "Unexpected skip in function".to_string(),
-                                    message_short: "unexpected skip".to_string(),
-                                    span: expr.span,
-                                }),
-                            }
-                        }
-
-                        _ => Err(EvalError {
-                            message: format!("{} is not a function", name),
-                            message_short: "not a function".to_string(),
+            match eval(callee, context)?.unwrap() {
+                Expr::InternalFunction { name, args, func } => {
+                    if !args.contains(&"__args__".to_string()) && args.len() != evaluated_args.as_ref().map_or(0, |a| a.len()) {
+                        return Err(EvalError {
+                            message: format!("Function {} expects {} arguments, got {}", name, args.len(), evaluated_args.as_ref().map_or(0, |a| a.len())),
+                            message_short: format!("got {} arguments too many", evaluated_args.as_ref().map_or(0, |a| a.len()) - args.len()),
                             span: expr.span,
-                        })
+                        });
+                    }
+
+                    match func(evaluated_args?) {
+                        Ok(response) => Ok(Flow::Continue(response.return_value.node)),
+                        Err((msg, span)) => Err(EvalError {
+                            message: msg.clone(),
+                            message_short: msg,
+                            span,
+                        }),
                     }
                 }
 
-                None => Err(EvalError {
-                    message: format!("Undefined function: {}", name),
-                    message_short: "not defined".to_string(),
+                Expr::Function { name, args, body } => {
+                    if args.len() != evaluated_args.as_ref().map_or(0, |a| a.len()) {
+                        return Err(EvalError {
+                            message: format!("Function {} expects {} arguments, got {}", name, args.len(), evaluated_args.as_ref().map_or(0, |a| a.len())),
+                            message_short: format!("got {} arguments too many", evaluated_args.as_ref().map_or(0, |a| a.len()) - args.len()),
+                            span: expr.span,
+                        });
+                    }
+
+                    let mut new_context = context.clone();
+
+                    for (i, arg_name) in args.iter().enumerate() {
+                        new_context.insert(arg_name.clone(), evaluated_args.as_ref().unwrap()[i].node.clone());
+                    }
+
+                    match eval(&*body, &mut new_context)? {
+                        Flow::Continue(v) => Ok(Flow::Continue(v)),
+                        Flow::Return(v) => Ok(Flow::Continue(v)),
+                        Flow::Break => Err(EvalError {
+                            message: "Unexpected break in function".to_string(),
+                            message_short: "unexpected break".to_string(),
+                            span: expr.span,
+                        }),
+                        Flow::Skip => Err(EvalError {
+                            message: "Unexpected skip in function".to_string(),
+                            message_short: "unexpected skip".to_string(),
+                            span: expr.span,
+                        }),
+                    }
+                }
+
+                v => Err(EvalError {
+                    message: format!("{:?} is not a function", v),
+                    message_short: "not a function".to_string(),
                     span: expr.span,
-                }),
+                })
             }
         }
 

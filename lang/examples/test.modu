@@ -62,4 +62,6 @@ import "yapper.modu";
 import "yapper.modu" as yp;
 import "yapper.modu" as *;
 
+yapper.yap("test");
+yp.yap(yapper.abc);
 yap("hi");
