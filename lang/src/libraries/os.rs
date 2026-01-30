@@ -1,5 +1,5 @@
 use std::process::Command;
-use crate::ast::{Expr, InternalFunctionResponse, Spanned, SpannedExpr};
+use crate::{ast::{Expr, InternalFunctionResponse, Spanned, SpannedExpr}, lexer::Span};
 
 #[cfg(windows)]
 use std::os::windows::process::CommandExt;
@@ -49,6 +49,19 @@ pub fn exec(args: Vec<Spanned<Expr>>) -> Result<InternalFunctionResponse, (Strin
         format!("Failed to execute command: {}", e),
         args[0].span,
     ))?;
+
+    let stdout = String::from_utf8_lossy(&output.stdout).to_string();
+    let stderr = String::from_utf8_lossy(&output.stderr).to_string();
+
+    let combined_output = format!("{}{}", stdout, stderr);
+
+    Ok(InternalFunctionResponse {
+        return_value: SpannedExpr {
+            node: Expr::String(combined_output),
+            span: crate::lexer::Span::default(),
+        },
+        replace_self: None,
+    })
 }
 
 pub fn get_object() -> Expr {
@@ -59,10 +72,18 @@ pub fn get_object() -> Expr {
         SpannedExpr {
             node: Expr::InternalFunction {
                 name: "exec".to_string(),
-                args: vec![],
+                args: vec!["cmd".to_string()],
                 func: exec,
             },
-            span: crate::lexer::Span::default(),
+            span: Span::default(),
+        },
+    );
+
+    symbols.insert(
+        "name".to_string(),
+        SpannedExpr {
+            node: Expr::String(std::env::consts::OS.to_string()),
+            span: Span::default(),
         },
     );
 

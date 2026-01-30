@@ -1,4 +1,4 @@
-use crate::ast::{Expr, InternalFunctionResponse, Spanned, SpannedExpr};
+use crate::{ast::{Expr, InternalFunctionResponse, Spanned, SpannedExpr}, lexer::Span};
 
 pub fn v4(_: Vec<Spanned<Expr>>) -> Result<InternalFunctionResponse, (String, crate::lexer::Span)> {
     let uuid = uuid::Uuid::new_v4();
@@ -35,7 +35,7 @@ pub fn get_object() -> Expr {
                 args: vec![],
                 func: v4,
             },
-            span: crate::lexer::Span::default(),
+            span: Span::default(),
         },
     );
 
@@ -47,7 +47,7 @@ pub fn get_object() -> Expr {
                 args: vec![],
                 func: v7,
             },
-            span: crate::lexer::Span::default(),
+            span: Span::default(),
         },
     );
 
