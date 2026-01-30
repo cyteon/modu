@@ -66,7 +66,68 @@ pub fn set(args: Vec<Spanned<Expr>>) -> Result<InternalFunctionResponse, (String
     })
 }
 
-pub fn stringify(args: Vec<Spanned<Expr>>) -> Result<InternalFunctionResponse, (String, Span)> {
+pub fn has(args: Vec<Spanned<Expr>>) -> Result<InternalFunctionResponse, (String, Span)> {
+    let object = match &args[0].node {
+        Expr::Object { properties } => properties,
+        _ => {
+            return Err((
+                "has expects an object as the first argument".to_string(),
+                args[0].span,
+            ))
+        }
+    };
+
+    let key = match &args[1].node {
+        Expr::String(s) => s,
+        _ => {
+            return Err((
+                "has expects a string as the second argument".to_string(),
+                args[1].span,
+            ))
+        }
+    };
+
+    let exists = object.contains_key(key);
+
+    Ok(InternalFunctionResponse {
+        return_value: Expr::Bool(exists),
+        replace_self: None,
+    })
+}
+
+pub fn delete(args: Vec<Spanned<Expr>>) -> Result<InternalFunctionResponse, (String, Span)> {
+    let object = match &args[0].node {
+        Expr::Object { properties } => properties.clone(),
+        _ => {
+            return Err((
+                "delete expects an object as the first argument".to_string(),
+                args[0].span,
+            ))
+        }
+    };
+
+    let key = match &args[1].node {
+        Expr::String(s) => s.clone(),
+        _ => {
+            return Err((
+                "delete expects a string as the second argument".to_string(),
+                args[1].span,
+            ))
+        }
+    };
+
+    let mut new_properties = object;
+    new_properties.remove(&key);
+
+    Ok(InternalFunctionResponse {
+        return_value: Expr::Null,
+        replace_self: Some(Expr::Object {
+            properties: new_properties,
+        }),
+    })
+}
+
+pub fn to_string(args: Vec<Spanned<Expr>>) -> Result<InternalFunctionResponse, (String, Span)> {
     let object = &args[0].node;
 
     let result = match object {
@@ -79,7 +140,7 @@ pub fn stringify(args: Vec<Spanned<Expr>>) -> Result<InternalFunctionResponse, (
                     Expr::Float(f) => f.to_string(),
                     Expr::Bool(b) => b.to_string(),
                     Expr::Null => "null".to_string(),
-                    _ => "<complex_value>".to_string(),
+                    _ => "\"<complex_value>\"".to_string(),
                 };
                 parts.push(format!("\"{}\": {}", key, value_str));
             }
@@ -87,7 +148,7 @@ pub fn stringify(args: Vec<Spanned<Expr>>) -> Result<InternalFunctionResponse, (
         }
         _ => {
             return Err((
-                "stringify expects an object as the first argument".to_string(),
+                "to_string expects an object as the first argument".to_string(),
                 args[0].span,
             ))
         }
@@ -105,13 +166,17 @@ pub fn get_fn(name: &str) -> Option<Expr> {
         args: match name {
             "get" => vec!["self".to_string(), "key".to_string()],
             "set" => vec!["self".to_string(), "key".to_string(), "value".to_string()],
-            "stringify" => vec!["self".to_string()],
+            "has" => vec!["self".to_string(), "key".to_string()],
+            "delete" => vec!["self".to_string(), "key".to_string()],
+            "to_string" => vec!["self".to_string()],
             _ => vec![],
         },
         func: match name {
             "get" => get,
             "set" => set,
-            "stringify" => stringify,
+            "has" => has,
+            "delete" => delete,
+            "to_string" => to_string,
             _ => return None,
         },
     })

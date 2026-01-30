@@ -8,8 +8,8 @@ obj.set("age", 67);
 print(obj.name);
 print(obj);
 print(json.new());
-print(obj.stringify());
-print(json.new().stringify());
+print(obj.to_string());
+print(json.new().to_string());
 
 let everything = json.new();
 everything.set("string", "hello");
@@ -21,7 +21,7 @@ everything.set("obj", obj);
 
 print();
 
-let string = everything.stringify();
+let string = everything.to_string();
 let parsed = json.parse(string);
 
 print(parsed.get("string"));
