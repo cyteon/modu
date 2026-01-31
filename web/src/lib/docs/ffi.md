@@ -15,8 +15,8 @@ import "ffi" as ffi;
 // In actal code you would have to differentiate using os.name 
 // (returns windows/linux/macos/unknown)
 // For info on the OS package see the "OS Lib" page
-let lib = ffi.load("./libffi_test.so")
-lib.hello_world()
+let lib = ffi.load("./libffi_test.so");
+lib.hello_world();
 
 // Output:
 //

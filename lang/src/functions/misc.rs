@@ -17,7 +17,7 @@ pub fn print(args: Vec<Spanned<Expr>>) -> Result<InternalFunctionResponse, (Stri
 pub fn input(args: Vec<Spanned<Expr>>) -> Result<InternalFunctionResponse, (String, Span)> {
     use std::io::{self, Write};
 
-    for arg in args {
+    for arg in args.clone() {
         print!("{}", arg.node);
     }
     

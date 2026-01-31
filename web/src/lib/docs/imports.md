@@ -20,7 +20,7 @@ fn yap(msg) {
 ```rust
 // main.modu
 
-import "yapper.modu" as yapper
+import "yapper.modu" as yapper;
 
 yapper.yap("Hello, World!");
 print(yapper.abc);
@@ -34,7 +34,7 @@ Hello, World!
 
 You can also import with an * to remove the need of "yapper." on the start
 ```rust
-import "yapper.modu" as *
+import "yapper.modu" as *;
 
 yap("Hello, World!");
 print(abc);
@@ -52,8 +52,8 @@ let b = file.read("input.modu");
 ```
 or alternatively
 ```rust
-import math;
-import file;
+import "math";
+import "file";
 
 let a = math.abs(-5);
 let b = file.read("input.modu");

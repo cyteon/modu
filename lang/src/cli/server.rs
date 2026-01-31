@@ -1,6 +1,7 @@
+use gag::{BufferRedirect, Redirect};
 use rouille::router;
+use std::io::Read;
 use crate::parser::parse;
-use std::sync::Arc;
 
 pub fn server() {
     let args = std::env::args().collect::<Vec<String>>();
@@ -50,18 +51,18 @@ pub fn server() {
 
                 let context = &mut crate::utils::create_context();
 
-                std::io::set_output_capture(Some(Default::default()));
+                let mut stdout = BufferRedirect::stdout().unwrap();
+                let mut stderr = BufferRedirect::stderr().unwrap();
 
                 parse(&text, "<server>", context);
 
-                let captured = String::from_utf8(
-                    Arc::try_unwrap(
-                        std::io::set_output_capture(None).unwrap()
-                    )
-                        .unwrap()
-                        .into_inner()
-                        .unwrap()
-                ).unwrap();
+                let mut out = String::new();
+                let mut err = String::new();
+
+                stdout.read_to_string(&mut out).unwrap();
+                stderr.read_to_string(&mut err).unwrap();
+
+                let captured = format!("{}{}", out, err);
 
                 rouille::Response {
                     status_code: 200,

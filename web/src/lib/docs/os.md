@@ -14,7 +14,7 @@ Example:
 ```rust
 // UNIX-like OS only
 
-import "os" as os
+import "os" as os;
 
 if os.name == "windows" {
     print("this example dosent run on windows :C");
@@ -24,7 +24,7 @@ if os.name == "windows" {
 print("I am ", os.exec("whoami"), " and I use ", os.name);
 
 os.exec("echo 'Hello, World!' > tmp.txt");
-print(os.exec("cat tmp.txt"));;
+print(os.exec("cat tmp.txt"));
 os.exec("rm tmp.txt");
 
 // Expected Output
