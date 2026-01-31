@@ -56,6 +56,6 @@ fn crypto() {
 }
 
 #[test]
-fn minsky() {
+fn minskys_machine() {
     run_test("minskys_machine");
 }

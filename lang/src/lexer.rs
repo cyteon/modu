@@ -7,7 +7,8 @@ pub type Span = SimpleSpan;
 pub enum LexingError {
     #[default]
     UnexpectedToken,
-    InvalidInteger(String)
+    InvalidInteger(String),
+    InvalidFloat(String),
 }
 
 impl From<std::num::ParseIntError> for LexingError {
@@ -25,7 +26,7 @@ impl From<std::num::ParseIntError> for LexingError {
 
 impl From<std::num::ParseFloatError> for LexingError {
     fn from(_err: std::num::ParseFloatError) -> Self {
-        LexingError::InvalidInteger("Invalid float literal".to_string())
+        LexingError::InvalidFloat("Invalid float literal".to_string())
     }
 }
 
@@ -179,7 +180,8 @@ impl std::fmt::Display for LexingError {
     fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
         match self {
             LexingError::UnexpectedToken => write!(f, "Unexpected token"),
-            LexingError::InvalidInteger(msg) => write!(f, "Invalid integer: {}", msg),  
+            LexingError::InvalidInteger(msg) => write!(f, "Invalid integer: {}", msg),
+            LexingError::InvalidFloat(msg) => write!(f, "Invalid float: {}", msg),
         }
     }
 }

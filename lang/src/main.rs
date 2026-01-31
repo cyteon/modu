@@ -60,13 +60,13 @@ fn main() {
             .or_else(|| panic.downcast_ref::<String>().map(String::as_str))
             .unwrap_or("Unknown internal error");
         
-        eprintln!("{}", "Internal compiler error".red().bold());
+        eprintln!("{}", "Internal interpreter error".red().bold());
         eprintln!("  ├─ {}", msg.yellow());
         if cfg!(debug_assertions) {
             let bt = std::backtrace::Backtrace::capture();
             
             if bt.frames().is_empty() {
-                eprintln!("  ├─ {}", "run with RUST_BACKTRACE=1 to see a backtrace".dimmed());
+                eprintln!("  ├─ {}", "Run with RUST_BACKTRACE=1 to see a backtrace".dimmed());
             } else {
                 eprintln!("  ├─ Backtrace:");
                 for line in bt.frames().iter() {
