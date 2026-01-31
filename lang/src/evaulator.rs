@@ -73,7 +73,7 @@ pub fn eval<'src>(expr: &'src SpannedExpr, context: &mut HashMap<String, Expr>) 
                     }
                 }
 
-                Expr::Array(elements) => {
+                Expr::Array(_) => {
                     match crate::builtins::array::get_fn(property) {
                         Some(value) => Ok(Flow::Continue(value)),
                         None => Err(EvalError {
@@ -225,7 +225,7 @@ pub fn eval<'src>(expr: &'src SpannedExpr, context: &mut HashMap<String, Expr>) 
                         Ok(response) => {
                             if let Some(replace_self) = response.replace_self {
                                 match &callee.node {
-                                    Expr::PropertyAccess { object, property } => {
+                                    Expr::PropertyAccess { object, property: _ } => {
                                         if let Expr::Identifier(obj_name) = &object.node {
                                             context.insert(obj_name.clone(), replace_self);
                                         }
@@ -586,15 +586,15 @@ pub fn eval<'src>(expr: &'src SpannedExpr, context: &mut HashMap<String, Expr>) 
                 None => name.clone(),
             };
 
-            if name.ends_with(".modu") {
-                let mut path = std::env::current_dir().unwrap();
+            let mut path = std::env::current_dir().unwrap();
                 
-                let sys_args = std::env::args().collect::<Vec<String>>();
-                if sys_args.len() > 2 && sys_args[1] == "run" {
-                    path.push(&sys_args[2]);
-                    path.pop();
-                }
+            let sys_args = std::env::args().collect::<Vec<String>>();
+            if sys_args.len() > 2 && sys_args[1] == "run" {
+                path.push(&sys_args[2]);
+                path.pop();
+            }
 
+            if name.ends_with(".modu") {
                 path.push(name);
                 
                 let source = std::fs::read_to_string(path.clone()).map_err(|e| EvalError {
@@ -625,27 +625,68 @@ pub fn eval<'src>(expr: &'src SpannedExpr, context: &mut HashMap<String, Expr>) 
                     });
                 }
             } else {
-                let module = crate::libraries::get_package(name).ok_or(EvalError {
-                    message: format!("No such package: {}", name),
-                    message_short: "no such package".to_string(),
-                    span: expr.span,
-                })?;
-
-                if import_as == "*" {
-                    if let Expr::Module { symbols } = module {
-                        for (k, v) in symbols {
-                            context.insert(k, v.node);
+                match crate::libraries::get_package(name) {
+                    Some(module) => {
+                        if import_as == "*" {
+                            if let Expr::Module { symbols } = module {
+                                for (k, v) in symbols {
+                                    context.insert(k, v.node);
+                                }
+                            } else {
+                                return Err(EvalError {
+                                    message: format!("Package {} is not a module", name),
+                                    message_short: "not a module".to_string(),
+                                    span: expr.span,
+                                });
+                            }
                         }
-                    } else {
-                        return Err(EvalError {
-                            message: format!("package {} is not a module", name),
-                            message_short: "not a module".to_string(),
-                            span: expr.span,
-                        });
                     }
-                } else {
-                    context.insert(import_as.clone(), module);
+
+                    None => {
+                        path.push(".modu");
+                        path.push("packages");
+                        path.push(name);
+                        path.push("lib.modu");
+
+                        if !path.exists() {
+                            return Err(EvalError {
+                                message: format!("Package {} does not exist or is not installed", name),
+                                message_short: "package not found".to_string(),
+                                span: expr.span,
+                            });
+                        }
+
+                        let source = std::fs::read_to_string(path.clone()).map_err(|e| EvalError {
+                            message: format!("Failed to read module file for package {}: {}", name, e),
+                            message_short: "failed to read module".to_string(),
+                            span: expr.span,
+                        })?;
+
+                        let mut new_context = crate::utils::create_context();
+                        crate::parser::parse(&source, path.to_str().unwrap(), &mut new_context);
+
+                        if import_as == "*" {
+                            for (k, v) in new_context {
+                                context.insert(k, v);
+                            }
+                        } else {
+                            let mut symbols = HashMap::new();
+
+                            for (k, v) in new_context.iter().filter(|(k, _)| !crate::utils::create_context().contains_key(*k)) {
+                                symbols.insert(k.clone(), SpannedExpr {
+                                    node: v.clone(),
+                                    span: expr.span,
+                                });
+                            }
+
+                            context.insert(import_as.clone().replace(".modu", ""), Expr::Module {
+                                symbols,
+                            });
+                        }
+                    }
                 }
+
+               
             }
 
             Ok(Flow::Continue(Expr::Null))

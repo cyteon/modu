@@ -113,7 +113,7 @@ pub fn div(args: Vec<Spanned<Expr>>) -> Result<InternalFunctionResponse, (String
             })
         }
 
-        v => Err((
+        _ => Err((
             "div expects number arguments".to_string(),
             args[0].span,
         )),

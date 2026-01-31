@@ -209,7 +209,7 @@ fn parser<'src>() -> impl Parser<
         let expr_stmt = expr.clone()
             .map_with(|expr, e| (expr, e.span()))
             .then(select! { (Token::Semicolon, span) => span }.labelled("semicolon"))
-            .map(|((expr, expr_span), end): ((SpannedExpr, SimpleSpan), Span)| {
+            .map(|((expr, _), end): ((SpannedExpr, SimpleSpan), Span)| {
                 SpannedExpr {
                     node: expr.node,
                     span: Span::from(expr.span.start..end.end),

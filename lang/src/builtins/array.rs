@@ -14,12 +14,7 @@ pub fn len(args: Vec<Spanned<Expr>>) -> Result<InternalFunctionResponse, (String
     })
 }
 
-pub fn clear(args: Vec<Spanned<Expr>>) -> Result<InternalFunctionResponse, (String, Span)> {
-    let array = match &args[0].node {
-        Expr::Array(_) => (),
-        _ => unreachable!(),
-    };
-
+pub fn clear(_: Vec<Spanned<Expr>>) -> Result<InternalFunctionResponse, (String, Span)> {
     Ok(InternalFunctionResponse {
         return_value: Expr::Null,
         replace_self: Some(Expr::Array(vec![])),

@@ -1,3 +1,4 @@
 import "test" as test;
 
 print(test.new_feature("abc"));
+print(test.equals.equals(10, 10));
