@@ -1,4 +1,8 @@
 #![feature(internal_output_capture)]
+#![feature(backtrace_frames)]
+
+use std::panic::{catch_unwind, AssertUnwindSafe};
+use colored::Colorize;
 
 mod ast;
 mod evaulator;
@@ -11,6 +15,8 @@ mod libraries;
 mod builtins;
 
 fn main() {
+    std::panic::set_hook(Box::new(|_| {}));
+
     let args = std::env::args().collect::<Vec<String>>();
 
     if args.len() < 2 {
@@ -28,21 +34,47 @@ fn main() {
 
     let action = &args[1];
 
-    match action.as_str() {
-        "run" => cli::run::run(),
-        "repl" => cli::repl::repl(),
-        "server" => cli::server::server(),
-        "login" => cli::login::login(),
-        "init" => cli::init::init(),
-        "publish" => cli::publish::publish(),
-        "install" => cli::install::install(),
-        "uninstall" => cli::uninstall::uninstall(),
-        "--version" => {
-            println!("Modu v1.3.0");
-        }
+    let result = catch_unwind(AssertUnwindSafe(|| {
+        match action.as_str() {
+            "run" => cli::run::run(),
+            "repl" => cli::repl::repl(),
+            "server" => cli::server::server(),
+            "login" => cli::login::login(),
+            "init" => cli::init::init(),
+            "publish" => cli::publish::publish(),
+            "install" => cli::install::install(),
+            "uninstall" => cli::uninstall::uninstall(),
+            "--version" => {
+                println!("Modu v1.3.0");
+            }
 
-        action => {
-            println!("Unknown command: {}", action);
+            action => {
+                println!("Unknown command: {}", action);
+            }
         }
+    }));
+
+    if let Err(panic) = result {
+        let msg = panic
+            .downcast_ref::<&str>()
+            .copied()
+            .or_else(|| panic.downcast_ref::<String>().map(String::as_str))
+            .unwrap_or("Unknown internal error");
+        
+        eprintln!("{}", "Internal compiler error".red().bold());
+        eprintln!("  ├─ {}", msg.yellow());
+        if cfg!(debug_assertions) {
+            let bt = std::backtrace::Backtrace::capture();
+            
+            if bt.frames().is_empty() {
+                eprintln!("  ├─ {}", "run with RUST_BACKTRACE=1 to see a backtrace".dimmed());
+            } else {
+                eprintln!("  ├─ Backtrace:");
+                for line in bt.frames().iter() {
+                    eprintln!("  │   {}", format!("{:?}", line).dimmed());
+                }
+            } 
+        }
+        eprintln!("  └─ {}", "Please report this issue at https://github.com/cyteon/modu/issues".dimmed());
     }
 }

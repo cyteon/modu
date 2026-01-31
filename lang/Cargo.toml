@@ -36,6 +36,7 @@ base16 = "0.2.1"
 md5 = "0.8.0"
 chumsky = "0.12.0"
 ariadne = "0.6.0"
+colored = "3.1.1"
 
 [dev-dependencies]
 assert_cmd = "2.1.2"
