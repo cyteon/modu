@@ -148,11 +148,14 @@ pub enum Token {
     #[token(">=")]
     GreaterThanOrEqual,
 
-    #[regex(r"[ \t\n\f]+", logos::skip)]
+    #[regex(r"[ \t\n\f\r]+", logos::skip)]
     Whitespace,
 
     #[regex(r"//[^\n]*", logos::skip, allow_greedy = true)]
     Comment,
+
+    #[regex(r"/\*([^*]|\*+[^*/])*\*+/", logos::skip, allow_greedy = true)]
+    MultiLineComment,
 }
 
 pub fn lex(input: &str) -> Result<Vec<(Token, Span)>, (LexingError, Span)> {

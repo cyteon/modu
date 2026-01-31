@@ -1,7 +1,7 @@
 use std::collections::HashMap;
 use ariadne::{Color, Label, Report, ReportKind, Source};
 use chumsky::prelude::*;
-use crate::{ast::{Expr, SpannedExpr}, evaulator, lexer::{Span, Token, lex}};
+use crate::{ast::{Expr, SpannedExpr}, eval, lexer::{Span, Token, lex}};
 
 enum Postfix {
     Property(String, Span),
@@ -426,7 +426,7 @@ pub fn parse(input: &str, filename: &str, context: &mut HashMap<String, Expr>) {
                     _ => {}
                 }
 
-                match evaulator::eval(&expr, context) {
+                match eval::eval(&expr, context) {
                     Ok(_) => {
                         
                     }

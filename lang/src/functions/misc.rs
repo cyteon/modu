@@ -21,10 +21,10 @@ pub fn input(args: Vec<Spanned<Expr>>) -> Result<InternalFunctionResponse, (Stri
         print!("{}", arg.node);
     }
     
-    io::stdout().flush().unwrap();
+    io::stdout().flush().map_err(|e| (format!("Failed to flush stdout: {}", e), args[0].span))?;
 
     let mut input = String::new();
-    io::stdin().read_line(&mut input).unwrap();
+    io::stdin().read_line(&mut input).map_err(|e| (format!("Failed to read input: {}", e), args[0].span))?;
 
     Ok(InternalFunctionResponse {
         return_value: Expr::String(input.trim_end().to_string()),

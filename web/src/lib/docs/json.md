@@ -6,7 +6,7 @@ The JSON library has 3 functions, **.new()**, **.to_string(object)**, and **.par
 import "json" as json; // Alternatively `as *;` then use new(), etc
 
 let object = json.new(); // Makes a new object
-let string = object.string() // Turns a object into a string
+let string = object.to_string(); // Turns a object into a string
 let new_object = json.parse(string); // Turns a valid JSON string into an object
 ```
 

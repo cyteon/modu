@@ -17,7 +17,7 @@ pub fn exec(args: Vec<Spanned<Expr>>) -> Result<InternalFunctionResponse, (Strin
     if args.len() != 1 {
         return Err((
             "exec takes exactly one argument".to_string(),
-            args[1].span,
+            chumsky::span::SimpleSpan::from(args[0].span.start..args[args.len() - 1].span.end),
         ));
     }
 
@@ -50,13 +50,21 @@ pub fn exec(args: Vec<Spanned<Expr>>) -> Result<InternalFunctionResponse, (Strin
         args[0].span,
     ))?;
 
-    let stdout = String::from_utf8_lossy(&output.stdout).to_string();
-    let stderr = String::from_utf8_lossy(&output.stderr).to_string();
+    if !output.status.success() {
+        return Err((
+            format!(
+                "Command exited with non-zero status: {}. stderr: {}",
+                output.status,
+                String::from_utf8_lossy(&output.stderr)
+            ),
+            args[0].span,
+        ));
+    }
 
-    let combined_output = format!("{}{}", stdout, stderr).trim_end().to_string();
+    let stdout = String::from_utf8_lossy(&output.stdout).to_string();
 
     Ok(InternalFunctionResponse {
-        return_value: Expr::String(combined_output),
+        return_value: Expr::String(stdout),
         replace_self: None,
     })
 }

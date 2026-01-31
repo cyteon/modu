@@ -31,5 +31,4 @@ print(parsed);
 
 parsed.delete("obj");
 print(parsed);
-print(parsed.get("obj"));
 print(parsed.has("obj"));

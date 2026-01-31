@@ -30,7 +30,7 @@ import "json" as json;
 let data = json.new();
 data.set("name", "modu");
 
-let result = http.post("https://httpbin.org/post", json.to_string(data));
+let result = http.post("https://httpbin.org/post", data.to_string());
 print("Status: ", result.status, " - ", result.status_text);
 print("\nHeaders: ", result.headers);
 print("\nBody:\n", result.body);
