@@ -1,5 +1,5 @@
 <script>
-    import { Home } from 'lucide-svelte';
+    import { Github, Home } from 'lucide-svelte';
     import { base } from '$app/paths';
 </script>
 
@@ -12,10 +12,17 @@
     <div class="mx-auto">
         <h1 class="mt-4 w-full font-bold text-7xl">Examples</h1>
 
-        <a href={base + "/"} class="mx-auto mt-5 bg-ctp-blue text-ctp-crust text-xl p-2 rounded-md text-center w-fit flex">
-            <Home size={20} class="my-auto" />
-            <span class="ml-1 my-auto">Return Home</span>
-        </a>
+        <div class="flex">
+            <a href={base + "/"} class="mx-auto mt-5 bg-ctp-blue text-ctp-crust text-xl p-2 rounded-md text-center w-fit flex">
+                <Home size={20} class="my-auto" />
+                <span class="ml-1 my-auto">Return Home</span>
+            </a>
+
+            <a href="https://github.com/cyteon/modu/tree/main/lang/examples" class="mx-auto mt-5 bg-white text-ctp-crust text-xl p-2 rounded-md text-center w-fit flex">
+                <Github size={20} class="my-auto" />
+                <span class="ml-1 my-auto">All Examples</span>
+            </a>
+        </div>
     </div>
 
     <div class="grid grid-cols-1 md:grid-cols-3 gap-4 mt-4">
