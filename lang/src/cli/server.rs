@@ -1,4 +1,4 @@
-use gag::{BufferRedirect, Redirect};
+use gag::BufferRedirect;
 use rouille::router;
 use std::io::Read;
 use crate::parser::parse;
