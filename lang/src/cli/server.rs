@@ -1,7 +1,7 @@
+use gag::BufferRedirect;
 use rouille::router;
-use crate::utils;
+use std::io::Read;
 use crate::parser::parse;
-use std::sync::Arc;
 
 pub fn server() {
     let args = std::env::args().collect::<Vec<String>>();
@@ -49,25 +49,20 @@ pub fn server() {
                     };
                 }
 
-                let context = &mut utils::create_context();
+                let context = &mut crate::utils::create_context();
 
-                std::io::set_output_capture(Some(Default::default()));
+                let mut stdout = BufferRedirect::stdout().unwrap();
+                let mut stderr = BufferRedirect::stderr().unwrap();
 
-                parse(&text, context).unwrap_or_else(|e| {
-                    println!("\n⚠️ {}", e.0);
-                    println!("Traceback (most recent call last):");
-                    println!("    File \"<stdin>\", line {}", e.1);
-                    println!("Believe this is a bug? Report it: https://github.com/cyteon/modu/issues/new");
-                });
+                parse(&text, "<server>", context);
 
-                let captured = String::from_utf8(
-                    Arc::try_unwrap(
-                        std::io::set_output_capture(None).unwrap()
-                    )
-                        .unwrap()
-                        .into_inner()
-                        .unwrap()
-                ).unwrap();
+                let mut out = String::new();
+                let mut err = String::new();
+
+                stdout.read_to_string(&mut out).unwrap();
+                stderr.read_to_string(&mut err).unwrap();
+
+                let captured = format!("{}{}", out, err);
 
                 rouille::Response {
                     status_code: 200,

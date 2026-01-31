@@ -30,8 +30,8 @@ if c == "potato" {
     print("c == 'potato'");
 }
 
-let h;
-if h {
+let h = null;
+if null {
     print("oh nyo");
 }
 

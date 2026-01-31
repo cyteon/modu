@@ -13,7 +13,7 @@ pub extern "C" fn add(
         let a = (*argv.offset(0 as isize)).value.integer;
         let b = (*argv.offset(1 as isize)).value.integer;
 
-        FFIValue::integer(a + b)
+        FFIValue::integer((a + b) as i64)
     }
 }
 

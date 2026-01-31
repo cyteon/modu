@@ -3,6 +3,11 @@
   <img alt="Crates.io Version" src="https://img.shields.io/crates/v/modu?style=for-the-badge">
 </a>
 
+## Install
+```sh
+cargo +nightly install modu
+```
+
 ## About
 
 Modu is a simple and fast interpreted programming language. \

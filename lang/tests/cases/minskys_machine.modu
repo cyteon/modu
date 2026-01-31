@@ -1,0 +1,42 @@
+let A = [];
+let B = [];
+
+let state = 0;
+
+loop {
+    if state == 0 {
+        A.push(1);
+        print("INC A");
+        A.push(1);
+        print("INC A");
+        A.push(1);
+        print("INC A");
+
+        B.push(1);
+        print("INC B");
+        B.push(1);
+        print("INC B");
+
+        let state = 1;
+    }
+
+    if state == 1 {
+        if B.len() == 0 {
+            let state = 2;
+        } else {
+            let x = B.pop();
+            print("DEC B");
+            A.push(1);
+            print("INC A");
+            let state = 1;
+        }
+    }
+
+    if state == 2 {
+        print("Final counters:");
+        print("A length = ", A.len());
+        print("B length = ", B.len());
+        print("Halting...");
+        break;
+    }
+}

@@ -30,7 +30,7 @@ import "json" as json;
 let data = json.new();
 data.set("name", "modu");
 
-let result = http.post("https://httpbin.org/post", json.stringify(data));
+let result = http.post("https://httpbin.org/post", data.to_string());
 print("Status: ", result.status, " - ", result.status_text);
 print("\nHeaders: ", result.headers);
 print("\nBody:\n", result.body);
@@ -44,7 +44,7 @@ import "json" as json;
 let data = json.new();
 data.set("name", "modu");
 
-let result = http.put("https://httpbin.org/put", json.stringify(data));
+let result = http.put("https://httpbin.org/put", data.to_string());
 print("Status: ", result.status, " - ", result.status_text);
 print("\nHeaders: ", result.headers);
 print("\nBody:\n", result.body);
@@ -58,7 +58,7 @@ import "json" as json;
 let data = json.new();
 data.set("name", "modu");
 
-let result = http.patch("https://httpbin.org/patch", json.stringify(data));
+let result = http.patch("https://httpbin.org/patch", data.to_string());
 print("Status: ", result.status, " - ", result.status_text);
 print("\nHeaders: ", result.headers);
 print("\nBody:\n", result.body);

@@ -12,7 +12,7 @@ loop {
     print(i);
 }
 
-for n = 1..5 {
+for n = 1..=5 {
     print(n);
 }
 
@@ -24,14 +24,14 @@ for i = 1..100 {
     print(i);
 }
 
-let end = 0
+let end = 0;
 
 let start = 1;
-for i = start..5 {
+for i = start..=5 {
     print(i);
     let end = i;
 }
 
-for n = 1..end {
+for n = 1..=end {
     print(n);
 }

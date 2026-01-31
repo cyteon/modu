@@ -1,6 +1,6 @@
 import "encoding" as encoding;
 
-print(encoding.base64_encode("test"));
-print(encoding.base16_encode("test"));
-print(encoding.base64_decode("dGVzdA=="));
-print(encoding.base16_decode("74657374"));
+print(encoding.encode_base64("test"));
+print(encoding.encode_base16("test"));
+print(encoding.decode_base64("dGVzdA=="));
+print(encoding.decode_base16("74657374"));

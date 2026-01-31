@@ -1,3 +1,0 @@
-import "os" as os;
-
-print(os.exec("mkdir test"));

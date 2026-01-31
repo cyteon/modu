@@ -1,12 +1,11 @@
-use crate::utils;
-use crate::parser::parse;
 
 use std::io::Write;
+use crate::parser::parse;
 
 pub fn repl() {
     println!("Modu REPL");
 
-    let context = &mut utils::create_context();
+    let context = &mut crate::utils::create_context();
     
     let mut history: Vec<String> = Vec::new();
     let mut open_functions = 0;
@@ -37,10 +36,7 @@ pub fn repl() {
         input.push_str(&this_input);
 
         if open_functions == 0 {
-            parse(&input, context).unwrap_or_else(|e| {
-                println!("⚠️ {}", e.0);
-                println!("Believe this is a bug? Report it: https://github.com/cyteon/modu/issues/new");
-            });
+            parse(&input, "<repl>", context);
         }
     }
 }

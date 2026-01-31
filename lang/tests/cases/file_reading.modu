@@ -1,3 +1,0 @@
-import file;
-
-print(file.read("tests/cases/type_conversion.expected"));

@@ -1,10 +1,10 @@
 [package]
 name = "modu"
-version = "1.3.0"
+version = "2.0.0"
 edition = "2024"
 repository = "https://github.com/cyteon/modu"
 homepage = "https://modu.cyteon.dev"
-description = "A fast and simple interpreted language"
+description = "A fast and simple turning-complete interpreted language"
 documentation = "https://modu.cyteon.dev/docs/quickstart"
 license = "MIT"
 authors = ["cyteon"]
@@ -12,10 +12,9 @@ keywords = ["programming-language", "cli", "interpreter", "language"]
 exclude = ["/examples", "/tmp", "/tests"]
 
 [dependencies]
-bat = "0.26.1"
 chrono = "0.4.39"
 libloading = "0.9.0"
-logos = "0.16.0"
+logos = "0.16.1"
 rand = "0.8.5"
 reqwest = { version = "0.13.1", features = ["blocking", "json"] }
 rouille = "3.6.2"
@@ -23,9 +22,9 @@ serde_json = "1.0.134"
 toml = "0.9.11"
 zip = "7.2.0"
 openssl = { version = "0.10", features = ["vendored"] }
-uuid = { version = "1.13.1", features = ["v4", "v7"]}
+uuid = { version = "1.20.0", features = ["v4", "v7"]}
 serde = { version = "1.0.228", features = ["derive"] }
-modu_ffi = "1.0.1"
+modu_ffi = "1.1.2"
 base64 = "0.22.1"
 sha2 = "0.10.9"
 blake3 = "1.8.3"
@@ -34,6 +33,10 @@ argon2 = "0.5.3"
 scrypt = "0.11.0"
 base16 = "0.2.1"
 md5 = "0.8.0"
+chumsky = "0.12.0"
+ariadne = "0.6.0"
+colored = "3.1.1"
+gag = "1.0.0"
 
 [dev-dependencies]
 assert_cmd = "2.1.2"

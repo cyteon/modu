@@ -15,7 +15,7 @@ typedef enum FFIType {
 
 typedef union FFIValueUnion {
   char *string;
-  int64_t integer;
+  int integer;
   double float;
   bool boolean;
 } FFIValueUnion;
@@ -24,5 +24,3 @@ typedef struct FFIValue {
   enum FFIType ty;
   union FFIValueUnion value;
 } FFIValue;
-
-void ffi_free_string(char *ptr);

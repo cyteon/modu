@@ -1,6 +1,6 @@
 # Basics
 
-**Note: Semicolons are not required!**
+**Note: Semicolons are required!**
 
 ## Variables
 
@@ -58,6 +58,8 @@ If the condition given returns true, the code inside of the brackets is ran.
 ```rust
 if 1 == 1 {
     print("yes");
+} else {
+    print("we are cooked");
 }
 
 if 1 != 2 {

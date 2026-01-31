@@ -5,10 +5,10 @@ print("Array: ", array);
 
 print("First element: ", array[0]);
 
-let length = len(array);
+let length = array.len();
 print("Array length: ", length);
 
-let b = length - 1;
+let b = length;
 for i = 0..b {
     print("Element ", i, ": ", array[i]);
 }

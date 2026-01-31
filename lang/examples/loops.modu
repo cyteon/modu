@@ -23,7 +23,6 @@ for n = 1..5 {
 
 print("\nfor loop w/ break: (should print 1-5)\n");
 
-
 for i = 1..100 {
     if i > 5 {
         break;

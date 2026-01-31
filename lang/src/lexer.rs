@@ -1,65 +1,90 @@
 use logos::Logos;
+use chumsky::span::SimpleSpan;
+
+pub type Span = SimpleSpan;
 
 #[derive(Default, Debug, PartialEq, Clone)]
 pub enum LexingError {
     #[default]
     UnexpectedToken,
-    InvalidInteger(String)
+    InvalidInteger(String),
+    InvalidFloat(String),
 }
 
 impl From<std::num::ParseIntError> for LexingError {
     fn from(err: std::num::ParseIntError) -> Self {
-        use std::num::IntErrorKind::*;
+        use std::num::IntErrorKind;
 
         match err.kind() {
-            PosOverflow | NegOverflow => LexingError::InvalidInteger("Integer overflow".to_string()),
-            _ => LexingError::InvalidInteger("Other error".to_string()),
+            IntErrorKind::PosOverflow | IntErrorKind::NegOverflow => {
+                LexingError::InvalidInteger("Integer literal out of range".to_string())
+            }
+            _ => LexingError::InvalidInteger("Invalid integer literal".to_string()),
         }
     }
 }
 
 impl From<std::num::ParseFloatError> for LexingError {
     fn from(_err: std::num::ParseFloatError) -> Self {
-        LexingError::InvalidInteger("Float parsing error".to_string())
+        LexingError::InvalidFloat("Invalid float literal".to_string())
     }
 }
 
-#[derive(Logos, Debug, PartialEq, Clone)]
+#[derive(Logos, Debug, Clone, PartialEq)]
 #[logos(error = LexingError)]
-#[logos(skip r"[ \t\n\f\r]+")]
 pub enum Token {
-    #[regex("//[^\n]*|/\\*([^*]|\\*[^/])*\\*/", allow_greedy = true)]
-    Comment,
-
-    #[token("/*")]
-    MultiLineCommentStart,
-
-    #[token("*/")]
-    MultiLineCommentEnd,
-
     #[token("let")]
     Let,
 
-    #[token("fn")]
-    Fn,
-
-    #[token("import")]
-    Import,
-
-    #[token("return")]
-    Return,
-
-    #[token("as")]
-    As,
-
-    #[token(",")]
-    Comma,
+    #[token("=")]
+    Assign,
 
     #[token(";")]
     Semicolon,
 
+    #[regex("[a-zA-Z_][a-zA-Z0-9_]*", |lex| lex.slice().to_string())]
+    Identifier(String),
+
+    #[regex("[0-9]+", |lex| lex.slice().parse::<i64>())]
+    Int(i64),
+
+    #[regex(r"[0-9]+\.[0-9]+", |lex| lex.slice().parse::<f64>())]
+    Float(f64),
+
+    #[regex(r#""([^"\\]|\\.)*""#, |lex| {
+        lex.slice()[1..lex.slice().len()-1].to_string()
+    })]
+    String(String),
+
+    #[regex("true|false", |lex| lex.slice() == "true")]
+    Bool(bool),
+
+    #[token("null")]
+    Null,
+
+    #[token("return")]
+    Return,
+
+    #[token("break")]
+    Break,
+
+    #[token("continue")]
+    Continue,
+
+    #[token("fn")]
+    Function,
+
+    #[token("import")]
+    Import,
+
+    #[token("as")]
+    As,
+
     #[token("if")]
     If,
+
+    #[token("else")]
+    Else,
 
     #[token("loop")]
     Loop,
@@ -67,39 +92,20 @@ pub enum Token {
     #[token("for")]
     For,
 
-    #[token("break")]
-    Break,
+    #[token(",")]
+    Comma,
 
-    #[regex("[a-zA-Z_][a-zA-Z0-9_]*", |lex| {
-        lex.slice().to_string()
-    })]
-    Identifer(String),
+    #[token(".")]
+    Dot,
 
-    #[regex("[0-9](?:_?[0-9])*", |lex| {
-        lex.slice().replace("_", "").parse::<i64>()
-    })]
-    Integer(i64),
+    #[token("*")]
+    Star,
+    
+    #[token("+")]
+    Plus,
 
-    #[regex("[0-9]+\\.[0-9]+", |lex| {
-        lex.slice().parse::<f64>()
-    })]
-    Float(f64),
-
-    #[regex(r#""([^"\\]|\\.)*"|'([^'\\]|\\.)*'"#, |lex| {
-        let slice = lex.slice();
-        let len = slice.len();
-        slice[1..len-1].to_string()
-    })]
-    String(String),
-
-    #[regex("true|false", |lex| {
-        match lex.slice() {
-            "true" => true,
-            "false" => false,
-            _ => unreachable!(),
-        }
-    })]
-    Boolean(bool),
+    #[token("-")]
+    Minus,
 
     #[token("(")]
     LParen,
@@ -108,128 +114,74 @@ pub enum Token {
     RParen,
 
     #[token("{")]
-    LBracket,
+    LBrace,
 
     #[token("}")]
-    RBracket,
+    RBrace,
 
     #[token("[")]
-    LSquareBracket,
+    LBracket,
 
     #[token("]")]
-    RSquareBracket,
-
-    #[token(".")]
-    Dot,
+    RBracket,
 
     #[token("..")]
     Range,
 
-    #[token("+")]
-    Plus,
-
-    #[token("-")]
-    Minus,
-
-    #[token("=")]
-    Assign,
+    #[token("..=")]
+    InclusiveRange,
 
     #[token("==")]
-    IsEqual,
+    DoubleEqual,
 
     #[token("!=")]
-    IsUnequal,
+    NotEqual,
 
     #[token("<")]
     LessThan,
 
-    #[token(">")]
-    GreaterThan,
-
     #[token("<=")]
     LessThanOrEqual,
+
+    #[token(">")]
+    GreaterThan,
 
     #[token(">=")]
     GreaterThanOrEqual,
 
-    #[token("*")]
-    Star,
+    #[regex(r"[ \t\n\f\r]+", logos::skip)]
+    Whitespace,
+
+    #[regex(r"//[^\n]*", logos::skip, allow_greedy = true)]
+    Comment,
+
+    #[regex(r"/\*([^*]|\*+[^*/])*\*+/", logos::skip, allow_greedy = true)]
+    MultiLineComment,
 }
 
-#[cfg(test)]
-mod tests {
-    use super::*;
+pub fn lex(input: &str) -> Result<Vec<(Token, Span)>, (LexingError, Span)> {
+    let mut lexer = Token::lexer(input);
+    let mut tokens: Vec<(Token, Span)> = Vec::new();
 
-    #[test]
-    fn string_1() {
-        let mut lexer = Token::lexer("\"Hello, world!\"");
-        assert_eq!(lexer.next(), Some(Ok(Token::String("Hello, world!".to_string()))));
+    while let Some(token) = lexer.next() {
+        match token {
+            Err(e) => return Err((e, SimpleSpan::from(lexer.span()))),
+
+            Ok(v) => {
+                tokens.push((v, SimpleSpan::from(lexer.span())));
+            }
+        }
     }
 
-    #[test]
-    fn string_2() {
-        let mut lexer = Token::lexer("'Hello, world!'");
-        assert_eq!(lexer.next(), Some(Ok(Token::String("Hello, world!".to_string()))));
-    }
+    Ok(tokens)
+}
 
-    #[test]
-    fn string_error() {
-        let mut lexer = Token::lexer("\"Hello, world!'");
-        assert_eq!(lexer.next(), Some(Err(LexingError::UnexpectedToken)));
-    }
-
-    #[test]
-    fn assign_str() {
-        let mut lexer = Token::lexer("let x = \"test\"");
-        assert_eq!(lexer.next(), Some(Ok(Token::Let)));
-        assert_eq!(lexer.next(), Some(Ok(Token::Identifer("x".to_string()))));
-        assert_eq!(lexer.next(), Some(Ok(Token::Assign)));
-        assert_eq!(lexer.next(), Some(Ok(Token::String("test".to_string()))));
-    }
-
-    #[test]
-    fn assign_number() {
-        let mut lexer = Token::lexer("let x = 10");
-        assert_eq!(lexer.next(), Some(Ok(Token::Let)));
-        assert_eq!(lexer.next(), Some(Ok(Token::Identifer("x".to_string()))));
-        assert_eq!(lexer.next(), Some(Ok(Token::Assign)));
-        assert_eq!(lexer.next(), Some(Ok(Token::Integer(10))));
-    }
-
-    #[test]
-    fn assign_boolean() {
-        let mut lexer = Token::lexer("let x = true");
-        assert_eq!(lexer.next(), Some(Ok(Token::Let)));
-        assert_eq!(lexer.next(), Some(Ok(Token::Identifer("x".to_string()))));
-        assert_eq!(lexer.next(), Some(Ok(Token::Assign)));
-        assert_eq!(lexer.next(), Some(Ok(Token::Boolean(true))));
-    }
-
-    #[test]
-    fn expr() {
-        let mut lexer = Token::lexer("print(\"Hello, world!\")");
-
-        assert_eq!(lexer.next(), Some(Ok(Token::Identifer("print".to_string()))));
-        assert_eq!(lexer.next(), Some(Ok(Token::LParen)));
-        assert_eq!(lexer.next(), Some(Ok(Token::String("Hello, world!".to_string()))));
-        assert_eq!(lexer.next(), Some(Ok(Token::RParen)));
-    }
-
-    #[test]
-    fn comments() {
-        let mut lexer = Token::lexer("// This is a comment\n/* This is a \n multi-line comment */");
-
-        assert_eq!(lexer.next(), Some(Ok(Token::Comment)));
-        assert_eq!(lexer.next(), Some(Ok(Token::Comment)));
-    }
-
-    #[test]
-    fn int_overflow() {
-        let mut lexer = Token::lexer("let x = 9223372036854775808");
-
-        assert_eq!(lexer.next(), Some(Ok(Token::Let)));
-        assert_eq!(lexer.next(), Some(Ok(Token::Identifer("x".to_string()))));
-        assert_eq!(lexer.next(), Some(Ok(Token::Assign)));
-        assert_eq!(lexer.next(), Some(Err(LexingError::InvalidInteger("Integer overflow".to_string()))));
+impl std::fmt::Display for LexingError {
+    fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
+        match self {
+            LexingError::UnexpectedToken => write!(f, "Unexpected token"),
+            LexingError::InvalidInteger(msg) => write!(f, "Invalid integer: {}", msg),
+            LexingError::InvalidFloat(msg) => write!(f, "Invalid float: {}", msg),
+        }
     }
 }

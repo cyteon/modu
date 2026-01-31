@@ -1,0 +1,13 @@
+INC A
+INC A
+INC A
+INC B
+INC B
+DEC B
+INC A
+DEC B
+INC A
+Final counters:
+A length = 5
+B length = 0
+Halting...

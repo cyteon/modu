@@ -36,11 +36,6 @@ fn type_conversion() {
 }
 
 #[test]
-fn file_reading() {
-    run_test("file_reading");
-}
-
-#[test]
 fn http_requests() {
     run_test("http");
 }
@@ -58,4 +53,9 @@ fn encoding() {
 #[test]
 fn crypto() {
     run_test("crypto");
+}
+
+#[test]
+fn minskys_machine() {
+    run_test("minskys_machine");
 }

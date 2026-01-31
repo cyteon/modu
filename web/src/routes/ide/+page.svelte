@@ -86,6 +86,8 @@ yap("Hello, World!");
     let output = "Run the code to see the output";
     let runClicked = false;
 
+    const ansiRegex = /\x1b\[[0-9;]*m/g;
+
     async function run() {
         try {
             runClicked = true;
@@ -99,7 +101,7 @@ yap("Hello, World!");
                 body: view.state.doc.toString(),
             });
 
-            output = (await res.text()).trim();
+            output = (await res.text()).trim().replace(ansiRegex, "");
 
             if (output == "") {
                 output = "No output";

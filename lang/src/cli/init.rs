@@ -55,14 +55,20 @@ pub fn init() {
         return;
     }
 
+    print!("Enter description (optional): ");
+    std::io::stdout().flush().unwrap();
+    let mut package_description = String::new();
+    std::io::stdin().read_line(&mut package_description).unwrap();
+
     print!("Is this a library? (y/N) ");
     std::io::stdout().flush().unwrap();
     std::io::stdin().read_line(&mut is_library).unwrap();
 
     let package_name = package_name.trim();
     let package_version = package_version.trim();
+    let package_description = package_description.trim();
 
-    file.write_all(format!("[package]\nname = \"{}\"\nversion = \"{}\"", package_name, package_version).as_bytes()).unwrap();
+    file.write_all(format!("[package]\nname = \"{}\"\nversion = \"{}\"\ndescription = \"{}\"\n", package_name, package_version, package_description).as_bytes()).unwrap();
 
     let mut file_name = "main.modu";
 
@@ -78,8 +84,8 @@ pub fn init() {
         .unwrap();
 
     if is_library.trim() == "y" {
-        main_file.write_all(b"fn hello() {\n    print(\"Hello, world!\")\n}").unwrap();
+        main_file.write_all(b"fn hello() {\n    print(\"Hello, world!\");\n}").unwrap();
     } else {
-        main_file.write_all("print(\"Hello, world!\")".as_bytes()).unwrap();
+        main_file.write_all("print(\"Hello, world!\");".as_bytes()).unwrap();
     }
 }

@@ -1,827 +1,815 @@
-use crate::ast::AST;
-
-use std::{collections::HashMap, path::PathBuf};
-use crate::utils;
-use crate::packages::get_package;
-
-static DISABLED_ON_SERVER: [&str; 4] = ["file", "os", "ffi", "http"];
-
-pub fn eval(expr: AST, context: &mut HashMap<String, AST>) -> Result<AST, String> {
-    match expr {
-        AST::Call { name, args, line: _ } => {
-            match name.as_str() {
-                _ => {
-                    match context.get(&name) {
-                        Some(value) => {
-                            match value {
-                                AST::Function { name: _, args: f_args, body, line: _ } => {
-                                    if args.len() == f_args.len() || f_args.last().unwrap() == "__args__" {
-                                        let mut new_context = context.clone();
-
-                                        for (i, arg) in f_args.iter().enumerate() {
-                                            new_context.insert(arg.clone(), eval(args[i].clone(), &mut new_context.clone())?);
-                                        }
-
-                                        let mut depth = 0;
-
-                                        for expr in body {
-                                            if depth > 100 {
-                                                return Err("Maximum recursion depth exceeded".to_string());
-                                            }
-
-                                            if let AST::Return(value) = expr {
-                                                return eval(*value.clone(), &mut new_context);
-                                            }
-
-                                            depth += 1;
-
-                                            let ast: AST = eval(expr.clone(), &mut new_context)?;
-
-                                            if let AST::Return(value) = ast {
-                                                return Ok(*value);
-                                            }
-                                        }
-                                    } else {                                        
-                                        return Err(format!("{} takes {} argument(s)", name, f_args.len()));
-                                    }
-                                }
-
-                                AST::InternalFunction { name: _, args: f_args, call_fn } => {
-                                    if args.len() == f_args.len() || f_args.last().unwrap() == "__args__" {
-                                        return Ok(call_fn(args, context)?.0);
-                                    } else {
-                                        return Err(format!("{} takes {} argument(s)", name, f_args.len()));
-                                    }
-                                }
-
-                                _ => {
-                                    return Err(format!("{} is not a function", name));
-                                }
-                            }
-                        }
-
-                        None => {
-                            return Err(format!("Function {} not found", name));
-                        }
-                    }
-                }
-            }
-        }
-
-        AST::LetDeclaration { name, value, line: _ } => {
-            if utils::is_reserved(name.as_ref().unwrap_or(&"".to_string())) {
-                return Err(format!("{} is a reserved keyword", name.as_ref().unwrap()));
-            }
-
-            if let Some(name) = name {
-                match *value {
-                    AST::Identifer(i_name) => {
-                        match context.get(&i_name) {
-                            Some(value) => {
-                                let val = eval(value.clone(), context)?;
-                                context.insert(name, val);
-                            }
-
-                            None => {
-                                return Err(format!("Variable {} not found", i_name));
-                            }
-                        }
-                    }
-
-                    _ => {
-                        let val = eval(*value, context)?;
-                        context.insert(name, val);
-                    }
-                }
-            }
-        }
-
-        AST::Function { name, args, body, line: _ } => {
-            context.insert(name.clone(), AST::Function { name, args, body, line: 0 });
-        }
-
-        AST::Semicolon => {
-            return Ok(AST::Null);
-        }
-
-        AST::Import { file, as_, line } => {
-            let file: String = match file {
-                Some(f) => f.replace("\"", ""),
-                None => {
-                    if as_.is_some() {
-                        // parse the file to be the same as what u are trying to import as
-                        // so u can do 'import math' instead of 'import "math" as math'
-                        as_.clone().unwrap()
-                    } else {
-                        return Err("Import file name cannot be null".to_string());
-                    }
-                }
-            };
-
-            let mut path: PathBuf = std::env::current_dir().unwrap();
-
-            let args = std::env::args().collect::<Vec<String>>();
-            if args.len() > 2 && args[1] == "run" {
-                let run_file_path = PathBuf::from(&args[2]);
-                let run_file_parent = run_file_path.parent().unwrap();
-                path.push(run_file_parent);
-            }
-
-            if context.contains_key("MODU_PACKAGE_NAME") {
-                path.push(".modu");
-                path.push("packages");
-                path.push(context.get("MODU_PACKAGE_NAME").unwrap().to_string().replace("\"", ""));
-                path.push(&file);
-            } else {
-                path.push(&file);
-            }
-
-            if file.ends_with(".modu") {
-                match std::fs::read_to_string(&path) {
-                    Ok(file) => {
-                        let mut new_context = context.clone();
-    
-                        match crate::parser::parse(&file, &mut new_context) {
-                            Ok(_) => {
-                                let insert_as = as_.unwrap();
-
-                                if insert_as == "*" {
-                                    for (name, value) in new_context {
-                                        context.insert(name, value);
-                                    }
-    
-                                    return Ok(AST::Null);
-                                } else {
-                                    context.insert(insert_as, AST::Object { properties: new_context, line });
-                                }
-                            }
-    
-                            Err(e) => {
-                                return Err(e.0);
-                            }
-                        }
-                    }
-    
-                    Err(e) => {    
-                        return Err(e.to_string());
-                    }
-                }
-            } else {
-                let args = std::env::args().collect::<Vec<String>>();
-
-                if args.len() > 1 && args[1] == "server" {
-                    if DISABLED_ON_SERVER.contains(&file.as_str()) {
-                        return Err(format!("{} is disabled on the server", file));
-                    }
-                }
-
-                let package = get_package(&file);
-
-                if let Some(package) = package {
-                    if let AST::Object { properties, line } = package {
-                        let insert_as = as_.unwrap();
-
-                        if insert_as == "*" {
-                            for (name, value) in properties {
-                                context.insert(name, value);
-                            }
-                        } else {
-                            context.insert(insert_as, AST::Object { properties, line });
-                        }
-                    }
-                } else {
-                    if std::fs::exists(format!(".modu/packages/{}", file)).unwrap() {
-                        let mut new_context = context.clone();
-                        new_context.insert("MODU_PACKAGE_NAME".to_string(), AST::String(file.clone()));
-
-                        let content = std::fs::read_to_string(format!(".modu/packages/{}/lib.modu", file)).unwrap();
-
-                        match crate::parser::parse(&content, &mut new_context) {
-                            Ok(_) => {
-                                let insert_as = as_.unwrap();
-
-                                if insert_as == "*" {
-                                    for (name, value) in new_context {
-                                        context.insert(name, value);
-                                    }
-
-                                    return Ok(AST::Null);
-                                } else {
-                                    context.insert(insert_as, AST::Object { properties: new_context, line });
-                                }
-                            }
-
-                            _ => {
-                                return Err(format!("Failed to parse package {}", file));
-                            }
-                        }
-
-                        context.remove("MODU_PACKAGE_NAME");
-                    } else {
-                        return Err(format!("Package {} not found", file));
-                    }
-                }
-            }
-        }
-
-        AST::PropertyCall { object, property, args, line: _ } => {
-            match object.clone() {
-                Some(name) => {
-                    match context.get(&name) {
-                        Some(value) => {
-                            match value {
-                                AST::Object { properties, line: _ } => {
-                                    match properties.get(property.as_ref().unwrap()) {
-                                        Some(value) => {
-                                            match value {
-                                                AST::Function { name, args: f_args, body, line: _ } => {
-                                                    if args.len() == f_args.len() || f_args.last().unwrap() == "__args__" {
-                                                        let mut new_context = context.clone();
-
-                                                        for (i, arg) in f_args.iter().enumerate() {
-                                                            new_context.insert(arg.clone(), eval(args[i].clone(), &mut new_context.clone())?);
-                                                        }
-
-                                                        new_context.remove(name);
-                                                        
-                                                        for prop in properties {
-                                                            new_context.insert(prop.0.clone(), prop.1.clone());
-                                                        }
-
-                                                        for expr in body {
-                                                            if let AST::Return(value) = expr {
-                                                                return eval(*value.clone(), &mut new_context);
-                                                            }
-
-                                                            let ast = eval(expr.clone(), &mut new_context)?;
-
-                                                            if let AST::Return(value) = ast {
-                                                                return Ok(*value);
-                                                            }
-                                                        }
-                                                    } else {
-                                                        return Err(format!("{} takes {} argument(s)", name, f_args.len()));
-                                                    }
-                                                }
-
-                                                AST::InternalFunction { name, args: f_args, call_fn } => {
-                                                    if args.len() == f_args.len() || f_args.last().unwrap() == "__args__" {
-                                                        return Ok(call_fn(args, context)?.0);
-                                                    } else if f_args[0] == "self" && args.len() == f_args.len() - 1 || f_args.last().unwrap() == "__args__" {
-                                                            let mut new_args = vec![AST::Object { properties: properties.clone(), line: 0 }];
-
-                                                            for arg in args {
-                                                                new_args.push(arg);
-                                                            }
-
-                                                            let result = call_fn(new_args, context)?;
-
-                                                            match result.1.clone() {
-                                                                AST::Object { properties, line: _ } => {
-                                                                    context.insert(object.unwrap(), AST::Object { properties, line: 0 });
-                                                                }
-
-                                                                _ => {}
-                                                            }
-
-                                                            return Ok(result.0);
-                                                    } else if f_args[0] == "self" {
-                                                        return Err(format!("{} takes {} argument(s)", name, f_args.len() - 1));
-                                                    } else {
-                                                        return Err(format!("{} takes {} argument(s)", name, f_args.len()));
-                                                    }
-                                                }
-
-                                                _ => {
-                                                    return Err(format!("{} on object {} is not a function", property.as_ref().unwrap(), name));
-                                                }
-                                            }
-                                        }
-
-                                        None => {
-                                            return Err(format!("Property {} not found in object {}", property.as_ref().unwrap(), name));
-                                        }
-                                    }
-                                }
-
-                                AST::FFILibrary { path: _, lib } => {
-                                    let result = crate::packages::ffi::execute_ffi_call(lib.clone(), property.as_ref().unwrap(), args, context)?;
-
-                                    return Ok(result);
-                                }
-
-                                AST::Array(elements) => {
-                                    let result = crate::functions::array::handle_function(
-                                        elements, 
-                                        property.as_ref().unwrap().clone(),
-                                        args,
-                                    )?;
-
-                                    if let AST::Null = result.1 {
-                                        
-                                    } else {
-                                        context.insert(object.unwrap(), result.1);
-                                    }
-
-                                    return Ok(result.0);
-                                }
-
-                                _ => {
-                                    return Err(format!("{} is not an object", name));
-                                }
-                            }
-                        }
-
-                        None => {
-                            return Err(format!("Object {} not found", name));
-                        }
-                    }
-                }
-
-                None => {
-                    return Err("Object appears to be null".to_string());
-                }
-            }
-        }
-
-        AST::Break => {
-            return Ok(AST::Break);
-        }
-
-        AST::Loop { body, line: _ } => {
-            'outer: loop {
-                for expr in &body {
-                    let result = eval(expr.clone(), context)?;
-
-                    if let AST::Break = result {
-                        break 'outer;
-                    }
-                }
-            }
-        }
-
-        AST::ForLoop { start, end, index_name, body, line: _ } => {
-            let start_val = match eval(*start, context)? {
-                AST::Integer(i) => i,
-                v => {
-                    return Err(format!("For loop start value must be an integer, got {:?}", v));
-                }
-            };
-
-            let end_val = match eval(*end, context)? {
-                AST::Integer(i) => i,
-                v => {
-                    return Err(format!("For loop end value must be an integer, got {:?}", v));
-                }
-            };
-
-            'outer: for i in start_val..=end_val {
-                context.insert(index_name.clone(), AST::Integer(i));
-
-                for expr in &body {
-                    let result = eval(expr.clone(), context)?;
-
-                    if let AST::Break = result {
-                        break 'outer;
-                    }
-                }
-            }
-
-            context.remove(&index_name);
-        }
-
-        AST::IsEqual(left, right) => {
-            match (eval(*left, context)?, eval(*right, context)?) {
-                (AST::Integer(l), AST::Integer(r)) => {
-                    return Ok(AST::Boolean(l == r));
-                }
-
-                (AST::Float(l), AST::Float(r)) => {
-                    return Ok(AST::Boolean(l == r));
-                }
-
-                (AST::String(l), AST::String(r)) => {
-                    return Ok(AST::Boolean(l == r));
-                }
-
-                (AST::Boolean(l), AST::Boolean(r)) => {
-                    return Ok(AST::Boolean(l == r));
-                }
-
-                _ => {
-                    return Ok(AST::Boolean(false));
-                }
-            }
-        }
-
-        AST::IsUnequal(left, right) => {
-            match (eval(*left, context)?, eval(*right, context)?) {
-                (AST::Integer(l), AST::Integer(r)) => {
-                    return Ok(AST::Boolean(l != r));
-                }
-
-                (AST::Float(l), AST::Float(r)) => {
-                    return Ok(AST::Boolean(l != r));
-                }
-
-                (AST::String(l), AST::String(r)) => {
-                    return Ok(AST::Boolean(l != r));
-                }
-
-                (AST::Boolean(l), AST::Boolean(r)) => {
-                    return Ok(AST::Boolean(l != r));
-                }
-
-                _ => {
-                    return Ok(AST::Boolean(true));
-                }
-            }
-        }
-
-        AST::LessThan( left, right ) => {
-            match (eval(*left, context)?, eval(*right, context)?) {
-                (AST::Integer(l), AST::Integer(r)) => {
-                    return Ok(AST::Boolean(l < r));
-                }
-
-                (AST::Float(l), AST::Float(r)) => {
-                    return Ok(AST::Boolean(l < r));
-                }
-
-                (val, val2) => {
-                    return Err(format!("Cannot compare {:?} and {:?}", val, val2));
-                }
-            }
-        }
-
-        AST::GreaterThan(left, right) => {
-            match (eval(*left, context)?, eval(*right, context)?) {
-                (AST::Integer(l), AST::Integer(r)) => {
-                    return Ok(AST::Boolean(l > r));
-                }
-
-                (AST::Float(l), AST::Float(r)) => {
-                    return Ok(AST::Boolean(l > r));
-                }
-
-                (val, val2) => {
-                    return Err(format!("Cannot compare {:?} and {:?}", val, val2));
-                }
-            }
-        }
-
-        AST::LessThanOrEqual(left, right) => {
-            match (eval(*left, context)?, eval(*right, context)?) {
-                (AST::Integer(l), AST::Integer(r)) => {
-                    return Ok(AST::Boolean(l <= r));
-                }
-
-                (AST::Float(l), AST::Float(r)) => {
-                    return Ok(AST::Boolean(l <= r));
-                }
-
-                (val, val2) => {
-                    return Err(format!("Cannot compare {:?} and {:?}", val, val2));
-                }
-            }
-        }
-
-        AST::GreaterThanOrEqual(left, right) => {
-            match (eval(*left, context)?, eval(*right, context)?) {
-                (AST::Integer(l), AST::Integer(r)) => {
-                    return Ok(AST::Boolean(l >= r));
-                }
-
-                (AST::Float(l), AST::Float(r)) => {
-                    return Ok(AST::Boolean(l >= r));
-                }
-
-                (val, val2) => {
-                    return Err(format!("Cannot compare {:?} and {:?}", val, val2));
-                }
-            }
-        }
-
-        AST::Exists(value) => {
-            match eval(*value, context)? {
-                AST::Null => {
-                    return Ok(AST::Boolean(false));
-                }
-
-                AST::Boolean(false) => {
-                    return Ok(AST::Boolean(false));
-                }
-
-                _ => {
-                    return Ok(AST::Boolean(true));
-                }
-            }
-        }
-
-        AST::IfStatement { condition, body, line: _ } => {
-            match eval(*condition, context)? {
-                AST::Boolean(b) => {
-                    if b {
-                        for expr in body {
-                            let result = eval(expr, context)?;
-
-                            if let AST::Return(value) = result {
-                                return Ok(*value);
-                            } else if let AST::Break = result {
-                                return Ok(AST::Break);
-                            }
-                        }
-                    }
-                }
-
-                _ => {
-                    return Err("If statement condition must return a boolean".to_string());
-                }
-            }
-        }
-
-        AST::Integer(_) | AST::Boolean(_) | AST::Float(_) | AST::Object { .. } | AST::Null => {
-            return Ok(expr);
-        }
-
-        AST::String(value) => {
-            return Ok(AST::String(value.replace("\"", "").replace("\\n", "\n").replace("\\t", "\t")));
-        }
-
-        AST::Addition(left, right) => {
-            match (eval(*left.clone(), context)?, eval(*right.clone(), context)?) {
-                (AST::Integer(l), AST::Integer(r)) => {
-                    return Ok(AST::Integer(l + r));
-                }
-
-                (AST::Float(l), AST::Float(r)) => {
-                    return Ok(AST::Float(l + r));
-                }
-
-                (AST::Integer(l), AST::Float(r)) => {
-                    return Ok(AST::Float(l as f64 + r));
-                }
-
-                (AST::Float(l), AST::Integer(r)) => {
-                    return Ok(AST::Float(l + r as f64));
-                }
-
-                (AST::String(l), AST::String(r)) => {
-                    return Ok(AST::String(format!("{}{}", l, r)));
-                }
-
-                _ => {
-                    return Err(format!("Cannot add {:?} and {:?}", eval(*left, context)?, eval(*right, context)?));
-                }
-            }
-        }
-
-        AST::Subtraction(left, right) => {
-            match (eval(*left.clone(), context)?, eval(*right.clone(), context)?) {
-                (AST::Integer(l), AST::Integer(r)) => {
-                    return Ok(AST::Integer(l - r));
-                }
-
-                (AST::Float(l), AST::Float(r)) => {
-                    return Ok(AST::Float(l - r));
-                }
-
-                (AST::Integer(l), AST::Float(r)) => {
-                    return Ok(AST::Float(l as f64 - r));
-                }
-
-                (AST::Float(l), AST::Integer(r)) => {
-                    return Ok(AST::Float(l - r as f64));
-                }
-
-                (AST::Null, AST::Integer(r)) => {
-                    return Ok(AST::Integer(-r));
-                }
-
-                (AST::Null, AST::Float(r)) => {
-                    return Ok(AST::Float(-r));
-                }
-
-                (AST::Integer(l), AST::Null) => {
-                    return Ok(AST::Integer(l));
-                }
-
-                (AST::Float(l), AST::Null) => {
-                    return Ok(AST::Float(l));
-                }
-
-                _ => {
-                    return Err(format!("Cannot subtract {:?} and {:?}", eval(*left, context)?, eval(*right, context)?));
-                }
-            }
-        }
-
-        AST::Identifer(name) => {
-            match context.get(&name) {
-                Some(value) => {
-                    return Ok(value.clone());
-                }
-
-                None => {
-                    return Ok(AST::Null);
-                }
-            }
-        }
-
-        AST::PropertyAccess { object, property, line: _ } => {
-            let evaluated_property = eval(*property.clone(), context)?;
-
-            match object {
-                Some(name) => {
-                    match context.get(&name) {
-                        Some(value) => {
-                            match value {
-                                AST::Object { properties, line: _ } => {
-                                    match *property {
-                                        AST::Identifer(prop_name) => {
-                                            match properties.get(&prop_name) {
-                                                Some(value) => {
-                                                    return Ok(value.clone());
-                                                }
-
-                                                None => {
-                                                    return Err(format!("Property {} not found in object {}", prop_name, name));
-                                                }
-                                            }
-                                        }
-
-                                        AST::String(prop_name) => {
-                                            match properties.get(&prop_name) {
-                                                Some(value) => {
-                                                    return Ok(value.clone());
-                                                }
-
-                                                None => {
-                                                    return Err(format!("Property {} not found in object {}", prop_name, name));
-                                                }
-                                            }
-                                        }
-
-                                        v => {
-                                            return Err(format!("Property name must be a string or identifier, got {:?}", v));
-                                        }
-                                    }
-                                }
-
-                                AST::Array(elements) => {
-                                    match evaluated_property {
-                                        AST::Integer(index) => {
-                                            if index < 0 || (index as usize) >= elements.len() {
-                                                return Err(format!("Index {} out of bounds for array of length {}", index, elements.len()));
-                                            }
-
-                                            return Ok(elements[index as usize].clone());
-                                        }
-
-                                        _ => {
-                                            return Err("Array index must be an integer".to_string());
-                                        }
-                                    }
-                                }
-
-                                _ => {
-                                    return Err(format!("{} is not an object", name));
-                                }
-                            }
-                        }
-
-                        None => {
-                            return Err(format!("Variable {} not found", name));
-                        }
-                    }
-                }
-
-                None => {
-                    return Err("Object not found".to_string());
-                }
-            }
-        }
-
-        AST::Return(value) => {
-            return Ok(*value);
-        }
-
-        AST::Array(elements) => {
-            let mut evaluated_elements: Vec<AST> = vec![];
-
-            for element in elements {
-                evaluated_elements.push(eval(element, context)?);
-            }
-
-            return Ok(AST::Array(evaluated_elements));
-        }
-
-        _ => {
-            return Err(format!("Unknown expression, got {:?}", expr));
-        }
-    }
-
-    Ok(AST::Null)
+use std::collections::HashMap;
+use chumsky::span::SimpleSpan;
+
+use crate::ast::{Expr, SpannedExpr};
+use crate::lexer::Span;
+
+#[derive(Debug)]
+pub struct EvalError {
+    pub message: String,
+    pub message_short: String,
+    pub span: Span,
 }
 
-#[cfg(test)]
-mod tests {
-    use super::*;
+#[derive(Debug)]
+pub enum Flow {
+    Continue(Expr),
+    Return(Expr),
+    Break,
+    Skip,
+}
 
-    #[test]
-    fn unknown_variable() {
-        let mut context = crate::utils::create_context();
-
-        let expr = AST::Identifer("unknown".to_string());
-
-        assert_eq!(eval(expr, &mut context).unwrap(), AST::Null);
-    }
-
-    #[test]
-    fn unknown_function() {
-        let mut context = crate::utils::create_context();
-
-        let expr = AST::Call { name: "cookie".to_string(), args: vec![], line: 0 };
-
-        match eval(expr, &mut context) {
-            Ok(_) => {
-                assert!(false);
-            }
-
-            Err(e) => {
-                assert_eq!(e, "Function cookie not found");
-            }
+impl Flow {
+    fn unwrap(self) -> Expr {
+        match self {
+            Flow::Continue(v) | Flow::Return(v) => v,
+            Flow::Break | Flow::Skip => Expr::Null,
         }
     }
+}
 
-    #[test]
-    fn addition() {
-        let mut context = crate::utils::create_context();
-
-        let expr = AST::Addition(Box::new(AST::Integer(1)), Box::new(AST::Integer(2)));
-
-        assert_eq!(eval(expr, &mut context).unwrap(), AST::Integer(3));
+impl std::fmt::Display for EvalError {
+    fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
+        write!(f, "{}", self.message)
     }
+}
 
-    #[test]
-    fn subtraction() {
-        let mut context = crate::utils::create_context();
+pub fn eval<'src>(expr: &'src SpannedExpr, context: &mut HashMap<String, Expr>) -> Result<Flow, EvalError> {    
+    match &expr.node {
+        Expr::Int(n) => Ok(Flow::Continue(Expr::Int(*n))),
+        Expr::Float(f) => Ok(Flow::Continue(Expr::Float(*f))),
+        Expr::String(s) => Ok(Flow::Continue(Expr::String(s.clone()))),
+        Expr::Bool(b) => Ok(Flow::Continue(Expr::Bool(*b))),
+        Expr::Null => Ok(Flow::Continue(Expr::Null)),
 
-        let expr = AST::Subtraction(Box::new(AST::Integer(1)), Box::new(AST::Integer(2)));
+        Expr::PropertyAccess { object, property } => {
+            let object = eval(object, context)?.unwrap();
 
-        assert_eq!(eval(expr, &mut context).unwrap(), AST::Integer(-1));
-    }
+            match object {
+                Expr::Module { symbols } => {
+                    match symbols.get(property) {
+                        Some(value) => Ok(Flow::Continue(value.node.clone())),
+                        None => Err(EvalError {
+                            message: format!("Module has no property named {}", property),
+                            message_short: "no such property".to_string(),
+                            span: expr.span,
+                        }),
+                    }
+                }
+                
+                Expr::Object { properties } => {
+                    match properties.get(property) {
+                        Some(value) => Ok(Flow::Continue(value.clone())),
+                        None => {
+                            match crate::builtins::object::get_fn(property) {
+                                Some(value) => Ok(Flow::Continue(value)),
+                                None => Err(EvalError {
+                                    message: format!("Object has no property named {}", property),
+                                    message_short: "no such property".to_string(),
+                                    span: expr.span,
+                                }),
+                            }
+                        }
+                    }
+                }
 
-    #[test]
-    fn negative_num() {
-        let mut context = crate::utils::create_context();
+                Expr::Array(_) => {
+                    match crate::builtins::array::get_fn(property) {
+                        Some(value) => Ok(Flow::Continue(value)),
+                        None => Err(EvalError {
+                            message: format!("Array has no property named {}", property),
+                            message_short: "no such property".to_string(),
+                            span: expr.span,
+                        }),
+                    }
+                }
 
-        let expr = AST::Subtraction(Box::new(AST::Null), Box::new(AST::Integer(2)));
+                Expr::FFILibrary(library) => {
+                    Ok(Flow::Continue(Expr::FFILibrary(library)))
+                }
 
-        assert_eq!(eval(expr, &mut context).unwrap(), AST::Integer(-2));
-    }
+                _ => Err(EvalError {
+                    message: format!("Cannot access property {} of {:?}", property, object),
+                    message_short: "cannot access property".to_string(),
+                    span: expr.span,
+                }),
+            }
+        }
 
-    #[test]
-    fn join_strings() {
-        let mut context = crate::utils::create_context();
+        Expr::Neg(inner) => {
+            let value = eval(inner, context)?.unwrap();
 
-        let expr = AST::Addition(Box::new(AST::String("Hello, ".to_string())), Box::new(AST::String("World!".to_string())));
+            match value {
+                Expr::Int(n) => Ok(Flow::Continue(Expr::Int(-n))),
+                Expr::Float(f) => Ok(Flow::Continue(Expr::Float(-f))),
+                _ => Err(EvalError {
+                    message: format!("Cannot negate value: {:?}", value),
+                    message_short: "cannot negate".to_string(),
+                    span: expr.span,
+                }),
+            }
+        }
 
-        assert_eq!(eval(expr, &mut context).unwrap(), AST::String("Hello, World!".to_string()));
-    }
+        Expr::Add(left, right) => {
+            let left_value = eval(left, context)?.unwrap();
+            let right_value = eval(right, context)?.unwrap();
 
-    #[test]
-    fn add_floats() {
-        let mut context = crate::utils::create_context();
+            match (left_value, right_value) {
+                (Expr::Int(l), Expr::Int(r)) => Ok(Flow::Continue(Expr::Int(l + r))),
+                (Expr::Float(l), Expr::Float(r)) => Ok(Flow::Continue(Expr::Float(l + r))),
+                (Expr::Int(l), Expr::Float(r)) => Ok(Flow::Continue(Expr::Float(l as f64 + r))),
+                (Expr::Float(l), Expr::Int(r)) => Ok(Flow::Continue(Expr::Float(l + r as f64))),
+                (Expr::String(l), Expr::String(r)) => Ok(Flow::Continue(Expr::String(l + &r))),
 
-        let expr = AST::Addition(Box::new(AST::Float(1.0)), Box::new(AST::Float(2.0)));
+                _ => Err(EvalError {
+                    message: format!("Cannot add values: {:?} + {:?}", left.node, right.node),
+                    message_short: "cannot add".to_string(),
+                    span: expr.span,
+                }),
+            }
+        }
 
-        assert_eq!(eval(expr, &mut context).unwrap(), AST::Float(3.0));
-    }
+        Expr::Sub(left, right) => {
+            let left_value = eval(left, context)?.unwrap();
+            let right_value = eval(right, context)?.unwrap();
 
-    #[test]
-    fn add_float_and_int() {
-        let mut context = crate::utils::create_context();
+            match (left_value, right_value) {
+                (Expr::Int(l), Expr::Int(r)) => Ok(Flow::Continue(Expr::Int(l - r))),
+                (Expr::Float(l), Expr::Float(r)) => Ok(Flow::Continue(Expr::Float(l - r))),
+                (Expr::Int(l), Expr::Float(r)) => Ok(Flow::Continue(Expr::Float(l as f64 - r))),
+                (Expr::Float(l), Expr::Int(r)) => Ok(Flow::Continue(Expr::Float(l - r as f64))),
+                
+                _ => Err(EvalError {
+                    message: format!("Cannot subtract values: {:?} - {:?}", left.node, right.node),
+                    message_short: "cannot subtract".to_string(),
+                    span: expr.span,
+                }),
+            }
+        }
 
-        let expr = AST::Addition(Box::new(AST::Float(1.0)), Box::new(AST::Integer(2)));
+        Expr::Identifier(name) => {
+            match context.get(name) {
+                Some(value) => Ok(Flow::Continue(value.clone())),
+                None => Err(EvalError {
+                    message: format!("Undefined variable: {}", name),
+                    message_short: "not defined".to_string(),
+                    span: expr.span,
+                }),
+            }
+        }
 
-        assert_eq!(eval(expr, &mut context).unwrap(), AST::Float(3.0));
-    }
+        Expr::Range { start, end } => {
+            Ok(Flow::Continue(Expr::Range {
+                start: start.clone(),
+                end: end.clone(),
+            }))
+        }
 
-    #[test]
-    fn add_int_and_string() {
-        let mut context = crate::utils::create_context();
+        Expr::InclusiveRange { start, end } => {
+            Ok(Flow::Continue(Expr::InclusiveRange {
+                start: start.clone(),
+                end: end.clone(),
+            }))
+        }
 
-        let expr = AST::Addition(Box::new(AST::Integer(1)), Box::new(AST::String("cookie".to_string())));
+        Expr::Call { callee, args } => {
+            let mut evaluated_args: Vec<SpannedExpr> = args.iter()
+                .map(|arg| {
+                    match eval(arg, context) {
+                        Ok(v) => Ok(SpannedExpr {
+                            node: v.unwrap(),
+                            span: arg.span,
+                        }),
 
-        match eval(expr, &mut context) {
-            Ok(_) => {
-                assert!(false);
+                        Err(e) => Err(e),
+                    }
+                })
+                .collect::<Result<Vec<SpannedExpr>, EvalError>>()?;
+
+            match eval(callee, context)?.unwrap() {
+                Expr::InternalFunction { name, args, func } => {
+                    if args.contains(&"self".to_string()) {
+                        match &callee.node {
+                            Expr::PropertyAccess { object, .. } => {
+                                evaluated_args.insert(0, SpannedExpr {
+                                    node: eval(object, context)?.unwrap(),
+                                    span: object.span,
+                                });
+                            }
+
+                            _ => { }
+                        }
+                    }
+
+                    if !args.contains(&"__args__".to_string()) && args.len() != evaluated_args.len() {
+                        let error_span = if evaluated_args.len() > args.len() {
+                            SimpleSpan::from(
+                                evaluated_args[args.len()].span.start..evaluated_args[evaluated_args.len() - 1].span.end
+                            )
+                        } else {
+                            expr.span
+                        };
+                        
+                        if evaluated_args.len() > args.len() {
+                            return Err(EvalError {
+                                message: format!("Function {} expects {} arguments, got {}", name, args.len(), evaluated_args.len()),
+                                message_short: format!("{} arguments too many", evaluated_args.len() - args.len()),
+                                span: error_span,
+                            });
+                        } else {
+                            return Err(EvalError {
+                                message: format!("Function {} expects {} arguments, got {}", name, args.len(), evaluated_args.len()),
+                                message_short: format!("{} arguments too few", args.len() - evaluated_args.len()),
+                                span: error_span,
+                            });
+                        }
+                    }
+
+                    match func(evaluated_args) {
+                        Ok(response) => {
+                            if let Some(replace_self) = response.replace_self {
+                                match &callee.node {
+                                    Expr::PropertyAccess { object, property: _ } => {
+                                        if let Expr::Identifier(obj_name) = &object.node {
+                                            context.insert(obj_name.clone(), replace_self);
+                                        }
+                                    }
+                                    
+                                    _ => {}
+                                }
+                            }
+
+                            Ok(Flow::Continue(response.return_value))
+                        },
+                        Err((msg, span)) => Err(EvalError {
+                            message: msg.clone(),
+                            message_short: msg,
+                            span,
+                        }),
+                    }
+                }
+
+                Expr::Function { name, args, body } => {
+                    if args.len() != evaluated_args.len() {
+                        let error_span = if evaluated_args.len() > args.len() {
+                            SimpleSpan::from(
+                                evaluated_args[args.len()].span.start..evaluated_args[evaluated_args.len() - 1].span.end
+                            )
+                        } else {
+                            expr.span
+                        };
+
+                        if evaluated_args.len() > args.len() {
+                            return Err(EvalError {
+                                message: format!("Function {} expects {} arguments, got {}", name, args.len(), evaluated_args.len()),
+                                message_short: format!("{} arguments too many", evaluated_args.len() - args.len()),
+                                span: error_span,
+                            });
+                        } else {
+                            return Err(EvalError {
+                                message: format!("Function {} expects {} arguments, got {}", name, args.len(), evaluated_args.len()),
+                                message_short: format!("{} arguments too few", args.len() - evaluated_args.len()),
+                                span: error_span,
+                            });
+                        }
+                    }
+
+                    let mut new_context = context.clone();
+
+                    for (i, arg_name) in args.iter().enumerate() {
+                        new_context.insert(arg_name.clone(), evaluated_args[i].node.clone());
+                    }
+
+                    match eval(&*body, &mut new_context)? {
+                        Flow::Continue(v) => Ok(Flow::Continue(v)),
+                        Flow::Return(v) => Ok(Flow::Continue(v)),
+                        Flow::Break => Err(EvalError {
+                            message: "Unexpected break in function".to_string(),
+                            message_short: "unexpected break".to_string(),
+                            span: expr.span,
+                        }),
+                        Flow::Skip => Err(EvalError {
+                            message: "Unexpected skip in function".to_string(),
+                            message_short: "unexpected skip".to_string(),
+                            span: expr.span,
+                        }),
+                    }
+                }
+
+                Expr::FFILibrary(library) => {
+                    let result = crate::libraries::ffi::execute_ffi_call(
+                        &library,
+                        match &callee.node {
+                            Expr::PropertyAccess { property, .. } => property,
+                            _ => unreachable!(),
+                        },
+                        evaluated_args,
+                    );
+
+                    match result {
+                        Ok(value) => Ok(Flow::Continue(value)),
+                        Err(msg) => Err(EvalError {
+                            message: msg.clone(),
+                            message_short: msg,
+                            span: expr.span,
+                        }),
+                    }
+                }
+
+                v => Err(EvalError {
+                    message: format!("{:?} is not a function", v),
+                    message_short: "not a function".to_string(),
+                    span: expr.span,
+                })
+            }
+        }
+
+        Expr::Let { name, value } => {
+            let value = eval(value, context)?.unwrap();
+            context.insert(name.clone(), value);
+            
+            Ok(Flow::Continue(Expr::Null))
+
+        }
+
+        Expr::Function { name, args, body } => {
+            context.insert(name.clone(), Expr::Function {
+                name: name.clone(),
+                args: args.clone(),
+                body: body.clone(),
+            });
+
+            Ok(Flow::Continue(Expr::Null))
+        }
+
+        Expr::Block(exprs) => {
+            let preexisting_keys = context.keys().cloned().collect::<Vec<String>>();
+
+            for e in exprs {
+                match eval(e, context)? {
+                    Flow::Continue(_) => {},
+                    Flow::Return(v) => return Ok(Flow::Return(v)),
+                    Flow::Break => return Ok(Flow::Break),
+                    Flow::Skip => return Ok(Flow::Skip),
+                }
             }
 
-            Err(e) => {
-                assert_eq!(e, "Cannot add Integer(1) and String(\"cookie\")");
+            for key in context.keys().cloned().collect::<Vec<String>>() {
+                if !preexisting_keys.contains(&key) {
+                    context.remove(&key);
+                }
             }
+
+            Ok(Flow::Continue(Expr::Null))
+        }
+
+        Expr::InfiniteLoop { body } => {
+            loop {
+                match eval(body, context)? {
+                    Flow::Continue(_) => {},
+                    Flow::Return(v) => return Ok(Flow::Return(v)),
+                    Flow::Break => return Ok(Flow::Continue(Expr::Null)),
+                    Flow::Skip => continue,
+                }
+            }
+        }
+
+        Expr::ForLoop { iterator_name, iterator_range, body } => {
+            let range_value = eval(iterator_range, context)?.unwrap();
+
+            match range_value {
+                Expr::Range { start, end } => {
+                    let start = match eval(&start, context)?.unwrap() {
+                        Expr::Int(n) => n,
+
+                        _ => {
+                            return Err(EvalError {
+                                message: format!("Range start must be an integer, got {:?}", start),
+                                message_short: "invalid range start".to_string(),
+                                span: expr.span,
+                            });
+                        }
+                    };
+
+                    let end = match eval(&end, context)?.unwrap() {
+                        Expr::Int(n) => n,
+
+                        _ => {
+                            return Err(EvalError {
+                                message: format!("Range end must be an integer, got {:?}", end),
+                                message_short: "invalid range end".to_string(),
+                                span: expr.span,
+                            });
+                        }
+                    };
+
+                    for i in start..end {
+                        context.insert(iterator_name.clone(), Expr::Int(i));
+
+                        match eval(body, context)? {
+                            Flow::Continue(_) => {},
+                            Flow::Return(v) => return Ok(Flow::Return(v)),
+                            Flow::Break => break,
+                            Flow::Skip => continue,
+                        }
+                    }
+
+                    Ok(Flow::Continue(Expr::Null))
+                }
+
+                Expr::InclusiveRange { start, end } => {
+                    let start = match eval(&start, context)?.unwrap() {
+                        Expr::Int(n) => n,
+
+                        _ => {
+                            return Err(EvalError {
+                                message: format!("Range start must be an integer, got {:?}", start),
+                                message_short: "invalid range start".to_string(),
+                                span: expr.span,
+                            });
+                        }
+                    };
+
+                    let end = match eval(&end, context)?.unwrap() {
+                        Expr::Int(n) => n,
+
+                        _ => {
+                            return Err(EvalError {
+                                message: format!("Range end must be an integer, got {:?}", end),
+                                message_short: "invalid range end".to_string(),
+                                span: expr.span,
+                            });
+                        }
+                    };
+
+                    for i in start..=end {
+                        context.insert(iterator_name.clone(), Expr::Int(i));
+
+                        match eval(body, context)? {
+                            Flow::Continue(_) => {},
+                            Flow::Return(v) => return Ok(Flow::Return(v)),
+                            Flow::Break => break,
+                            Flow::Skip => continue,
+                        }
+                    }
+
+                    Ok(Flow::Continue(Expr::Null))
+                }
+
+                _ => Err(EvalError {
+                    message: format!("Cannot iterate over value: {:?}", range_value),
+                    message_short: "cannot iterate".to_string(),
+                    span: expr.span,
+                }),
+            }
+        }
+
+        Expr::Return(value) => {
+            let return_value = eval(value, context)?.unwrap();
+            Ok(Flow::Return(return_value))
+        }
+
+        Expr::Break => {
+            Ok(Flow::Break)
+        },
+
+        Expr::Continue => {
+            Ok(Flow::Skip)
+        },
+
+        Expr::Equal(left, right) => {
+            let left_value = eval(left, context)?.unwrap();
+            let right_value = eval(right, context)?.unwrap();
+
+            match (left_value, right_value) {
+                (Expr::Int(l), Expr::Int(r)) => Ok(Flow::Continue(Expr::Bool(l == r))),
+                (Expr::Float(l), Expr::Float(r)) => Ok(Flow::Continue(Expr::Bool(l == r))),
+                (Expr::Int(l), Expr::Float(r)) => Ok(Flow::Continue(Expr::Bool((l as f64) == r))),
+                (Expr::Float(l), Expr::Int(r)) => Ok(Flow::Continue(Expr::Bool(l == (r as f64)))),
+                (Expr::Bool(l), Expr::Bool(r)) => Ok(Flow::Continue(Expr::Bool(l == r))),
+                (Expr::String(l), Expr::String(r)) => Ok(Flow::Continue(Expr::Bool(l == r))),
+                (Expr::Null, Expr::Null) => Ok(Flow::Continue(Expr::Bool(true))),
+
+                _ => Ok(Flow::Continue(Expr::Bool(false))),
+            }
+        },
+
+        Expr::NotEqual(left, right) => {
+            let left_value = eval(left, context)?.unwrap();
+            let right_value = eval(right, context)?.unwrap();
+
+            match (left_value, right_value) {
+                (Expr::Int(l), Expr::Int(r)) => Ok(Flow::Continue(Expr::Bool(l != r))),
+                (Expr::Float(l), Expr::Float(r)) => Ok(Flow::Continue(Expr::Bool(l != r))),
+                (Expr::Int(l), Expr::Float(r)) => Ok(Flow::Continue(Expr::Bool((l as f64) != r))),
+                (Expr::Float(l), Expr::Int(r)) => Ok(Flow::Continue(Expr::Bool(l != (r as f64)))),
+                (Expr::Bool(l), Expr::Bool(r)) => Ok(Flow::Continue(Expr::Bool(l != r))),
+                (Expr::String(l), Expr::String(r)) => Ok(Flow::Continue(Expr::Bool(l != r))),
+                (Expr::Null, Expr::Null) => Ok(Flow::Continue(Expr::Bool(false))),
+
+                _ => Ok(Flow::Continue(Expr::Bool(true))),
+            }
+        },
+
+        Expr::LessThan(left, right) => {
+            let left_value = eval(left, context)?.unwrap();
+            let right_value = eval(right, context)?.unwrap();
+
+            match (left_value, right_value) {
+                (Expr::Int(l), Expr::Int(r)) => Ok(Flow::Continue(Expr::Bool(l < r))),
+                (Expr::Float(l), Expr::Float(r)) => Ok(Flow::Continue(Expr::Bool(l < r))),
+                (Expr::Int(l), Expr::Float(r)) => Ok(Flow::Continue(Expr::Bool((l as f64) < r))),
+                (Expr::Float(l), Expr::Int(r)) => Ok(Flow::Continue(Expr::Bool(l < (r as f64)))),
+
+                _ => Err(EvalError {
+                    message: format!("Cannot compare values: {:?} < {:?}", left.node, right.node),
+                    message_short: "cannot compare".to_string(),
+                    span: expr.span,
+                }),
+            }
+        },
+
+        Expr::LessThanOrEqual(left, right) => {
+            let left_value = eval(left, context)?.unwrap(); 
+            let right_value = eval(right, context)?.unwrap();
+
+            match (left_value, right_value) {
+                (Expr::Int(l), Expr::Int(r)) => Ok(Flow::Continue(Expr::Bool(l <= r))),
+                (Expr::Float(l), Expr::Float(r)) => Ok(Flow::Continue(Expr::Bool(l <= r))),
+                (Expr::Int(l), Expr::Float(r)) => Ok(Flow::Continue(Expr::Bool((l as f64) <= r))),
+                (Expr::Float(l), Expr::Int(r)) => Ok(Flow::Continue(Expr::Bool(l <= (r as f64)))),
+
+                _ => Err(EvalError {
+                    message: format!("Cannot compare values: {:?} <= {:?}", left.node, right.node),
+                    message_short: "cannot compare".to_string(),
+                    span: expr.span,
+                }),
+            }
+        },
+
+        Expr::GreaterThan(left, right) => {
+            let left_value = eval(left, context)?.unwrap();
+            let right_value = eval(right, context)?.unwrap();
+
+            match (left_value, right_value) {
+                (Expr::Int(l), Expr::Int(r)) => Ok(Flow::Continue(Expr::Bool(l > r))),
+                (Expr::Float(l), Expr::Float(r)) => Ok(Flow::Continue(Expr::Bool(l > r))),
+                (Expr::Int(l), Expr::Float(r)) => Ok(Flow::Continue(Expr::Bool((l as f64) > r))),
+                (Expr::Float(l), Expr::Int(r)) => Ok(Flow::Continue(Expr::Bool(l > (r as f64)))),
+
+                _ => Err(EvalError {
+                    message: format!("Cannot compare values: {:?} > {:?}", left.node, right.node),
+                    message_short: "cannot compare".to_string(),
+                    span: expr.span,
+                }),
+            }
+        },
+
+        Expr::GreaterThanOrEqual(left, right) => {
+            let left_value = eval(left, context)?.unwrap();
+            let right_value = eval(right, context)?.unwrap();
+
+            match (left_value, right_value) {
+                (Expr::Int(l), Expr::Int(r)) => Ok(Flow::Continue(Expr::Bool(l >= r))),
+                (Expr::Float(l), Expr::Float(r)) => Ok(Flow::Continue(Expr::Bool(l >= r))),
+                (Expr::Int(l), Expr::Float(r)) => Ok(Flow::Continue(Expr::Bool((l as f64) >= r))),
+                (Expr::Float(l), Expr::Int(r)) => Ok(Flow::Continue(Expr::Bool(l >= (r as f64)))),
+
+                _ => Err(EvalError {
+                    message: format!("Cannot compare values: {:?} >= {:?}", left.node, right.node),
+                    message_short: "cannot compare".to_string(),
+                    span: expr.span,
+                }),
+            }
+        },
+
+        Expr::If { condition, then_branch, else_branch } => {
+            let condition_value = eval(condition, context)?.unwrap();
+
+            match condition_value {
+                Expr::Bool(true) => eval(then_branch, context),
+                Expr::Bool(false) | Expr::Null => {
+                    if let Some(else_branch) = else_branch {
+                        eval(else_branch, context)
+                    } else {
+                        Ok(Flow::Continue(Expr::Null))
+                    }
+                },
+
+                _ => Err(EvalError {
+                    message: format!("Condition must be a boolean, got {:?}", condition_value),
+                    message_short: "invalid condition".to_string(),
+                    span: expr.span,
+                }),
+            }
+        }
+
+        Expr::Import { name, import_as } => {
+            let import_as = match import_as {
+                Some(as_name) => as_name.clone(),
+                None => name.clone(),
+            };
+
+            let mut path = std::env::current_dir().unwrap();
+                
+            let sys_args = std::env::args().collect::<Vec<String>>();
+            if sys_args.len() > 2 && sys_args[1] == "run" {
+                path.push(&sys_args[2]);
+                path.pop();
+            }
+
+            if context.contains_key("CURRENTLY_PARSING_MODULE_PATH") {
+                if let Expr::String(current_module_path) = context.get("CURRENTLY_PARSING_MODULE_PATH").unwrap() {
+                    let mut module_path = std::path::PathBuf::from(current_module_path);
+                    module_path.pop();
+                    path = module_path;
+                }
+            }
+
+            if context.contains_key("CURRENTLY_PARSING_PACKAGE_NAME") {
+                if let Expr::String(current_package_name) = context.get("CURRENTLY_PARSING_PACKAGE_NAME").unwrap() {
+                    path.push(".modu");
+                    path.push("packages");
+                    path.push(current_package_name);
+                }
+            }
+
+            if name.ends_with(".modu") {
+                path.push(name);
+                
+                let source = std::fs::read_to_string(path.clone()).map_err(|e| EvalError {
+                    message: format!("Failed to read module file {}: {}", name, e),
+                    message_short: "failed to read module".to_string(),
+                    span: expr.span,
+                })?;
+
+                let mut new_context = crate::utils::create_context();
+                new_context.insert(
+                    "CURRENTLY_PARSING_MODULE_PATH".to_string(),
+                    Expr::String(path.to_str().unwrap().to_string())
+                );
+
+                crate::parser::parse(&source, path.to_str().unwrap(), &mut new_context);
+
+                if import_as == "*" {
+                    for (k, v) in new_context {
+                        context.insert(k, v);
+                    }
+                } else {
+                    let mut symbols = HashMap::new();
+
+                    for (k, v) in new_context.iter().filter(|(k, _)| !crate::utils::create_context().contains_key(*k)) {
+                        symbols.insert(k.clone(), SpannedExpr {
+                            node: v.clone(),
+                            span: expr.span,
+                        });
+                    }
+
+                    context.insert(import_as.clone().replace(".modu", ""), Expr::Module {
+                        symbols,
+                    });
+                }
+            } else {
+                match crate::libraries::get_package(name) {
+                    Some(module) => {
+                        if import_as == "*" {
+                            if let Expr::Module { symbols } = module {
+                                for (k, v) in symbols {
+                                    context.insert(k, v.node);
+                                }
+                            } else {
+                                return Err(EvalError {
+                                    message: format!("Package {} is not a module", name),
+                                    message_short: "not a module".to_string(),
+                                    span: expr.span,
+                                });
+                            }
+                        } else {
+                            context.insert(import_as.clone(), module);
+                        }
+                    }
+
+                    None => {
+                        path.push(".modu");
+                        path.push("packages");
+                        path.push(name);
+                        path.push("lib.modu");
+
+                        if !path.exists() {
+                            return Err(EvalError {
+                                message: format!("Package {} does not exist or is not installed", name),
+                                message_short: "package not found".to_string(),
+                                span: expr.span,
+                            });
+                        }
+
+                        let source = std::fs::read_to_string(path.clone()).map_err(|e| EvalError {
+                            message: format!("Failed to read module file for package {}: {}", name, e),
+                            message_short: "failed to read module".to_string(),
+                            span: expr.span,
+                        })?;
+
+                        let mut new_context = crate::utils::create_context();
+                        new_context.insert(
+                            "CURRENTLY_PARSING_PACKAGE_PATH".to_string(),
+                            Expr::String(path.to_str().unwrap().to_string())
+                        );
+                        new_context.insert(
+                            "CURRENTLY_PARSING_PACKAGE_NAME".to_string(),
+                            Expr::String(name.clone()),
+                        );
+
+                        crate::parser::parse(&source, path.to_str().unwrap(), &mut new_context);
+
+                        if import_as == "*" {
+                            for (k, v) in new_context {
+                                context.insert(k, v);
+                            }
+                        } else {
+                            let mut symbols = HashMap::new();
+
+                            for (k, v) in new_context.iter().filter(|(k, _)| !crate::utils::create_context().contains_key(*k)) {
+                                symbols.insert(k.clone(), SpannedExpr {
+                                    node: v.clone(),
+                                    span: expr.span,
+                                });
+                            }
+
+                            context.insert(import_as.clone().replace(".modu", ""), Expr::Module {
+                                symbols,
+                            });
+                        }
+                    }
+                }
+
+               
+            }
+
+            Ok(Flow::Continue(Expr::Null))
+        }
+
+        Expr::Array(elements) => {
+            let mut evaluated_elements = Vec::new();
+
+            for element in elements {
+                let value = eval(element, context)?.unwrap();
+                evaluated_elements.push(SpannedExpr {
+                    node: value,
+                    span: element.span,
+                });
+            }
+
+            Ok(Flow::Continue(Expr::Array(evaluated_elements)))
+        }
+
+        Expr::IndexAccess { object, index } => {
+            let object_value = eval(object, context)?.unwrap();
+            let index_value = eval(index, context)?.unwrap();
+            
+            match (object_value, index_value) {
+                (Expr::Array(elements), Expr::Int(i)) => {
+                    let idx = if i < 0 {
+                        elements.len() as i64 + i
+                    } else {
+                        i
+                    };
+
+                    if idx < 0 || idx >= elements.len() as i64 {
+                        return Err(EvalError {
+                            message: format!("Array index out of bounds: {}", i),
+                            message_short: "index out of bounds".to_string(),
+                            span: expr.span,
+                        });
+                    }
+
+                    Ok(Flow::Continue(elements[idx as usize].node.clone()))
+                }
+
+                (Expr::Object { properties }, Expr::String(key)) => {
+                    match properties.get(&key) {
+                        Some(value) => Ok(Flow::Continue(value.clone())),
+                        None => Err(EvalError {
+                            message: format!("Object has no property named {}", key),
+                            message_short: "no such property".to_string(),
+                            span: expr.span,
+                        }),
+                    }
+                }
+
+                (v, _) => Err(EvalError {
+                    message: format!("Cannot index into value: {:?}", v),
+                    message_short: "cannot index".to_string(),
+                    span: expr.span,
+                }),
+            }
+        }
+
+        v => {
+            Err(EvalError {
+                message: format!("No evaluator for {:?}", v),
+                message_short: "couldn't evaluate".to_string(),
+                span: expr.span,
+            })
         }
     }
 }

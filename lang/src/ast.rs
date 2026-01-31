@@ -1,221 +1,166 @@
-
 use std::collections::HashMap;
 use libloading::Library;
 use std::sync::Arc;
 
+use crate::lexer::Span;
+
+pub type SpannedExpr = Spanned<Expr>;
 #[derive(Debug, Clone)]
-pub enum AST {
-    LetDeclaration {
-        name: Option<String>,
-        value: Box<AST>,
-        line: usize,
-    },
+pub struct Spanned<T> {
+    pub node: T,
+    pub span: Span,
+}
 
-    IfStatement {
-        condition: Box<AST>,
-        body: Vec<AST>,
-        line: usize,
-    },
+#[derive(Debug, Clone)]
+pub struct InternalFunctionResponse {
+    pub return_value: Expr,
+    pub replace_self: Option<Expr>,
+}
 
-    Import {
-        file: Option<String>,
-        as_: Option<String>,
-        line: usize,
-    },
+#[derive(Debug, Clone)]
+pub enum Expr {
+    Int(i64),
+    Float(f64),
+    String(String),
+    Identifier(String),
+    Bool(bool),
+    Return(Box<Spanned<Expr>>),
+    Null,
+    Break,
+    Continue,
 
-    Object {
-        properties: HashMap<String, AST>,
-        line: usize,
-    },
+    Neg(Box<Spanned<Expr>>),
+    Add(Box<Spanned<Expr>>, Box<Spanned<Expr>>),
+    Sub(Box<Spanned<Expr>>, Box<Spanned<Expr>>),
 
-    Array(Vec<AST>),
-
-    PropertyAccess {
-        object: Option<String>,
-        property: Box<AST>,
-        line: usize,
-    },
-
-    PropertyCall {
-        object: Option<String>,
-        property: Option<String>,
-        args: Vec<AST>,
-        line: usize,
+    Let {
+        name: String,
+        value: Box<Spanned<Expr>>,
     },
 
     Call {
+        callee: Box<Spanned<Expr>>,
+        args: Vec<Spanned<Expr>>,
+    },
+
+    PropertyAccess {
+        object: Box<Spanned<Expr>>,
+        property: String,
+    },
+
+    IndexAccess {
+        object: Box<Spanned<Expr>>,
+        index: Box<Spanned<Expr>>, // either abc[0] or abc["key"]
+    },
+
+    Block(Vec<Spanned<Expr>>),
+    Array(Vec<Spanned<Expr>>),
+
+    InternalFunction {
         name: String,
-        args: Vec<AST>,
-        line: usize,
+        args: Vec<String>, // Vec<"__args__"> for an optional amount
+        func: fn(Vec<Spanned<Expr>>) -> Result<InternalFunctionResponse, (String, Span)>,
     },
 
     Function {
         name: String,
         args: Vec<String>,
-        body: Vec<AST>,
-        line: usize,
+        body: Box<Spanned<Expr>>,
     },
 
-    Return(Box<AST>),
-
-    InternalFunction {
+    // import "module" as module;
+    // or import "module" as *; // you can use like function() instead of module.function()
+    // or import "module"; // will import as the module name
+    Import {
         name: String,
-        args: Vec<String>,
-        call_fn: fn(Vec<AST>, &mut HashMap<String, AST>) -> Result<(AST, AST), String>,
+        import_as: Option<String>,
     },
 
-    FFILibrary {
-        path: String,
-        lib: Arc<Library>,
+    Module {
+        symbols: HashMap<String, Spanned<Expr>>,
     },
 
-    Loop {
-        body: Vec<AST>,
-        line: usize,
+    FFILibrary(Arc<Library>),
+
+    Object {
+        properties: HashMap<String, Expr>,
+    },
+
+    If {
+        condition: Box<Spanned<Expr>>,
+        then_branch: Box<Spanned<Expr>>,
+        else_branch: Option<Box<Spanned<Expr>>>,
+    },
+
+    InfiniteLoop {
+        body: Box<Spanned<Expr>>,
     },
 
     ForLoop {
-        start: Box<AST>,
-        end: Box<AST>,
-        index_name: String,
-        body: Vec<AST>,
-        line: usize,
+        iterator_name: String,
+        iterator_range: Box<Spanned<Expr>>,
+        body: Box<Spanned<Expr>>,
     },
 
-    Range(Box<AST>, Box<AST>),
+    Range {
+        start: Box<Spanned<Expr>>,
+        end: Box<Spanned<Expr>>,
+    },
 
-    Exists(Box<AST>),
-    IsEqual(Box<AST>, Box<AST>),
-    IsUnequal(Box<AST>, Box<AST>),
-    LessThan(Box<AST>, Box<AST>),
-    GreaterThan(Box<AST>, Box<AST>),
-    LessThanOrEqual(Box<AST>, Box<AST>),
-    GreaterThanOrEqual(Box<AST>, Box<AST>),
-    Addition(Box<AST>, Box<AST>),
-    Subtraction(Box<AST>, Box<AST>),
-
-    Identifer(String),
-    Integer(i64),
-    String(String),
-    Boolean(bool),
-    Float(f64),
-
-    Null,
-    Semicolon,
-    Lparen,
-    Rparen,
-    RBracket,
-    Comma,
-    Dot,
-    Minus,
-    Plus,
-    Break,
+    InclusiveRange {
+        start: Box<Spanned<Expr>>,
+        end: Box<Spanned<Expr>>,
+    },
+    
+    Equal(Box<Spanned<Expr>>, Box<Spanned<Expr>>),
+    NotEqual(Box<Spanned<Expr>>, Box<Spanned<Expr>>),
+    LessThan(Box<Spanned<Expr>>, Box<Spanned<Expr>>),
+    LessThanOrEqual(Box<Spanned<Expr>>, Box<Spanned<Expr>>),
+    GreaterThan(Box<Spanned<Expr>>, Box<Spanned<Expr>>),
+    GreaterThanOrEqual(Box<Spanned<Expr>>, Box<Spanned<Expr>>),
 }
 
-
-impl std::fmt::Display for AST {
-    fn fmt(&self, f: &mut std::fmt::Formatter) -> std::fmt::Result {
+impl std::fmt::Display for Expr {
+    fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
         match self {
-            AST::String(s) => { 
-                let mut s = s.replace("\\t", "\t")
-                    .replace("\\n", "\n")
-                    .replace("\\r", "\r")
+            Expr::Int(n) => write!(f, "{}", n),
+            Expr::Float(fl) => write!(f, "{}", fl),
+            Expr::String(s) => write!(
+                f, "{}", 
+                s.replace("\\n", "\n")
+                    .replace("\\t", "\t")
                     .replace("\\\"", "\"")
-                    .replace("\\\\", "\\");
-            
-                if s.starts_with("\"") && s.ends_with("\"") {
-                    s = s[1..s.len() - 1].to_string();
-                } else if s.starts_with("'") && s.ends_with("'") {
-                    s = s[1..s.len() - 1].to_string();
-                }
+                    .replace("\\\\", "\\")
+            ),
+            Expr::Identifier(name) => write!(f, "{}", name),
+            Expr::Bool(b) => write!(f, "{}", b),
+            Expr::Null => write!(f, "null"),
 
-                write!(f, "{}", s)
-            },
-
-            AST::Integer(n) => write!(f, "{}", n),
-            AST::Float(n) => write!(f, "{}", n),
-            AST::Boolean(b) => write!(f, "{}", b),
-            AST::Null => write!(f, "null"),
-
-            AST::Object { properties, line: _ } => {
-                write!(f, "{{ ")?;
-
-                if properties.len() as i32 - crate::packages::json::BUILTINS.len() as i32 == 0 {
-                    write!(f, "}}")?;
-                } else {
-                    let mut str = String::new();
-
-                    for (key, value) in properties {
-                        if crate::packages::json::BUILTINS.contains(&key.as_str()) {
-                            continue;
-                        }
-
-                        match value {
-                            AST::String(s) => {
-                                str.push_str(&format!("\"{}\": \"{}\", ", key, s.replace("\"", "\\\"").replace("\n", "\\n").replace("\t", "\\t")));
-                            }
-
-                            _ => {
-                                str.push_str(&format!("\"{}\": {}, ", key, value));
-                            }
-                        }
-                    }
-
-                    if str.len() > 0 {
-                        write!(f, "{}", &str[..str.len() - 2])?;
-                    }
-
-
-                    write!(f, " }}")?;
-                }
-                
-                Ok(())
-            }
-
-            AST::Array(elements) => {
+            Expr::Array(elements) => {
                 write!(f, "[")?;
 
-                let mut str = String::new();
+                for (i, element) in elements.iter().enumerate() {
+                    if let Expr::String(s) = &element.node {
+                        write!(
+                            f, "\"{}\"",
+                            s.replace("\\n", "\n")
+                                .replace("\\t", "\t")
+                                .replace("\\\"", "\"")
+                                .replace("\\\\", "\\")
+                        )?;
+                    } else {
+                        write!(f, "{}", element.node)?;
+                    }
 
-                for element in elements {
-                    match element {
-                        AST::String(s) => {
-                            str.push_str(&format!("\"{}\", ", s.replace("\"", "\\\"").replace("\n", "\\n").replace("\t", "\\t")));
-                        }
-
-                        _ => {
-                            str.push_str(&format!("{}, ", element));
-                        }
+                    if i != elements.len() - 1 {
+                        write!(f, ", ")?;
                     }
                 }
 
-                if str.len() > 0 {
-                    write!(f, "{}", &str[..str.len() - 2])?;
-                }
-
-                write!(f, "]")?;
-
-                Ok(())
+                write!(f, "]")
             }
 
             _ => write!(f, "{:?}", self),
-        }
-    }
-}
-
-impl PartialEq for AST {
-    fn eq(&self, other: &Self) -> bool {
-        match (self, other) {
-            (AST::FFILibrary { path: p1, .. }, AST::FFILibrary { path: p2, .. }) => p1 == p2,
-            (AST::Integer(i1), AST::Integer(i2)) => i1 == i2,
-            (AST::String(s1), AST::String(s2)) => s1 == s2,
-            (AST::Boolean(b1), AST::Boolean(b2)) => b1 == b2,
-            (AST::Float(f1), AST::Float(f2)) => f1 == f2,
-
-            (AST::Integer(i1), AST::Float(f2)) => (*i1 as f64) == *f2,
-            (AST::Float(f1), AST::Integer(i2)) => *f1 == (*i2 as f64),
-
-            _ => std::mem::discriminant(self) == std::mem::discriminant(other),
         }
     }
 }

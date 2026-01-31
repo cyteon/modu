@@ -7,13 +7,13 @@ data.set("name", "modu");
 let result = http.get("https://httpbin.org/get");
 print(result.status, " - ", result.status_text);
 
-let result = http.post("https://httpbin.org/post", json.stringify(data));
+let result = http.post("https://httpbin.org/post", data.to_string());
 print(result.status, " - ", result.status_text);
 
-let result = http.put("https://httpbin.org/put", json.stringify(data));
+let result = http.put("https://httpbin.org/put", data.to_string());
 print(result.status, " - ", result.status_text);
 
-let result = http.patch("https://httpbin.org/patch", json.stringify(data));
+let result = http.patch("https://httpbin.org/patch", data.to_string());
 print(result.status, " - ", result.status_text);
 
 let result = http.delete("https://httpbin.org/delete");
