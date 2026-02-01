@@ -31,8 +31,8 @@ yap("Hello, World!");
             tabsize.of(EditorState.tabSize.of(4)),
             EditorView.theme({
                 "&": {
-                    color: "#cdd6f4",
-                    backgroundColor: "#11111b",
+                    color: "#fbg1c7",
+                    backgroundColor: "#282828",
                     fontSize: "24px",
                     height: "100%",
                 },
@@ -42,15 +42,15 @@ yap("Hello, World!");
                 },
 
                 ".cm-activeLine": {
-                    backgroundColor: "#89b4fa10",
+                    backgroundColor: "#1d202180",
                 },
 
                 ".cm-activeLineGutter" : {
-                    backgroundColor: "#89b4fa10",
+                    backgroundColor: "#28282880",
                 },
 
                 ".cm-gutters": {
-                    backgroundColor: "#181825",
+                    backgroundColor: "#1d2021",
                 },
 
             }, { dark: true }),
@@ -93,6 +93,21 @@ yap("Hello, World!");
             runClicked = true;
 
             const code = view.state.doc.toString();
+
+            if (code.includes("import \"http\"")) {
+                output = "Error running code: The HTTP client does currently not work on the web";
+                runClicked = false;
+                return;
+            } else if (code.includes("import \"ffi\"")) {
+                output = "Error running code: Using FFI is not possible on the web";
+                runClicked = false;
+                return;
+            } else if (code.includes("import \"os\"")) {
+                output = "Error running code: Using the OS module is not supported in the web IDE cause its running on the web";
+                runClicked = false;
+                return;
+            }
+
             let result = eval_modu(code);
         
             output = result.replace(ansiRegex, "");
@@ -137,7 +152,7 @@ yap("Hello, World!");
 </svelte:head>
 
 <div class="flex flex-col w-full h-screen">
-    <div class="w-full border-b border-b-ctp-surface0 p-2 px-4 flex">
+    <div class="w-full border-b border-bg1 p-2 px-4 flex">
         <a href={base + "/"} class="text-3xl font-bold inline-block bg-clip-text text-transparent bg-gradient-to-r from-ctp-red to-75% to-ctp-yellow">Modu</a>
         <p class="ml-2 mt-auto text-xl">{moduVersion ? `${moduVersion}` : ""}</p>
 
@@ -161,20 +176,20 @@ yap("Hello, World!");
     </div>
 
     <div class="flex p-4 h-full space-y-4 flex-col md:flex-row md:space-x-4 md:space-y-0">
-        <div class="bg-ctp-mantle w-full p-6 pt-4 h-full rounded-md flex flex-col md:w-2/3 border border-ctp-surface0">
+        <div class="bg-bg1 w-full p-6 pt-4 h-full rounded-md flex flex-col md:w-2/3 border border-bg2">
             <h1 class="text-3xl font-bold">Input</h1>
             <div id="code" class="mt-4 h-full max-h-[83vh] rounded-md"></div>
         </div>
 
-        <div class="bg-ctp-mantle w-full p-6 pt-4 h-full rounded-md flex flex-col md:w-1/3 border border-ctp-surface0">
+        <div class="bg-bg1 w-full p-6 pt-4 h-full rounded-md flex flex-col md:w-1/3 border border-bg2">
             <h1 class="text-3xl font-bold">Output</h1>
-            <pre class="p-4 mt-4 text-xl break-words whitespace-pre-wrap bg-ctp-crust h-full rounded-md">{output}</pre>
+            <pre class="px-4 py-2 mt-4 text-xl break-words whitespace-pre-wrap bg-bg1 h-full rounded-md">{output}</pre>
         </div>
     </div>
 </div>
 
 <style>
     button {
-        @apply rounded-md my-auto text-center font-mono w-fit flex transition-all duration-300 hover:text-ctp-yellow;
+        @apply rounded-md my-auto text-center font-mono w-fit flex transition-all duration-300 hover:text-blue;
     }
 </style>
