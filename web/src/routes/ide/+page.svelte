@@ -59,11 +59,11 @@ yap("Hello, World!");
                 { tag: tags.keyword, color: "#cba6f7" },
                 { tag: tags.atom, color: "#f38ba8" },
                 { tag: tags.escape, color: "#f5c2e7" },
-                { tag: tags.comment, color: "#9399b2" },
+                { tag: tags.comment, color: "#a89984" },
                 { tag: tags.number, color: "#fab387" },
                 { tag: tags.float, color: "#fab387" },
                 { tag: tags.operator, color: "#89dceb" },
-                { tag: tags.brace, color: "#9399b2" },
+                { tag: tags.brace, color: "#a89984" },
                 { tag: tags.bool, color: "#89b4fa" }
             ])),
         ]
@@ -183,7 +183,7 @@ yap("Hello, World!");
 
         <div class="bg-bg1 w-full p-6 pt-4 h-full rounded-md flex flex-col md:w-1/3 border border-bg2">
             <h1 class="text-3xl font-bold">Output</h1>
-            <pre class="px-4 py-2 mt-4 text-xl break-words whitespace-pre-wrap bg-bg1 h-full rounded-md">{output}</pre>
+            <pre class="px-4 py-2 mt-4 text-xl break-words whitespace-pre-wrap bg-bg h-full">{output}</pre>
         </div>
     </div>
 </div>

@@ -1,0 +1,15 @@
+{
+  "name": "modu-wasm",
+  "type": "module",
+  "version": "0.1.0",
+  "files": [
+    "modu_wasm_bg.wasm",
+    "modu_wasm.js",
+    "modu_wasm.d.ts"
+  ],
+  "main": "modu_wasm.js",
+  "types": "modu_wasm.d.ts",
+  "sideEffects": [
+    "./snippets/*"
+  ]
+}
