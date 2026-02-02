@@ -37,7 +37,7 @@
 
 <svelte:head>
     <link
-        href="https://rawcdn.githack.com/cyteon/assets/05f98dd21d2870fe70f1f8d51912ef0e2ee9c9c8/prismjs/css/mocha.css"
+        href="https://rawcdn.githack.com/cyteon/assets/522e55c65c77fe6e277a51fc57b0a5053655c1a5/prismjs/css/gruvbox.css"
         rel="stylesheet"
     />
 
@@ -50,20 +50,21 @@
 </svelte:head>
 
 <div class="flex h-screen w-full docs">
-    <div class={`h-screen overflow-y-auto bg-ctp-mantle p-2 border-r border-r-ctp-surface0 flex flex-col transition-all duration-300 ${sidebarOpen ? "w-64" : "w-16"}`}>
-        <a href={base + "/"} class="flex text-xl font-bold transition-color duration-300 hover:bg-ctp-crust/80 p-2 rounded-md">
-            <MoveLeft size={32} class="my-auto text-lg bg-ctp-base p-1 border border-ctp-surface0 rounded-md" />
+    <div class={`h-screen overflow-y-auto bg-bg0_h p-2 border-r border-r-bg1 flex flex-col transition-all duration-300 ${sidebarOpen ? "w-64" : "w-fit"}`}>
+        <a href={base + "/"} class="flex text-xl font-bold transition-color duration-300 hover:bg-bg1/80 p-2 rounded-md">
+            <MoveLeft size={32} class="flex-shrink-0 my-auto text-lg bg-bg0 p-1 border border-bg1 rounded-md" />
             <span class={`ml-2 my-auto ${sidebarOpen ? "" : "hidden"}`}>Main Site</span>
         </a>
+
         {#each docData.pages as page}
-            <a href={page.path} class="flex text-xl font-bold transition-color duration-300 hover:bg-ctp-crust/80 p-2 rounded-md">
-                <page.icon size={32} class={`my-auto text-lg bg-ctp-base p-1 border border-ctp-surface0 rounded-md ${data.slug === page.path ? "text-ctp-blue" : ""}`} />
-                <span class={`ml-2 my-auto ${data.slug === page.path ? "text-ctp-blue" : ""} ${sidebarOpen ? "" : "hidden"}`}>{page.title}</span>
+            <a href={page.path} class="flex text-xl font-bold transition-color duration-300 hover:bg-bg1/80 p-2 rounded-md">
+                <page.icon size={32} class={`flex-shrink-0 my-auto text-lg bg-bg0 p-1 border border-bg1 rounded-md ${data.slug === page.path ? "text-blue" : ""}`} />
+                <span class={`ml-2 my-auto ${data.slug === page.path ? "text-blue" : ""} ${sidebarOpen ? "" : "hidden"}`}>{page.title}</span>
             </a>
         {/each}
 
-        <button class="mt-auto bg-ctp-mantle p-2 rounded-md" on:click={() => sidebarOpen = !sidebarOpen}>
-            <Menu size={32} class="my-auto" />
+        <button class="mt-auto p-2 rounded-md" on:click={() => sidebarOpen = !sidebarOpen}>
+            <Menu size={32} class="flex-shrink-0 my-auto" />
         </button>
     </div>
 

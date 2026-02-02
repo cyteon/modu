@@ -114,7 +114,7 @@ yap("Hello, World!");
 
             setTimeout(() => {
                 runClicked = false;
-            }, 1000);
+            }, 500);
         } catch (e) {
             output = "Error running code: " + e.message;
         }
@@ -153,7 +153,7 @@ yap("Hello, World!");
 
 <div class="flex flex-col w-full h-screen">
     <div class="w-full border-b border-bg1 p-2 px-4 flex">
-        <a href={base + "/"} class="text-3xl font-bold inline-block bg-clip-text text-transparent bg-gradient-to-r from-ctp-red to-75% to-ctp-yellow">Modu</a>
+        <a href={base + "/"} class="text-2xl font-bold">modu</a>
         <p class="ml-2 mt-auto text-xl">{moduVersion ? `${moduVersion}` : ""}</p>
 
         <div class="ml-auto my-auto">
@@ -161,7 +161,7 @@ yap("Hello, World!");
         </div>
 
         <div class="ml-auto flex">
-            <button class={`${runClicked ? "text-ctp-green" : ""} mr-5`} on:click={run}>
+            <button class={`${runClicked ? "text-blue" : ""} mr-5`} on:click={run}>
                 <Play size={28} class="my-auto" />
             </button>
 
