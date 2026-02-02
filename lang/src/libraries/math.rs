@@ -152,6 +152,54 @@ pub fn abs(args: Vec<Spanned<Expr>>) -> Result<InternalFunctionResponse, (String
     }
 }
 
+pub fn pow(args: Vec<Spanned<Expr>>) -> Result<InternalFunctionResponse, (String, Span)> {
+    if args.len() != 2 {
+        return Err((
+            "pow takes exactly two arguments".to_string(),
+            args[0].span,
+        ));
+    }
+
+    match (&args[0].node, &args[1].node) {
+        (Expr::Int(a), Expr::Int(b)) => {
+            let result = a.pow(*b as u32);
+            Ok(InternalFunctionResponse {
+                return_value: Expr::Int(result),
+                replace_self: None,
+            })
+        }
+
+        (Expr::Float(a), Expr::Float(b)) => {
+            let result = a.powf(*b);
+            Ok(InternalFunctionResponse {
+                return_value: Expr::Float(result),
+                replace_self: None,
+            })
+        }
+
+        (Expr::Int(a), Expr::Float(b)) => {
+            let result = (*a as f64).powf(*b);
+            Ok(InternalFunctionResponse {
+                return_value: Expr::Float(result),
+                replace_self: None,
+            })
+        }
+
+        (Expr::Float(a), Expr::Int(b)) => {
+            let result = a.powf(*b as f64);
+            Ok(InternalFunctionResponse {
+                return_value: Expr::Float(result),
+                replace_self: None,
+            })
+        }
+
+        _ => Err((
+            "pow expects number arguments".to_string(),
+            args[0].span,
+        )),
+    }
+}
+
 pub fn get_object() -> Expr {
     let mut symbols = std::collections::HashMap::new();
 
@@ -186,6 +234,18 @@ pub fn get_object() -> Expr {
                 name: "abs".to_string(),
                 args: vec!["x".to_string()],
                 func: abs,
+            },
+            span: Span::default(),
+        },
+    );
+
+    symbols.insert(
+        "pow".to_string(),
+        SpannedExpr {
+            node: Expr::InternalFunction {
+                name: "pow".to_string(),
+                args: vec!["base".to_string(), "exponent".to_string()],
+                func: pow,
             },
             span: Span::default(),
         },
