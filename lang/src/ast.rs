@@ -84,6 +84,8 @@ pub enum Expr {
     #[cfg(not(target_arch = "wasm32"))]
     FFILibrary(Arc<Library>),
 
+    File(Arc<std::fs::File>),
+
     Object {
         properties: HashMap<String, Expr>,
     },

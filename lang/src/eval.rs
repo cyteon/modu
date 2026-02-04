@@ -84,6 +84,17 @@ pub fn eval<'src>(expr: &'src SpannedExpr, context: &mut HashMap<String, Expr>) 
                     }
                 }
 
+                Expr::File(_) => {
+                    match crate::builtins::file::get_fn(property) {
+                        Some(value) => Ok(Flow::Continue(value)),
+                        None => Err(EvalError {
+                            message: format!("File has no property named {}", property),
+                            message_short: "no such property".to_string(),
+                            span: expr.span,
+                        }),
+                    }
+                }
+
                 #[cfg(not(target_arch = "wasm32"))]
                 Expr::FFILibrary(library) => {
                     Ok(Flow::Continue(Expr::FFILibrary(library)))
