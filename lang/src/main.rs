@@ -43,7 +43,7 @@ fn main() {
             "install" => cli::install::install(),
             "uninstall" => cli::uninstall::uninstall(),
             "--version" => {
-                println!("Modu v2.2.0");
+                println!("Modoodoo v6.7.0");
             }
 
             action => {
