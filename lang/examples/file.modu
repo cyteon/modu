@@ -1,16 +1,11 @@
 import "file";
 
 let path = input("file path: ");
-let file = file.create(path);
+let f = file.open(path);
 
-print("file: ", file);
+print("file: ", f);
 let content_write = input("content to write: ");
 let content_append = input("content to append: ");
 
-file.write(file, content_write);
-file.append(file, content_append);
-
-let file = file.open(path);
-let content = file.read();
-print("file: ", file);
-print("file content: ", content);
+f.write(content_write);
+f.append(content_append);

@@ -85,7 +85,7 @@ pub fn eval<'src>(expr: &'src SpannedExpr, context: &mut HashMap<String, Expr>) 
                 }
 
                 Expr::File(_) => {
-                    match crate::builtins::file::get_fn(property) {
+                    match crate::libraries::file::get_fn(property) {
                         Some(value) => Ok(Flow::Continue(value)),
                         None => Err(EvalError {
                             message: format!("File has no property named {}", property),
