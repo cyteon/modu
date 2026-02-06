@@ -1,5 +1,6 @@
 # Server
 Usage: **modu server [port: default 2424]**
+⚠️ Deprecated module, will be removed in future versions
 
 This will start the built-in modu interpreter server, which can be used to run code on platforms not supported by modu, like the web! \
 An example of this is the [Modu Web IDE](../ide).

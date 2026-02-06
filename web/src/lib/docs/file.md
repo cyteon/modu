@@ -1,31 +1,32 @@
 # File I/O
 > Disabled on the server :P
 
-Start of with importing the File package with either of these two methods:
+### Opening files
+In order to read or write to an file, you first have to open i
 ```rust
-import "file" as file;
-import "file" as *;
+import "file";
+let f = file.open("file.txt");
 ```
 
 ### Reading files
 
-You can read files with **read(path)** function:
+You can read files with **f.read()** function:
 ```rust
-let content = file.read("file.txt"); // or read() if imported with *
+let content = f.read();
 print(content);
 ```
 
 ### Writing files
-You can write files using **write(path, content)** or **write_append(path, content)**
+You can write files using **f.write(content)** or **f.append(content)**
 ```rust
-file.write("file.txt", "hello");
-print(file.read("file.txt"));
+f.write("hello");
+print(f.read());
 
 // Outputs:
 // hello
 
-file.write_append("file.txt", " world");
-print(file.read("file.txt"));
+f.append(" world");
+print(f.read());
 
 // Outputs:
 // hello world
