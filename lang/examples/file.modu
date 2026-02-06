@@ -12,3 +12,4 @@ f.append(content_append);
 
 f.close();
 print(f);
+f.write("this should fail");

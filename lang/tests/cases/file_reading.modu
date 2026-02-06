@@ -1,5 +1,0 @@
-import "file";
-
-let f = file.open("file_reading.modu");
-print(f.read());
-f.close();
