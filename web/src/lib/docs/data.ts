@@ -27,11 +27,11 @@ export default {
             "title": "Math",
             "icon": Equal,
         },
-        /*{
+        {
             "path": "file",
             "title": "File I/O",
             "icon": File,
-        },*/
+        },
         {
             "path": "os",
             "title": "OS Lib",

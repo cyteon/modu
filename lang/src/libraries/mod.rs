@@ -1,15 +1,17 @@
 mod time;
 mod encoding;
 mod uuid;
-#[cfg(not(target_arch = "wasm32"))]
-mod os;
 mod math;
-#[cfg(not(target_arch = "wasm32"))]
-mod http;
 mod json;
 mod crypto;
+pub mod file;
+
+#[cfg(not(target_arch = "wasm32"))]
+mod http;
 #[cfg(not(target_arch = "wasm32"))]
 pub mod ffi;
+#[cfg(not(target_arch = "wasm32"))]
+mod os;
 
 pub fn get_package(name: &str) -> Option<crate::ast::Expr> {
     match name {
@@ -49,6 +51,17 @@ pub fn get_package(name: &str) -> Option<crate::ast::Expr> {
 
             Some(ffi::get_object())
         }
+
+        #[cfg(not(target_arch = "wasm32"))]
+        "file" => {
+            let sys_args = std::env::args().collect::<Vec<String>>();
+            if sys_args.len() > 1 && sys_args[1] == "server" {
+                return None;
+            }
+
+            Some(file::get_object())
+        }
+
         _ => None,
     }
 }
