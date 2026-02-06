@@ -41,9 +41,55 @@ pub fn parse_obj(obj: &mut HashMap<String, serde_json::Value>) -> HashMap<String
                 map.insert(key, Expr::Object { properties });
             }
 
-            v => {
-                map.insert(key, Expr::String(v.to_string()));
+            serde_json::Value::Array(arr) => {
+                let elements: Vec<Spanned<Expr>> = arr.into_iter().map(|v| {
+                    let expr = match v {
+                        serde_json::Value::Null => Expr::Null,
+                        serde_json::Value::Bool(b) => Expr::Bool(b),
+                        serde_json::Value::Number(n) => {
+                            if let Some(i) = n.as_i64() {
+                                Expr::Int(i)
+                            } else if let Some(f) = n.as_f64() {
+                                Expr::Float(f)
+                            } else {
+                                Expr::Null
+                            }
+                        }
+                        serde_json::Value::String(s) => Expr::String(s),
+                        serde_json::Value::Object(o) => {
+                            let mut hashmap: HashMap<String, serde_json::Value> = o.into_iter().collect();
+                            let properties = parse_obj(&mut hashmap);
+                            Expr::Object { properties }
+                        }
+                        serde_json::Value::Array(a) => {
+                            let nested_elements: Vec<Spanned<Expr>> = a.into_iter().map(|v| {
+                                let nested_expr = match v {
+                                    serde_json::Value::Null => Expr::Null,
+                                    serde_json::Value::Bool(b) => Expr::Bool(b),
+                                    serde_json::Value::Number(n) => {
+                                        if let Some(i) = n.as_i64() {
+                                            Expr::Int(i)
+                                        } else if let Some(f) = n.as_f64() {
+                                            Expr::Float(f)
+                                        } else {
+                                            Expr::Null
+                                        }
+                                    }
+                                    serde_json::Value::String(s) => Expr::String(s),
+                                    _ => Expr::Null,
+                                };
+                                Spanned { node: nested_expr, span: Span::default() }
+                            }).collect();
+                            Expr::Array(nested_elements)
+                        }
+                    };
+                    Spanned { node: expr, span: Span::default() }
+                }).collect();
+
+                map.insert(key, Expr::Array(elements));
             }
+
+            _ => unreachable!(), // this shouldnt be reachable, cargo said it wont ever be reached
         }
     }
 

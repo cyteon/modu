@@ -156,6 +156,33 @@ impl std::fmt::Display for Expr {
                 write!(f, "]")
             }
 
+            Expr::Object { properties } => {
+                write!(f, "{{")?;
+
+                let mut first = true;
+                for (key, value) in properties {
+                    if !first {
+                        write!(f, ", ")?;
+                    }
+                    
+                    first = false;
+
+                    let value_str = match value {
+                        Expr::String(s) => format!("\"{}\"", Self::process_escape_sequences(s)),
+                        Expr::Int(n) => n.to_string(),
+                        Expr::Float(fl) => fl.to_string(),
+                        Expr::Bool(b) => b.to_string(),
+                        Expr::Array(_) => format!("{}", value),
+                        Expr::Null => "null".to_string(),
+                        _ => "\"<complex value>\"".to_string(),
+                    };
+
+                    write!(f, "\"{}\": {}", key, value_str)?;
+                }
+
+                write!(f, "}}")
+            }
+
             _ => write!(f, "{:?}", self),
         }
     }
