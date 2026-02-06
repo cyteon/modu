@@ -139,8 +139,9 @@ pub fn to_string(args: Vec<Spanned<Expr>>) -> Result<InternalFunctionResponse, (
                     Expr::Int(n) => n.to_string(),
                     Expr::Float(f) => f.to_string(),
                     Expr::Bool(b) => b.to_string(),
+                    Expr::Array(arr) => format!("{}", value),
                     Expr::Null => "null".to_string(),
-                    _ => "\"<complex_value>\"".to_string(),
+                    _ => "\"<complex value>\"".to_string(),
                 };
                 parts.push(format!("\"{}\": {}", key, value_str));
             }
@@ -160,6 +161,58 @@ pub fn to_string(args: Vec<Spanned<Expr>>) -> Result<InternalFunctionResponse, (
     })
 }
 
+pub fn keys(args: Vec<Spanned<Expr>>) -> Result<InternalFunctionResponse, (String, Span)> {
+    let object = &args[0].node;
+
+    let result = match object {
+        Expr::Object { properties } => {
+            let keys: Vec<Spanned<Expr>> = properties.keys().cloned().map(|k| Spanned {
+                node: Expr::String(k),
+                span: args[0].span.clone(),
+            }).collect();
+
+            Expr::Array(keys)
+        }
+        _ => {
+            return Err((
+                "keys expects an object as the first argument".to_string(),
+                args[0].span,
+            ))
+        }
+    };
+
+    Ok(InternalFunctionResponse {
+        return_value: result,
+        replace_self: None,
+    })
+}
+
+pub fn values(args: Vec<Spanned<Expr>>) -> Result<InternalFunctionResponse, (String, Span)> {
+    let object = &args[0].node;
+
+    let result = match object {
+        Expr::Object { properties } => {
+            let values: Vec<Spanned<Expr>> = properties.values().cloned().map(|v| Spanned {
+                node: v,
+                span: args[0].span.clone(),
+            }).collect();
+
+            Expr::Array(values)
+        }
+        _ => {
+            return Err((
+                "values expects an object as the first argument".to_string(),
+                args[0].span,
+            ))
+        }
+    };
+
+    Ok(InternalFunctionResponse {
+        return_value: result,
+        replace_self: None,
+    })
+}
+
 pub fn get_fn(name: &str) -> Option<Expr> {
     Some(Expr::InternalFunction {
         name: name.to_string(),
@@ -169,6 +222,8 @@ pub fn get_fn(name: &str) -> Option<Expr> {
             "has" => vec!["self".to_string(), "key".to_string()],
             "delete" => vec!["self".to_string(), "key".to_string()],
             "to_string" => vec!["self".to_string()],
+            "keys" => vec!["self".to_string()],
+            "values" => vec!["self".to_string()],
             _ => vec![],
         },
         func: match name {
@@ -177,6 +232,8 @@ pub fn get_fn(name: &str) -> Option<Expr> {
             "has" => has,
             "delete" => delete,
             "to_string" => to_string,
+            "keys" => keys,
+            "values" => values,
             _ => return None,
         },
     })
