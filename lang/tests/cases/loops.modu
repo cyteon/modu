@@ -12,11 +12,11 @@ loop {
     print(i);
 }
 
-for n = 1..=5 {
+for n in 1..=5 {
     print(n);
 }
 
-for i = 1..100 {
+for i in 1..100 {
     if i > 5 {
         break;
     }
@@ -32,6 +32,6 @@ for i = start..=5 {
     let end = i;
 }
 
-for n = 1..=end {
+for n in 1..=end {
     print(n);
 }

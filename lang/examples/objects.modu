@@ -39,3 +39,9 @@ print(parsed);
 parsed.delete("obj");
 print(parsed);
 print(parsed.has("obj"));
+
+print();
+
+for key in parsed.keys() {
+    print("key: ", key);
+}

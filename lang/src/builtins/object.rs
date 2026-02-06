@@ -139,7 +139,7 @@ pub fn to_string(args: Vec<Spanned<Expr>>) -> Result<InternalFunctionResponse, (
                     Expr::Int(n) => n.to_string(),
                     Expr::Float(f) => f.to_string(),
                     Expr::Bool(b) => b.to_string(),
-                    Expr::Array(arr) => format!("{}", value),
+                    Expr::Array(_) => format!("{}", value),
                     Expr::Null => "null".to_string(),
                     _ => "\"<complex value>\"".to_string(),
                 };

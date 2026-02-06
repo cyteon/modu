@@ -34,11 +34,11 @@ fn return_with_null() {
     print("this should not print either");
 }
 
-for n = 0..2 {
+for n in 0..2 {
     print("n is ", n);
 }
 
-for n = 2..=5 {
+for n in 2..=5 {
     print("n is ", n);
 }
 

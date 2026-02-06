@@ -8,9 +8,8 @@ print("First element: ", array[0]);
 let length = array.len();
 print("Array length: ", length);
 
-let b = length;
-for i = 0..b {
-    print("Element ", i, ": ", array[i]);
+for v in array {
+    print("v: ", v);
 }
 
 array.clear();

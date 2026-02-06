@@ -469,6 +469,22 @@ pub fn eval<'src>(expr: &'src SpannedExpr, context: &mut HashMap<String, Expr>) 
                     Ok(Flow::Continue(Expr::Null))
                 }
 
+                Expr::Array(elements) => {
+                    for element in elements {
+                        let value = eval(&element, context)?.unwrap();
+                        context.insert(iterator_name.clone(), value);
+
+                        match eval(body, context)? {
+                            Flow::Continue(_) => {},
+                            Flow::Return(v) => return Ok(Flow::Return(v)),
+                            Flow::Break => break,
+                            Flow::Skip => continue,
+                        }
+                    }
+
+                    Ok(Flow::Continue(Expr::Null))
+                }
+
                 _ => Err(EvalError {
                     message: format!("Cannot iterate over value: {:?}", range_value),
                     message_short: "cannot iterate".to_string(),

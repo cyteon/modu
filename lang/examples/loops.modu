@@ -17,13 +17,13 @@ loop {
 
 print("\nfor loop: (should print 1-5)\n");
 
-for n = 1..5 {
+for n in 1..5 {
     print(n);
 }
 
 print("\nfor loop w/ break: (should print 1-5)\n");
 
-for i = 1..100 {
+for i in 1..100 {
     if i > 5 {
         break;
     }
@@ -36,6 +36,6 @@ print("\nfor loop using vars in range: (should print 1-5)\n");
 let start = 1;
 let end = 5;
 
-for n = 1..end {
+for n in 1..end {
     print(n);
 }

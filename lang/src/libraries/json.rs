@@ -88,8 +88,6 @@ pub fn parse_obj(obj: &mut HashMap<String, serde_json::Value>) -> HashMap<String
 
                 map.insert(key, Expr::Array(elements));
             }
-
-            _ => unreachable!(), // this shouldnt be reachable, cargo said it wont ever be reached
         }
     }
 
