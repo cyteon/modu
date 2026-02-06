@@ -1,6 +1,7 @@
 use std::collections::HashMap;
 use ariadne::{Color, Label, Report, ReportKind, Source};
 use chumsky::prelude::*;
+use colored::Colorize;
 use crate::{ast::{Expr, SpannedExpr}, eval, lexer::{Span, Token, lex}};
 
 enum Postfix {
@@ -263,16 +264,25 @@ fn parser<'src>() -> impl Parser<
         
         let for_loop_stmt = select! { (Token::For, span) => span }
             .then(select! { (Token::Identifier(name), _) => name })
-            .then_ignore(select! { (Token::Assign, _) => () })
+            .then(
+                select! { (Token::Assign, span) => (true, span) }
+                    .or(select! { (Token::In, span) => (false, span) })
+            )
             .then(expr.clone())
             .then(block.clone())
-            .map(|(((start, iterator_name), iterator_range), body): (((Span, String), SpannedExpr), SpannedExpr)| SpannedExpr {
-                node: Expr::ForLoop {
-                    iterator_name,
-                    iterator_range: Box::new(iterator_range.clone()),
-                    body: Box::new(body.clone()),
-                },
-                span: Span::from(start.start..body.span.end),
+            .map(|((((start, iterator_name), (is_deprecated, token_span)), iterator_range), body): ((((Span, String), (bool, Span)), SpannedExpr), SpannedExpr)| {
+                if is_deprecated {
+                    println!("{}", format!("Warning: using '=' in for loops is deprecated and will be removed in an future version. Use 'in' instead. ").dimmed());
+                }
+                
+                SpannedExpr {
+                    node: Expr::ForLoop {
+                        iterator_name,
+                        iterator_range: Box::new(iterator_range.clone()),
+                        body: Box::new(body.clone()),
+                    },
+                    span: Span::from(start.start..body.span.end),
+                }
             });
         
         let if_stmt = select! { (Token::If, span) => span }

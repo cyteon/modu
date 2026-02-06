@@ -23,7 +23,7 @@ This will print the numbers 1 to 10.
 ## For Loops
 These loops will run through an set range. These can be also be stopped prematurely with "break".
 ```rust
-for n = 1..5 {
+for n in 1..5 {
     print(n); 
 }
 ```

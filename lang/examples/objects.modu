@@ -5,8 +5,11 @@ let obj = json.new();
 obj.set("name", "test");
 obj.set("age", 67);
 
-print(obj.name);
-print(obj);
+print("obj.name: ", obj.name);
+print("obj: ", obj);
+print("obj keys: ", obj.keys());
+print("obj values: ", obj.values());
+
 print(json.new());
 print(obj.to_string());
 print(json.new().to_string());
@@ -18,17 +21,31 @@ everything.set("float", 5.5);
 everything.set("bool", true);
 everything.set("null", null);
 everything.set("obj", obj);
+everything.set("arr", [1, "2", false]);
 
 print();
 
 let string = everything.to_string();
+print(string);
+
 let parsed = json.parse(string);
 
 print(parsed.get("string"));
 print(parsed.has("int"));
 print(parsed.obj);
+print(parsed.arr);
 print(parsed);
 
 parsed.delete("obj");
 print(parsed);
 print(parsed.has("obj"));
+
+print();
+
+for key in parsed.keys() {
+    print("key: ", key);
+}
+
+for value in parsed.values() {
+    print("value: ", value);
+}

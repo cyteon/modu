@@ -92,6 +92,9 @@ pub enum Token {
     #[token("for")]
     For,
 
+    #[token("in")]
+    In,
+
     #[token(",")]
     Comma,
 

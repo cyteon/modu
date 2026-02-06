@@ -84,6 +84,7 @@ pub fn eval<'src>(expr: &'src SpannedExpr, context: &mut HashMap<String, Expr>) 
                     }
                 }
 
+                #[cfg(not(target_arch = "wasm32"))]
                 Expr::File(_) => {
                     match crate::libraries::file::get_fn(property) {
                         Some(value) => Ok(Flow::Continue(value)),
@@ -457,6 +458,22 @@ pub fn eval<'src>(expr: &'src SpannedExpr, context: &mut HashMap<String, Expr>) 
 
                     for i in start..=end {
                         context.insert(iterator_name.clone(), Expr::Int(i));
+
+                        match eval(body, context)? {
+                            Flow::Continue(_) => {},
+                            Flow::Return(v) => return Ok(Flow::Return(v)),
+                            Flow::Break => break,
+                            Flow::Skip => continue,
+                        }
+                    }
+
+                    Ok(Flow::Continue(Expr::Null))
+                }
+
+                Expr::Array(elements) => {
+                    for element in elements {
+                        let value = eval(&element, context)?.unwrap();
+                        context.insert(iterator_name.clone(), value);
 
                         match eval(body, context)? {
                             Flow::Continue(_) => {},
