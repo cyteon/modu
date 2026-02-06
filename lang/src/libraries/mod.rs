@@ -4,8 +4,9 @@ mod uuid;
 mod math;
 mod json;
 mod crypto;
-pub mod file;
 
+#[cfg(not(target_arch = "wasm32"))]
+pub mod file;
 #[cfg(not(target_arch = "wasm32"))]
 mod http;
 #[cfg(not(target_arch = "wasm32"))]

@@ -84,6 +84,7 @@ pub enum Expr {
     #[cfg(not(target_arch = "wasm32"))]
     FFILibrary(Arc<Library>),
 
+    #[cfg(not(target_arch = "wasm32"))]
     File(Arc<std::fs::File>),
 
     Object {
@@ -164,7 +165,7 @@ impl std::fmt::Display for Expr {
                     if !first {
                         write!(f, ", ")?;
                     }
-                    
+
                     first = false;
 
                     let value_str = match value {

@@ -45,3 +45,7 @@ print();
 for key in parsed.keys() {
     print("key: ", key);
 }
+
+for value in parsed.values() {
+    print("value: ", value);
+}
