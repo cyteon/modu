@@ -265,12 +265,12 @@ fn parser<'src>() -> impl Parser<
         let for_loop_stmt = select! { (Token::For, span) => span }
             .then(select! { (Token::Identifier(name), _) => name })
             .then(
-                select! { (Token::Assign, span) => (true, span) }
-                    .or(select! { (Token::In, span) => (false, span) })
+                select! { (Token::Assign, _) => true }
+                    .or(select! { (Token::In, _) => false })
             )
             .then(expr.clone())
             .then(block.clone())
-            .map(|((((start, iterator_name), (is_deprecated, token_span)), iterator_range), body): ((((Span, String), (bool, Span)), SpannedExpr), SpannedExpr)| {
+            .map(|((((start, iterator_name), is_deprecated), iterator_range), body): ((((Span, String), bool), SpannedExpr), SpannedExpr)| {
                 if is_deprecated {
                     println!("{}", format!("Warning: using '=' in for loops is deprecated and will be removed in an future version. Use 'in' instead. ").dimmed());
                 }

@@ -137,6 +137,30 @@ pub fn bool(args: Vec<Spanned<Expr>>) -> Result<InternalFunctionResponse, (Strin
     })
 }
 
+pub fn type_of(args: Vec<Spanned<Expr>>) -> Result<InternalFunctionResponse, (String, Span)> {
+    let type_name = match &args[0].node {
+        Expr::Int(_) => "int",
+        Expr::Float(_) => "float",
+        Expr::String(_) => "string",
+        Expr::Bool(_) => "bool",
+        Expr::Null => "null",
+        Expr::Function { .. } => "function",
+        Expr::InternalFunction { .. } => "function",
+        Expr::Array(_) => "array",
+        Expr::Object {..} => "object",
+        Expr::Module { .. } => "module",
+        Expr::FFILibrary { .. } => "ffilibrary",
+        Expr::File(_) => "file",
+        _ => "unknown",
+
+    }.to_string();
+
+    Ok(InternalFunctionResponse {
+        return_value: Expr::String(type_name),
+        replace_self: None,
+    })
+}
+
 pub fn fill_context(context: &mut HashMap<String, Expr>) {
     context.insert(
         "print".to_string(),
@@ -198,6 +222,15 @@ pub fn fill_context(context: &mut HashMap<String, Expr>) {
             name: "bool".to_string(),
             args: vec!["value".to_string()],
             func: bool,
+        },
+    );
+
+    context.insert(
+        "type".to_string(),
+        Expr::InternalFunction {
+            name: "type".to_string(),
+            args: vec!["value".to_string()],
+            func: type_of,
         },
     );
 }
