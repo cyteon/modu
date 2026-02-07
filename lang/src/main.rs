@@ -1,5 +1,3 @@
-#![feature(backtrace_frames)]
-
 use std::panic::{catch_unwind, AssertUnwindSafe};
 use colored::Colorize;
 
@@ -63,18 +61,15 @@ fn main() {
         
         eprintln!("{}", "Internal interpreter error".red().bold());
         eprintln!("  ├─ {}", msg.yellow());
-        if cfg!(debug_assertions) {
-            let bt = std::backtrace::Backtrace::capture();
-            
-            if bt.frames().is_empty() {
-                eprintln!("  ├─ {}", "Run with RUST_BACKTRACE=1 to see a backtrace".dimmed());
-            } else {
-                eprintln!("  ├─ Backtrace:");
-                for line in bt.frames().iter() {
-                    eprintln!("  │   {}", format!("{:?}", line).dimmed());
-                }
-            } 
+
+        let bt = std::backtrace::Backtrace::capture();
+
+        if bt.status() == std::backtrace::BacktraceStatus::Captured {
+            eprintln!("  ├─ Backtrace:");
+            eprintln!("{}", format!("{bt:?}").dimmed());
+        } else {
+            eprintln!("  ├─ {}", "Run with RUST_BACKTRACE=1 for more details".dimmed());
         }
-        eprintln!("  └─ {}", "Please report this issue at https://github.com/cyteon/modu/issues".dimmed());
+        eprintln!("  └─ Please report this issue at https://github.com/cyteon/modu/issues");
     }
 }
