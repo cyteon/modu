@@ -21,7 +21,7 @@ name = "modu"
 path = "src/main.rs"
 
 [[bin]]
-name = "modu-runtime"
+name = "runtime"
 path = "src/runtime.rs"
 
 [dependencies]
