@@ -42,6 +42,7 @@ fn main() {
             "publish" => cli::publish::publish(),
             "install" => cli::install::install(),
             "uninstall" => cli::uninstall::uninstall(),
+            "build" => cli::build::build(),
             "--version" => {
                 println!("Modu v{}", env!("CARGO_PKG_VERSION"));
             }

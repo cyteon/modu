@@ -6,3 +6,4 @@ pub mod init;
 pub mod publish;
 pub mod install;
 pub mod uninstall;
+pub mod build;

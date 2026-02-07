@@ -10,6 +10,7 @@ license = "MIT"
 authors = ["cyteon"]
 keywords = ["programming-language", "cli", "interpreter", "language"]
 exclude = ["/examples", "/tmp", "/tests"]
+default-run = "modu"
 
 [lib]
 name = "modu"
@@ -18,6 +19,10 @@ path = "src/lib.rs"
 [[bin]]
 name = "modu"
 path = "src/main.rs"
+
+[[bin]]
+name = "modu-runtime"
+path = "src/runtime.rs"
 
 [dependencies]
 chrono = "0.4.39"

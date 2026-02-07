@@ -55,19 +55,5 @@ loop {
     }
 }
 
-import "yapper.modu";
-import "yapper.modu" as yp;
-import "yapper.modu" as *;
-
-yapper.yap("test");
-yp.yap(yapper.abc);
-yap("hi");
-
-/* this is a 
-   multi-line comment */
-
-fn red(string) {
-    return "\x1b[31m" + string + "\x1b[0m";
-}
-
-print(red("this should be red"));
+import "math";
+print(math.div(10, 2));
