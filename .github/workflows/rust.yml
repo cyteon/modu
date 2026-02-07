@@ -26,7 +26,8 @@ jobs:
     - name: Build for Linux
       run: |
         cd lang
-        cargo build --release --verbose
+        cargo build --release --verbose --bin modu
+        cargo build --release --verbose --bin runtime
     
     - name: Setup for Windows
       run: |
@@ -39,13 +40,16 @@ jobs:
     - name: Build for Windows
       run: |
         cd lang
-        cargo build --release --verbose --target x86_64-pc-windows-gnu
+        cargo build --release --verbose --target x86_64-pc-windows-gnu --bin modu
+        cargo build --release --verbose --target x86_64-pc-windows-gnu --bin runtime
 
     - name: Prepare binaries
       run: |
         mkdir -p artifacts
         cp lang/target/x86_64-pc-windows-gnu/release/modu.exe artifacts/modu.exe
+        cp lang/target/x86_64-pc-windows-gnu/release/runtime.exe artifacts/runtime.exe
         cp lang/target/release/modu artifacts/modu-linux
+        cp lang/target/release/runtime artifacts/runtime-linux-x64
 
     - name: Upload Artifacts
       uses: actions/upload-artifact@v4
