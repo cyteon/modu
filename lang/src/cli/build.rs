@@ -2,7 +2,7 @@ use colored::Colorize;
 use std::fs;
 use std::path::Path;
 
-#[cfg(all(target_os = "linux", target_arch = "x86_64"))]
+//#[cfg(all(target_os = "linux", target_arch = "x86_64"))]
 const RUNTIME_BINARY: &[u8] = include_bytes!("../runtimes/modu-runtime-linux-x64");
 
 pub fn build() {
