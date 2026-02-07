@@ -1,4 +1,3 @@
-#![feature(backtrace_frames)]
 use std::panic::{catch_unwind, AssertUnwindSafe};
 
 mod ast;
