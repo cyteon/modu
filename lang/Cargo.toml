@@ -54,7 +54,7 @@ uuid = { version = "1.20.0", features = ["v4", "v7", "js"]}
 gag = "1.0.0"
 uuid = { version = "1.20.0", features = ["v4", "v7"] }
 openssl = { version = "0.10", features = ["vendored"] }
-reqwest = { version = "0.13.1", features = ["blocking", "json"]}
+reqwest = { version = "0.13.1", features = ["blocking", "json"] }
 rouille = { version = "3.6.2" }
 libloading = { version = "0.9.0" }
 zip = { version = "7.2.0" }
