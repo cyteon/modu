@@ -43,7 +43,7 @@ fn main() {
             "install" => cli::install::install(),
             "uninstall" => cli::uninstall::uninstall(),
             "--version" => {
-                println!("{}", crate::VERSION);
+                println!("Modu v{}", env!("CARGO_PKG_VERSION"));
             }
 
             action => {
