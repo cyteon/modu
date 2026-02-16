@@ -73,3 +73,4 @@ fn red(string) {
 print(red("this should be red"));
 
 print("i like potatoes".split(" "));
+print("1.min(2).max(5) = ", 1.min(2).max(5));

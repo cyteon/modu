@@ -50,7 +50,7 @@ pub fn eval<'src>(expr: &'src SpannedExpr, context: &mut HashMap<String, Expr>) 
                     match symbols.get(property) {
                         Some(value) => Ok(Flow::Continue(value.node.clone())),
                         None => Err(EvalError {
-                            message: format!("Modules have no property named {}", property),
+                            message: format!("modules have no properties named {}", property),
                             message_short: "no such property".to_string(),
                             span: expr.span,
                         }),
@@ -64,7 +64,7 @@ pub fn eval<'src>(expr: &'src SpannedExpr, context: &mut HashMap<String, Expr>) 
                             match crate::builtins::object::get_fn(property) {
                                 Some(value) => Ok(Flow::Continue(value)),
                                 None => Err(EvalError {
-                                    message: format!("Objects have no properties named {}", property),
+                                    message: format!("objects have no properties named {}", property),
                                     message_short: "no such property".to_string(),
                                     span: expr.span,
                                 }),
@@ -77,7 +77,7 @@ pub fn eval<'src>(expr: &'src SpannedExpr, context: &mut HashMap<String, Expr>) 
                     match crate::builtins::array::get_fn(property) {
                         Some(value) => Ok(Flow::Continue(value)),
                         None => Err(EvalError {
-                            message: format!("Arrays have no properties named {}", property),
+                            message: format!("arrays have no properties named {}", property),
                             message_short: "no such property".to_string(),
                             span: expr.span,
                         }),
@@ -88,7 +88,29 @@ pub fn eval<'src>(expr: &'src SpannedExpr, context: &mut HashMap<String, Expr>) 
                     match crate::builtins::string::get_fn(property) {
                         Some(value) => Ok(Flow::Continue(value)),
                         None => Err(EvalError {
-                            message: format!("Strings have no properties named {}", property),
+                            message: format!("strings have no properties named {}", property),
+                            message_short: "no such property".to_string(),
+                            span: expr.span,
+                        }),
+                    }
+                }
+
+                Expr::Int(_) => {
+                    match crate::builtins::int::get_fn(property) {
+                        Some(value) => Ok(Flow::Continue(value)),
+                        None => Err(EvalError {
+                            message: format!("ints have no properties named {}", property),
+                            message_short: "no such property".to_string(),
+                            span: expr.span,
+                        }),
+                    }
+                }
+
+                Expr::Float(_) => {
+                    match crate::builtins::float::get_fn(property) {
+                        Some(value) => Ok(Flow::Continue(value)),
+                        None => Err(EvalError {
+                            message: format!("floats have no properties named {}", property),
                             message_short: "no such property".to_string(),
                             span: expr.span,
                         }),

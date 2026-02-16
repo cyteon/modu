@@ -30,7 +30,7 @@ pub fn push(args: Vec<Spanned<Expr>>) -> Result<InternalFunctionResponse, (Strin
     if args.len() < 2 {
         return Err((
             "push expects 2 arguments".to_string(),
-            args[0].span.clone(),
+            args[1].span.clone(),
         ));
     }
 
@@ -51,7 +51,7 @@ pub fn pop(args: Vec<Spanned<Expr>>) -> Result<InternalFunctionResponse, (String
 
     if array.is_empty() {
         return Err((
-            "Cannot pop from an empty array".to_string(),
+            "cannot pop from an empty array".to_string(),
             args[0].span.clone(),
         ));
     }
