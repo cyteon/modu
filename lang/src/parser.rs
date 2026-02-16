@@ -273,7 +273,7 @@ fn parser<'src>() -> impl Parser<
             .map(|((((start, iterator_name), is_deprecated), iterator_range), body): ((((Span, String), bool), SpannedExpr), SpannedExpr)| {
                 if is_deprecated {
                     println!("{}", format!("Warning: using '=' in for loops is deprecated and will be removed in an future version. Use 'in' instead. ").dimmed());
-                }
+                }   
                 
                 SpannedExpr {
                     node: Expr::ForLoop {

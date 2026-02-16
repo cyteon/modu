@@ -50,7 +50,7 @@ pub fn eval<'src>(expr: &'src SpannedExpr, context: &mut HashMap<String, Expr>) 
                     match symbols.get(property) {
                         Some(value) => Ok(Flow::Continue(value.node.clone())),
                         None => Err(EvalError {
-                            message: format!("modules have no properties named {}", property),
+                            message: format!("module has no method named '{}'", property),
                             message_short: "no such property".to_string(),
                             span: expr.span,
                         }),
@@ -64,7 +64,7 @@ pub fn eval<'src>(expr: &'src SpannedExpr, context: &mut HashMap<String, Expr>) 
                             match crate::builtins::object::get_fn(property) {
                                 Some(value) => Ok(Flow::Continue(value)),
                                 None => Err(EvalError {
-                                    message: format!("objects have no properties named {}", property),
+                                    message: format!("object has no method named '{}'", property),
                                     message_short: "no such property".to_string(),
                                     span: expr.span,
                                 }),
@@ -77,7 +77,7 @@ pub fn eval<'src>(expr: &'src SpannedExpr, context: &mut HashMap<String, Expr>) 
                     match crate::builtins::array::get_fn(property) {
                         Some(value) => Ok(Flow::Continue(value)),
                         None => Err(EvalError {
-                            message: format!("arrays have no properties named {}", property),
+                            message: format!("array has no method named '{}'", property),
                             message_short: "no such property".to_string(),
                             span: expr.span,
                         }),
@@ -88,7 +88,7 @@ pub fn eval<'src>(expr: &'src SpannedExpr, context: &mut HashMap<String, Expr>) 
                     match crate::builtins::string::get_fn(property) {
                         Some(value) => Ok(Flow::Continue(value)),
                         None => Err(EvalError {
-                            message: format!("strings have no properties named {}", property),
+                            message: format!("string has no method named '{}'", property),
                             message_short: "no such property".to_string(),
                             span: expr.span,
                         }),
@@ -99,7 +99,7 @@ pub fn eval<'src>(expr: &'src SpannedExpr, context: &mut HashMap<String, Expr>) 
                     match crate::builtins::int::get_fn(property) {
                         Some(value) => Ok(Flow::Continue(value)),
                         None => Err(EvalError {
-                            message: format!("ints have no properties named {}", property),
+                            message: format!("int has no method named '{}'", property),
                             message_short: "no such property".to_string(),
                             span: expr.span,
                         }),
@@ -110,7 +110,7 @@ pub fn eval<'src>(expr: &'src SpannedExpr, context: &mut HashMap<String, Expr>) 
                     match crate::builtins::float::get_fn(property) {
                         Some(value) => Ok(Flow::Continue(value)),
                         None => Err(EvalError {
-                            message: format!("floats have no properties named {}", property),
+                            message: format!("float has no method named '{}'", property),
                             message_short: "no such property".to_string(),
                             span: expr.span,
                         }),
@@ -122,7 +122,7 @@ pub fn eval<'src>(expr: &'src SpannedExpr, context: &mut HashMap<String, Expr>) 
                     match crate::libraries::file::get_fn(property) {
                         Some(value) => Ok(Flow::Continue(value)),
                         None => Err(EvalError {
-                            message: format!("Files have no properties named {}", property),
+                            message: format!("file has no method named '{}'", property),
                             message_short: "no such property".to_string(),
                             span: expr.span,
                         }),
@@ -135,7 +135,7 @@ pub fn eval<'src>(expr: &'src SpannedExpr, context: &mut HashMap<String, Expr>) 
                 }
 
                 _ => Err(EvalError {
-                    message: format!("Cannot access property {} of {:?}", property, object),
+                    message: format!("cannot access property '{}' of '{}'", property, object),
                     message_short: "cannot access property".to_string(),
                     span: expr.span,
                 }),
@@ -149,7 +149,7 @@ pub fn eval<'src>(expr: &'src SpannedExpr, context: &mut HashMap<String, Expr>) 
                 Expr::Int(n) => Ok(Flow::Continue(Expr::Int(-n))),
                 Expr::Float(f) => Ok(Flow::Continue(Expr::Float(-f))),
                 _ => Err(EvalError {
-                    message: format!("Cannot negate value: {:?}", value),
+                    message: format!("cannot negate value '{}'", value),
                     message_short: "cannot negate".to_string(),
                     span: expr.span,
                 }),
@@ -168,7 +168,7 @@ pub fn eval<'src>(expr: &'src SpannedExpr, context: &mut HashMap<String, Expr>) 
                 (Expr::String(l), Expr::String(r)) => Ok(Flow::Continue(Expr::String(l + &r))),
 
                 _ => Err(EvalError {
-                    message: format!("Cannot add values: {:?} + {:?}", left.node, right.node),
+                    message: format!("cannot add values '{}' and '{}'", left.node, right.node),
                     message_short: "cannot add".to_string(),
                     span: expr.span,
                 }),
@@ -186,7 +186,7 @@ pub fn eval<'src>(expr: &'src SpannedExpr, context: &mut HashMap<String, Expr>) 
                 (Expr::Float(l), Expr::Int(r)) => Ok(Flow::Continue(Expr::Float(l - r as f64))),
                 
                 _ => Err(EvalError {
-                    message: format!("Cannot subtract values: {:?} - {:?}", left.node, right.node),
+                    message: format!("cannot subtract values  '{}' and '{}'", left.node, right.node),
                     message_short: "cannot subtract".to_string(),
                     span: expr.span,
                 }),
@@ -197,7 +197,7 @@ pub fn eval<'src>(expr: &'src SpannedExpr, context: &mut HashMap<String, Expr>) 
             match context.get(name) {
                 Some(value) => Ok(Flow::Continue(value.clone())),
                 None => Err(EvalError {
-                    message: format!("Undefined variable: {}", name),
+                    message: format!("undefined variable '{}'", name),
                     message_short: "not defined".to_string(),
                     span: expr.span,
                 }),
@@ -258,13 +258,13 @@ pub fn eval<'src>(expr: &'src SpannedExpr, context: &mut HashMap<String, Expr>) 
                         
                         if evaluated_args.len() > args.len() {
                             return Err(EvalError {
-                                message: format!("Function {} expects {} arguments, got {}", name, args.len(), evaluated_args.len()),
+                                message: format!("function '{}' expects {} arguments, got {}", name, args.len(), evaluated_args.len()),
                                 message_short: format!("{} arguments too many", evaluated_args.len() - args.len()),
                                 span: error_span,
                             });
                         } else {
                             return Err(EvalError {
-                                message: format!("Function {} expects {} arguments, got {}", name, args.len(), evaluated_args.len()),
+                                message: format!("function '{}' expects {} arguments, got {}", name, args.len(), evaluated_args.len()),
                                 message_short: format!("{} arguments too few", args.len() - evaluated_args.len()),
                                 span: error_span,
                             });
@@ -307,13 +307,13 @@ pub fn eval<'src>(expr: &'src SpannedExpr, context: &mut HashMap<String, Expr>) 
 
                         if evaluated_args.len() > args.len() {
                             return Err(EvalError {
-                                message: format!("Function {} expects {} arguments, got {}", name, args.len(), evaluated_args.len()),
+                                message: format!("function '{}' expects {} arguments, got {}", name, args.len(), evaluated_args.len()),
                                 message_short: format!("{} arguments too many", evaluated_args.len() - args.len()),
                                 span: error_span,
                             });
                         } else {
                             return Err(EvalError {
-                                message: format!("Function {} expects {} arguments, got {}", name, args.len(), evaluated_args.len()),
+                                message: format!("function '{}' expects {} arguments, got {}", name, args.len(), evaluated_args.len()),
                                 message_short: format!("{} arguments too few", args.len() - evaluated_args.len()),
                                 span: error_span,
                             });
@@ -330,13 +330,13 @@ pub fn eval<'src>(expr: &'src SpannedExpr, context: &mut HashMap<String, Expr>) 
                         Flow::Continue(v) => Ok(Flow::Continue(v)),
                         Flow::Return(v) => Ok(Flow::Continue(v)),
                         Flow::Break => Err(EvalError {
-                            message: "Unexpected break in function".to_string(),
+                            message: "unexpected break statement in function".to_string(),
                             message_short: "unexpected break".to_string(),
                             span: expr.span,
                         }),
                         Flow::Skip => Err(EvalError {
-                            message: "Unexpected skip in function".to_string(),
-                            message_short: "unexpected skip".to_string(),
+                            message: "unexpected continue statement in function".to_string(),
+                            message_short: "unexpected continue".to_string(),
                             span: expr.span,
                         }),
                     }
@@ -364,7 +364,7 @@ pub fn eval<'src>(expr: &'src SpannedExpr, context: &mut HashMap<String, Expr>) 
                 }
 
                 v => Err(EvalError {
-                    message: format!("{:?} is not a function", v),
+                    message: format!("'{}' is not a function", v),
                     message_short: "not a function".to_string(),
                     span: expr.span,
                 })
@@ -431,7 +431,7 @@ pub fn eval<'src>(expr: &'src SpannedExpr, context: &mut HashMap<String, Expr>) 
 
                         _ => {
                             return Err(EvalError {
-                                message: format!("Range start must be an integer, got {:?}", start),
+                                message: format!("range start must be an integer, got '{}'", start.node),
                                 message_short: "invalid range start".to_string(),
                                 span: expr.span,
                             });
@@ -443,7 +443,7 @@ pub fn eval<'src>(expr: &'src SpannedExpr, context: &mut HashMap<String, Expr>) 
 
                         _ => {
                             return Err(EvalError {
-                                message: format!("Range end must be an integer, got {:?}", end),
+                                message: format!("range end must be an integer, got '{}'", end.node),
                                 message_short: "invalid range end".to_string(),
                                 span: expr.span,
                             });
@@ -470,7 +470,7 @@ pub fn eval<'src>(expr: &'src SpannedExpr, context: &mut HashMap<String, Expr>) 
 
                         _ => {
                             return Err(EvalError {
-                                message: format!("Range start must be an integer, got {:?}", start),
+                                message: format!("range start must be an integer, got '{}'", start.node),
                                 message_short: "invalid range start".to_string(),
                                 span: expr.span,
                             });
@@ -482,7 +482,7 @@ pub fn eval<'src>(expr: &'src SpannedExpr, context: &mut HashMap<String, Expr>) 
 
                         _ => {
                             return Err(EvalError {
-                                message: format!("Range end must be an integer, got {:?}", end),
+                                message: format!("range end must be an integer, got '{}'", end.node),
                                 message_short: "invalid range end".to_string(),
                                 span: expr.span,
                             });
@@ -520,7 +520,7 @@ pub fn eval<'src>(expr: &'src SpannedExpr, context: &mut HashMap<String, Expr>) 
                 }
 
                 _ => Err(EvalError {
-                    message: format!("Cannot iterate over value: {:?}", range_value),
+                    message: format!("cannot iterate over value '{}'", range_value),
                     message_short: "cannot iterate".to_string(),
                     span: expr.span,
                 }),
@@ -585,7 +585,7 @@ pub fn eval<'src>(expr: &'src SpannedExpr, context: &mut HashMap<String, Expr>) 
                 (Expr::Float(l), Expr::Int(r)) => Ok(Flow::Continue(Expr::Bool(l < (r as f64)))),
 
                 _ => Err(EvalError {
-                    message: format!("Cannot compare values: {:?} < {:?}", left.node, right.node),
+                    message: format!("cannot compare values '{}' and '{}'", left.node, right.node),
                     message_short: "cannot compare".to_string(),
                     span: expr.span,
                 }),
@@ -603,7 +603,7 @@ pub fn eval<'src>(expr: &'src SpannedExpr, context: &mut HashMap<String, Expr>) 
                 (Expr::Float(l), Expr::Int(r)) => Ok(Flow::Continue(Expr::Bool(l <= (r as f64)))),
 
                 _ => Err(EvalError {
-                    message: format!("Cannot compare values: {:?} <= {:?}", left.node, right.node),
+                    message: format!("cannot compare values '{}' and '{}'", left.node, right.node),
                     message_short: "cannot compare".to_string(),
                     span: expr.span,
                 }),
@@ -621,7 +621,7 @@ pub fn eval<'src>(expr: &'src SpannedExpr, context: &mut HashMap<String, Expr>) 
                 (Expr::Float(l), Expr::Int(r)) => Ok(Flow::Continue(Expr::Bool(l > (r as f64)))),
 
                 _ => Err(EvalError {
-                    message: format!("Cannot compare values: {:?} > {:?}", left.node, right.node),
+                    message: format!("cannot compare values '{}' and '{}'", left.node, right.node),
                     message_short: "cannot compare".to_string(),
                     span: expr.span,
                 }),
@@ -639,7 +639,7 @@ pub fn eval<'src>(expr: &'src SpannedExpr, context: &mut HashMap<String, Expr>) 
                 (Expr::Float(l), Expr::Int(r)) => Ok(Flow::Continue(Expr::Bool(l >= (r as f64)))),
 
                 _ => Err(EvalError {
-                    message: format!("Cannot compare values: {:?} >= {:?}", left.node, right.node),
+                    message: format!("cannot compare values '{}' and '{}'", left.node, right.node),
                     message_short: "cannot compare".to_string(),
                     span: expr.span,
                 }),
@@ -660,7 +660,7 @@ pub fn eval<'src>(expr: &'src SpannedExpr, context: &mut HashMap<String, Expr>) 
                 },
 
                 _ => Err(EvalError {
-                    message: format!("Condition must be a boolean, got {:?}", condition_value),
+                    message: format!("condition must be a boolean, got '{}'", condition_value),
                     message_short: "invalid condition".to_string(),
                     span: expr.span,
                 }),
@@ -747,7 +747,7 @@ pub fn eval<'src>(expr: &'src SpannedExpr, context: &mut HashMap<String, Expr>) 
                                 }
                             } else {
                                 return Err(EvalError {
-                                    message: format!("Package {} is not a module", name),
+                                    message: format!("package '{}' is not a module", name),
                                     message_short: "not a module".to_string(),
                                     span: expr.span,
                                 });
@@ -766,14 +766,14 @@ pub fn eval<'src>(expr: &'src SpannedExpr, context: &mut HashMap<String, Expr>) 
 
                         if !path.exists() {
                             return Err(EvalError {
-                                message: format!("Package {} does not exist or is not installed", name),
+                                message: format!("package '{}' does not exist or is not installed", name),
                                 message_short: "package not found".to_string(),
                                 span: expr.span,
                             });
                         }
 
                         let source = std::fs::read_to_string(path.clone()).map_err(|e| EvalError {
-                            message: format!("Failed to read module file for package {}: {}", name, e),
+                            message: format!("failed to read module file for package '{}': {}", name, e),
                             message_short: "failed to read module".to_string(),
                             span: expr.span,
                         })?;
@@ -813,7 +813,7 @@ pub fn eval<'src>(expr: &'src SpannedExpr, context: &mut HashMap<String, Expr>) 
                     #[cfg(target_arch = "wasm32")]
                     None => {
                         return Err(EvalError {
-                            message: format!("Could not find package {}", name),
+                            message: format!("could not find package '{}'", name),
                             message_short: "package not found".to_string(),
                             span: expr.span,
                         });
@@ -854,7 +854,7 @@ pub fn eval<'src>(expr: &'src SpannedExpr, context: &mut HashMap<String, Expr>) 
 
                     if idx < 0 || idx >= elements.len() as i64 {
                         return Err(EvalError {
-                            message: format!("Array index out of bounds: {}", i),
+                            message: format!("index {} is out of bounds", i)
                             message_short: "index out of bounds".to_string(),
                             span: expr.span,
                         });
@@ -867,7 +867,7 @@ pub fn eval<'src>(expr: &'src SpannedExpr, context: &mut HashMap<String, Expr>) 
                     match properties.get(&key) {
                         Some(value) => Ok(Flow::Continue(value.clone())),
                         None => Err(EvalError {
-                            message: format!("Object has no property named {}", key),
+                            message: format!("object has no property named '{}'", key),
                             message_short: "no such property".to_string(),
                             span: expr.span,
                         }),
@@ -875,7 +875,7 @@ pub fn eval<'src>(expr: &'src SpannedExpr, context: &mut HashMap<String, Expr>) 
                 }
 
                 (v, _) => Err(EvalError {
-                    message: format!("Cannot index into value: {:?}", v),
+                    message: format!("cannot index into value '{}'", v),
                     message_short: "cannot index".to_string(),
                     span: expr.span,
                 }),
@@ -884,7 +884,7 @@ pub fn eval<'src>(expr: &'src SpannedExpr, context: &mut HashMap<String, Expr>) 
 
         v => {
             Err(EvalError {
-                message: format!("No evaluator for {:?}", v),
+                message: format!("no evaluator for '{}', please report this issue", v),
                 message_short: "couldn't evaluate".to_string(),
                 span: expr.span,
             })

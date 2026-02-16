@@ -6,7 +6,7 @@ use crate::{ast::{Expr, InternalFunctionResponse, Spanned, SpannedExpr}, lexer::
 pub fn now_unix(_: Vec<Spanned<Expr>>) -> Result<InternalFunctionResponse, (String, Span)> {
     let now = std::time::SystemTime::now()
         .duration_since(std::time::UNIX_EPOCH)
-        .map_err(|e| (format!("System time error: {}", e), Span::default()))?
+        .map_err(|e| (format!("system time error: {}", e), Span::default()))?
         .as_secs() as i64;
 
     Ok(InternalFunctionResponse {
@@ -38,7 +38,7 @@ pub fn now_local(_: Vec<Spanned<Expr>>) -> Result<InternalFunctionResponse, (Str
 pub fn to_iso_8601(args: Vec<Spanned<Expr>>) -> Result<InternalFunctionResponse, (String, Span)> {
     let time = match args[0].node {
         Expr::Int(n) => n,
-        _ => return Err(("to_iso_8601 expects an integer unix timestamp".to_string(), args[0].span)),
+        _ => return Err(("time.to_iso_8601 expects an integer unix timestamp".to_string(), args[0].span)),
     };
 
     let time = time::UNIX_EPOCH + time::Duration::from_secs(time as u64);
@@ -53,7 +53,7 @@ pub fn to_iso_8601(args: Vec<Spanned<Expr>>) -> Result<InternalFunctionResponse,
 pub fn to_rfc_2822(args: Vec<Spanned<Expr>>) -> Result<InternalFunctionResponse, (String, Span)> {
     let time = match args[0].node {
         Expr::Int(n) => n,
-        _ => return Err(("to_rfc_2822 expects an integer unix timestamp".to_string(), args[0].span)),
+        _ => return Err(("time.to_rfc_2822 expects an integer unix timestamp".to_string(), args[0].span)),
     };
 
     let time = time::UNIX_EPOCH + time::Duration::from_secs(time as u64);
@@ -68,7 +68,7 @@ pub fn to_rfc_2822(args: Vec<Spanned<Expr>>) -> Result<InternalFunctionResponse,
 pub fn to_local_date_time(args: Vec<Spanned<Expr>>) -> Result<InternalFunctionResponse, (String, Span)> {
     let time = match args[0].node {
         Expr::Int(n) => n,
-        _ => return Err(("to_local_date_time expects an integer unix timestamp".to_string(), args[0].span)),
+        _ => return Err(("time.to_local_date_time expects an integer unix timestamp".to_string(), args[0].span)),
     };
 
     let time = time::UNIX_EPOCH + time::Duration::from_secs(time as u64);
@@ -83,7 +83,7 @@ pub fn to_local_date_time(args: Vec<Spanned<Expr>>) -> Result<InternalFunctionRe
 pub fn to_utc_date_time(args: Vec<Spanned<Expr>>) -> Result<InternalFunctionResponse, (String, Span)> {
     let time = match args[0].node {
         Expr::Int(n) => n,
-        _ => return Err(("to_utc_date_time expects an integer unix timestamp".to_string(), args[0].span)),
+        _ => return Err(("time.to_utc_date_time expects an integer unix timestamp".to_string(), args[0].span)),
     };
 
     let time = time::UNIX_EPOCH + time::Duration::from_secs(time as u64);
