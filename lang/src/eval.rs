@@ -854,7 +854,7 @@ pub fn eval<'src>(expr: &'src SpannedExpr, context: &mut HashMap<String, Expr>) 
 
                     if idx < 0 || idx >= elements.len() as i64 {
                         return Err(EvalError {
-                            message: format!("index {} is out of bounds", i)
+                            message: format!("index {} is out of bounds", i),
                             message_short: "index out of bounds".to_string(),
                             span: expr.span,
                         });

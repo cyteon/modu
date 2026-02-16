@@ -5,7 +5,7 @@
 
 ## Install
 ```sh
-cargo +nightly install modu
+cargo install modu
 ```
 
 ## About
