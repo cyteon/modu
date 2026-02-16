@@ -17,16 +17,16 @@ impl From<std::num::ParseIntError> for LexingError {
 
         match err.kind() {
             IntErrorKind::PosOverflow | IntErrorKind::NegOverflow => {
-                LexingError::InvalidInteger("Integer literal out of range".to_string())
+                LexingError::InvalidInteger("integer literal out of range".to_string())
             }
-            _ => LexingError::InvalidInteger("Invalid integer literal".to_string()),
+            _ => LexingError::InvalidInteger("invalid integer literal".to_string()),
         }
     }
 }
 
 impl From<std::num::ParseFloatError> for LexingError {
     fn from(_err: std::num::ParseFloatError) -> Self {
-        LexingError::InvalidFloat("Invalid float literal".to_string())
+        LexingError::InvalidFloat("invalid float literal".to_string())
     }
 }
 
@@ -182,9 +182,9 @@ pub fn lex(input: &str) -> Result<Vec<(Token, Span)>, (LexingError, Span)> {
 impl std::fmt::Display for LexingError {
     fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
         match self {
-            LexingError::UnexpectedToken => write!(f, "Unexpected token"),
-            LexingError::InvalidInteger(msg) => write!(f, "Invalid integer: {}", msg),
-            LexingError::InvalidFloat(msg) => write!(f, "Invalid float: {}", msg),
+            LexingError::UnexpectedToken => write!(f, "unexpected token"),
+            LexingError::InvalidInteger(msg) => write!(f, "invalid integer: {}", msg),
+            LexingError::InvalidFloat(msg) => write!(f, "invalid float: {}", msg),
         }
     }
 }

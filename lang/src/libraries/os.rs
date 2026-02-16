@@ -16,7 +16,7 @@ fn clean_command(cmd: String) -> String {
 pub fn exec(args: Vec<Spanned<Expr>>) -> Result<InternalFunctionResponse, (String, crate::lexer::Span)> {
     if args.len() != 1 {
         return Err((
-            "exec takes exactly one argument".to_string(),
+            "os.exec takes exactly one argument".to_string(),
             chumsky::span::SimpleSpan::from(args[0].span.start..args[args.len() - 1].span.end),
         ));
     }
@@ -24,7 +24,7 @@ pub fn exec(args: Vec<Spanned<Expr>>) -> Result<InternalFunctionResponse, (Strin
     let command_str = match &args[0].node {
         Expr::String(s) => clean_command(s.clone()),
         _ => return Err((
-            "exec expects a string argument".to_string(),
+            "os.exec expects a string argument".to_string(),
             args[0].span,
         )),
     };
@@ -46,14 +46,14 @@ pub fn exec(args: Vec<Spanned<Expr>>) -> Result<InternalFunctionResponse, (Strin
                 .output()
         }
     }.map_err(|e| (
-        format!("Failed to execute command: {}", e),
+        format!("failed to execute command: {}", e),
         args[0].span,
     ))?;
 
     if !output.status.success() {
         return Err((
             format!(
-                "Command exited with non-zero status: {}. stderr: {}",
+                "command exited with non-zero status code {}, stderr: {}",
                 output.status,
                 String::from_utf8_lossy(&output.stderr)
             ),

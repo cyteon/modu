@@ -7,7 +7,7 @@ pub fn sha256(args: Vec<Spanned<Expr>>) -> Result<InternalFunctionResponse, (Str
     let input = match &args[0].node {
         Expr::String(s) => s,
         _ => Err((
-            "sha256 expects a string argument".to_string(),
+            "crypto.sha256 expects a string argument".to_string(),
             args[0].span.clone(),
         ))?,
     };
@@ -25,7 +25,7 @@ pub fn sha512(args: Vec<Spanned<Expr>>) -> Result<InternalFunctionResponse, (Str
     let input = match &args[0].node {
         Expr::String(s) => s,
         _ => Err((
-            "sha512 expects a string argument".to_string(),
+            "crypto.sha512 expects a string argument".to_string(),
             args[0].span.clone(),
         ))?,
     };
@@ -43,7 +43,7 @@ pub fn blake3(args: Vec<Spanned<Expr>>) -> Result<InternalFunctionResponse, (Str
     let input = match &args[0].node {
         Expr::String(s) => s,
         _ => Err((
-            "blake3 expects a string argument".to_string(),
+            "crypto.blake3 expects a string argument".to_string(),
             args[0].span.clone(),
         ))?,
     };
@@ -60,14 +60,14 @@ fn bcrypt_hash(args: Vec<Spanned<Expr>>) -> Result<InternalFunctionResponse, (St
     let input = match &args[0].node {
         Expr::String(s) => s,
         _ => Err((
-            "bcrypt_hash expects a string argument".to_string(),
+            "crypto.bcrypt_hash expects a string argument".to_string(),
             args[0].span.clone(),
         ))?,
     };
 
     let hashed = bcrypt::hash(input, 12)
         .map_err(|e| (
-            format!("bcrypt_hash failed: {}", e),
+            format!("crypto.bcrypt_hash failed: {}", e),
             args[0].span.clone(),
         ))?;
     
@@ -81,7 +81,7 @@ pub fn bcrypt_verify(args: Vec<Spanned<Expr>>) -> Result<InternalFunctionRespons
     let password = match &args[0].node {
         Expr::String(s) => s,
         _ => Err((
-            "bcrypt_verify expects the first argument to be a string".to_string(),
+            "crypto.bcrypt_verify expects the first argument to be a string".to_string(),
             args[0].span.clone(),
         ))?,
     };
@@ -89,14 +89,14 @@ pub fn bcrypt_verify(args: Vec<Spanned<Expr>>) -> Result<InternalFunctionRespons
     let hash = match &args[1].node {
         Expr::String(s) => s,
         _ => Err((
-            "bcrypt_verify expects the second argument to be a string".to_string(),
+            "crypto.bcrypt_verify expects the second argument to be a string".to_string(),
             args[1].span.clone(),
         ))?,
     };
 
     let is_valid = bcrypt::verify(password, hash)
         .map_err(|e| (
-            format!("bcrypt_verify failed: {}", e),
+            format!("crypto.bcrypt_verify failed: {}", e),
             args[0].span.clone(),
         ))?;
 
@@ -110,7 +110,7 @@ pub fn argon2_hash(args: Vec<Spanned<Expr>>) -> Result<InternalFunctionResponse,
     let input = match &args[0].node {
         Expr::String(s) => s,
         _ => Err((
-            "argon2_hash expects a string argument".to_string(),
+            "crypto.argon2_hash expects a string argument".to_string(),
             args[0].span.clone(),
         ))?,
     };
@@ -122,7 +122,7 @@ pub fn argon2_hash(args: Vec<Spanned<Expr>>) -> Result<InternalFunctionResponse,
             &argon2::password_hash::SaltString::generate(&mut rand::thread_rng())
         )
         .map_err(|e| (
-            format!("argon2_hash failed: {}", e),
+            format!("crypto.argon2_hash failed: {}", e),
             args[0].span.clone(),
         ))?
         .to_string();
@@ -137,7 +137,7 @@ pub fn argon2_verify(args: Vec<Spanned<Expr>>) -> Result<InternalFunctionRespons
     let password = match &args[0].node {
         Expr::String(s) => s,
         _ => Err((
-            "argon2_verify expects the first argument to be a string".to_string(),
+            "crypto.argon2_verify expects the first argument to be a string".to_string(),
             args[0].span.clone(),
         ))?,
     };
@@ -145,14 +145,14 @@ pub fn argon2_verify(args: Vec<Spanned<Expr>>) -> Result<InternalFunctionRespons
     let hash = match &args[1].node {
         Expr::String(s) => s,
         _ => Err((
-            "argon2_verify expects the second argument to be a string".to_string(),
+            "crypto.argon2_verify expects the second argument to be a string".to_string(),
             args[1].span.clone(),
         ))?,
     };
 
     let parsed_hash = argon2::PasswordHash::new(hash)
         .map_err(|e| (
-            format!("argon2_verify failed to parse hash: {}", e),
+            format!("crypto.argon2_verify failed to parse hash: {}", e),
             args[1].span.clone(),
         ))?;
 
@@ -170,7 +170,7 @@ pub fn scrypt_hash(args: Vec<Spanned<Expr>>) -> Result<InternalFunctionResponse,
     let input = match &args[0].node {
         Expr::String(s) => s,
         _ => Err((
-            "scrypt_hash expects a string argument".to_string(),
+            "crypto.scrypt_hash expects a string argument".to_string(),
             args[0].span.clone(),
         ))?,
     };
@@ -181,7 +181,7 @@ pub fn scrypt_hash(args: Vec<Spanned<Expr>>) -> Result<InternalFunctionResponse,
         input.as_bytes(), 
         &salt
     ).map_err(|e| (
-        format!("scrypt_hash failed: {}", e),
+        format!("crypto.scrypt_hash failed: {}", e),
         args[0].span.clone(),
     ))?;
 
@@ -195,7 +195,7 @@ pub fn scrypt_verify(args: Vec<Spanned<Expr>>) -> Result<InternalFunctionRespons
     let password = match &args[0].node {
         Expr::String(s) => s,
         _ => Err((
-            "scrypt_verify expects the first argument to be a string".to_string(),
+            "crypto.scrypt_verify expects the first argument to be a string".to_string(),
             args[0].span.clone(),
         ))?,
     };
@@ -203,14 +203,14 @@ pub fn scrypt_verify(args: Vec<Spanned<Expr>>) -> Result<InternalFunctionRespons
     let hash = match &args[1].node {
         Expr::String(s) => s,
         _ => Err((
-            "scrypt_verify expects the second argument to be a string".to_string(),
+            "crypto.scrypt_verify expects the second argument to be a string".to_string(),
             args[1].span.clone(),
         ))?,
     };
 
     let parsed_hash = scrypt::password_hash::PasswordHash::new(hash)
         .map_err(|e| (
-            format!("scrypt_verify failed to parse hash: {}", e),
+            format!("crypto.scrypt_verify failed to parse hash: {}", e),
             args[1].span.clone(),
         ))?;
 
@@ -229,7 +229,7 @@ pub fn md5(args: Vec<Spanned<Expr>>) -> Result<InternalFunctionResponse, (String
     let input = match &args[0].node {
         Expr::String(s) => s,
         _ => Err((
-            "md5 expects a string argument".to_string(),
+            "crypto.legacy.md5 expects a string argument".to_string(),
             args[0].span.clone(),
         ))?,
     };

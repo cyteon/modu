@@ -23,7 +23,7 @@ pub fn execute_ffi_call(
 
             Expr::String(s) => {
                 let c_string = std::ffi::CString::new(s.clone())
-                    .map_err(|e| format!("Failed to convert string to C string: {}", e))?;
+                    .map_err(|e| format!("failed to convert string to C string: {}", e))?;
                 let ptr = c_string.into_raw();
                 owned_strings.push(ptr);
 
@@ -39,14 +39,14 @@ pub fn execute_ffi_call(
             }
 
             _ => {
-                return Err("Unsupported argument type for FFI call".to_string());
+                return Err("unsupported argument type for FFI call".to_string());
             }
         }
     }
 
     unsafe {
         let func = lib.get::<FFIFunction>(func_name.as_bytes())
-            .map_err(|e| format!("Failed to load FFI function '{}': {}", func_name, e))?;
+            .map_err(|e| format!("failed to load FFI function '{}': {}", func_name, e))?;
         
         let result = func(ffi_args.len() as i32, ffi_args.as_ptr());
 
@@ -60,7 +60,7 @@ pub fn execute_ffi_call(
             modu_ffi::FFIType::String => {
                 let c_str = std::ffi::CStr::from_ptr(result.value.string);
                 let str_slice = c_str.to_str()
-                    .map_err(|e| format!("Failed to convert C string to Rust string: {}", e))?;
+                    .map_err(|e| format!("failed to convert C string to Rust string: {}", e))?;
                 
                 let string = str_slice.to_string();
                 modu_ffi::ffi_free_string(result.value.string);
@@ -77,27 +77,27 @@ pub fn load(args: Vec<Spanned<Expr>>) -> Result<InternalFunctionResponse, (Strin
     let path = match &args[0].node {
         Expr::String(s) => s,
         _ => return Err((
-            "load expects a string argument".to_string(),
+            "ffi.load expects a string argument".to_string(),
             args[0].span,
         )),
     };
 
     let mut full_path = std::env::current_dir()
-        .map_err(|e| (format!("Failed to get current directory: {}", e), args[0].span.clone()))?
+        .map_err(|e| (format!("failed to get current directory: {}", e), args[0].span.clone()))?
         .to_str()
-        .ok_or_else(|| (format!("Current directory path is not valid UTF-8"), args[0].span.clone()))?
+        .ok_or_else(|| (format!("current directory path is not valid UTF-8"), args[0].span.clone()))?
         .to_string() + "/";
 
     let sys_args = std::env::args().collect::<Vec<String>>();
     if sys_args.len() > 2 && sys_args[1] == "run" {
         let file_path = PathBuf::from(&sys_args[2]);
         let parent = file_path.parent().ok_or_else(|| (
-            "Failed to get parent directory of current file".to_string(),
+            "failed to get parent directory of current file".to_string(),
             args[0].span.clone(),
         ))?;
 
         full_path = parent.to_str().ok_or_else(|| (
-            "Parent directory path is not valid UTF-8".to_string(),
+            "parent directory path is not valid UTF-8".to_string(),
             args[0].span.clone(),
         ))?.to_string() + "/";
     }
@@ -106,7 +106,7 @@ pub fn load(args: Vec<Spanned<Expr>>) -> Result<InternalFunctionResponse, (Strin
 
     unsafe {
         let library = libloading::Library::new(&full_path)
-            .map_err(|e| (format!("Failed to load FFI library: {}", e), args[0].span.clone()))?;
+            .map_err(|e| (format!("failed to load FFI library: {}", e), args[0].span.clone()))?;
 
         Ok(InternalFunctionResponse {
             return_value: Expr::FFILibrary(std::sync::Arc::new(library)),

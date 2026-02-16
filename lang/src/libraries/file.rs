@@ -6,7 +6,7 @@ pub fn open(args: Vec<Spanned<Expr>>) -> Result<InternalFunctionResponse, (Strin
     let path = match &args[0].node {
         Expr::String(s) => s,
         _ => return Err((
-            "open expects a string argument".to_string(),
+            "file.open expects a string argument".to_string(),
             args[0].span,
         )),
     };
@@ -17,7 +17,7 @@ pub fn open(args: Vec<Spanned<Expr>>) -> Result<InternalFunctionResponse, (Strin
         .create(true)
         .open(path)
         .map_err(|e| (
-            format!("Failed to open file: {}", e),
+            format!("failed to open file: {}", e),
             args[0].span,
         ))?;
     
@@ -52,7 +52,7 @@ pub fn read(args: Vec<Spanned<Expr>>) -> Result<InternalFunctionResponse, (Strin
     let file = match &args[0].node {
         Expr::File(file) => file,
         _ => return Err((
-            "read expects a file argument".to_string(),
+            "file.read expects a file argument".to_string(),
             args[0].span,
         )),
     };
@@ -61,7 +61,7 @@ pub fn read(args: Vec<Spanned<Expr>>) -> Result<InternalFunctionResponse, (Strin
     std::io::BufReader::new(&**file)
         .read_to_string(&mut buf)
         .map_err(|e| (
-            format!("Failed to read from file: {}", e),
+            format!("failed to read from file: {}", e),
             args[0].span,
         ))?;
 
@@ -75,7 +75,7 @@ pub fn write(args: Vec<Spanned<Expr>>) -> Result<InternalFunctionResponse, (Stri
     let file = match &args[0].node {
         Expr::File(file) => file,
         _ => return Err((
-            "write expects a file argument".to_string(),
+            "file.write expects a file argument".to_string(),
             args[0].span,
         )),
     };
@@ -83,28 +83,28 @@ pub fn write(args: Vec<Spanned<Expr>>) -> Result<InternalFunctionResponse, (Stri
     let content = match &args[1].node {
         Expr::String(s) => s,
         _ => return Err((
-            "write expects a string as the second argument".to_string(),
+            "file.write expects a string as the second argument".to_string(),
             args[1].span,
         )),
     };
     
     (&**file).seek(SeekFrom::Start(0)).map_err(|e| (
-        format!("Failed to seek to beginning of file: {}", e),
+        format!("failed to seek to beginning of file: {}", e),
         args[0].span,
     ))?;
 
     (&**file).write_all(content.as_bytes()).map_err(|e| (
-        format!("Failed to write to file: {}", e),
+        format!("failed to write to file: {}", e),
         args[0].span,
     ))?;
 
     file.set_len(content.len() as u64).map_err(|e| (
-        format!("Failed to truncate file: {}", e),
+        format!("failed to truncate file: {}", e),
         args[0].span,
     ))?;
 
     (&**file).flush().map_err(|e| (
-        format!("Failed to flush file: {}", e),
+        format!("failed to flush file: {}", e),
         args[0].span,
     ))?;
 
@@ -118,7 +118,7 @@ pub fn append(args: Vec<Spanned<Expr>>) -> Result<InternalFunctionResponse, (Str
     let file = match &args[0].node {
         Expr::File(file) => file,
         _ => return Err((
-            "append expects a file argument".to_string(),
+            "file.append expects a file argument".to_string(),
             args[0].span,
         )),
     };
@@ -126,18 +126,18 @@ pub fn append(args: Vec<Spanned<Expr>>) -> Result<InternalFunctionResponse, (Str
     let content = match &args[1].node {
         Expr::String(s) => s,
         _ => return Err((
-            "append expects a string as the second argument".to_string(),
+            "file.append expects a string as the second argument".to_string(),
             args[1].span,
         )),
     };
     
     (&**file).write_all(content.as_bytes()).map_err(|e| (
-        format!("Failed to write to file: {}", e),
+        format!("failed to write to file: {}", e),
         args[0].span,
     ))?;
 
     (&**file).flush().map_err(|e| (
-        format!("Failed to flush file: {}", e),
+        format!("failed to flush file: {}", e),
         args[0].span,
     ))?;
 
@@ -157,12 +157,12 @@ pub fn close(args: Vec<Spanned<Expr>>) -> Result<InternalFunctionResponse, (Stri
     };
     
     std::io::Write::flush(&mut &*file).map_err(|e| (
-        format!("Failed to flush file: {}", e),
+        format!("failed to flush file: {}", e),
         args[0].span,
     ))?;
 
     file.sync_all().map_err(|e| (
-        format!("Failed to sync file: {}", e),
+        format!("failed to sync file: {}", e),
         args[0].span,
     ))?;
     

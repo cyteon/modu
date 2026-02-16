@@ -32,7 +32,7 @@ fn handle_response(response: reqwest::blocking::Response) -> Result<InternalFunc
     );
 
     let body = response.text().map_err(|e| (
-        format!("Failed to read response body: {}", e),
+        format!("failed to read response body: {}", e),
         Span::default(),
     ))?;
 
@@ -56,13 +56,13 @@ pub fn get(args: Vec<Spanned<Expr>>) -> Result<InternalFunctionResponse, (String
     let url = match &args[0].node {
         Expr::String(s) => s,
         _ => return Err((
-            "get expects a string argument".to_string(),
+            "http.get expects a string argument".to_string(),
             args[0].span,
         )),
     };
 
     let response = reqwest::blocking::get(url).map_err(|e| (
-        format!("Failed to perform GET request: {}", e),
+        format!("failed to perform GET request: {}", e),
         args[0].span,
     ))?;
 
@@ -73,7 +73,7 @@ pub fn post(args: Vec<Spanned<Expr>>) -> Result<InternalFunctionResponse, (Strin
     let url = match &args[0].node {
         Expr::String(s) => s,
         _ => return Err((
-            "post expects a string as the first argument".to_string(),
+            "http.post expects a string as the first argument".to_string(),
             args[0].span,
         )),
     };
@@ -81,7 +81,7 @@ pub fn post(args: Vec<Spanned<Expr>>) -> Result<InternalFunctionResponse, (Strin
     let body = match &args[1].node {
         Expr::String(s) => s,
         _ => return Err((
-            "post expects a string as the second argument".to_string(),
+            "http.post expects a string as the second argument".to_string(),
             args[1].span,
         )),
     };
@@ -91,7 +91,7 @@ pub fn post(args: Vec<Spanned<Expr>>) -> Result<InternalFunctionResponse, (Strin
         .body(body.clone())
         .send()
         .map_err(|e| (
-            format!("Failed to perform POST request: {}", e),
+            format!("failed to perform POST request: {}", e),
             args[0].span,
         ))?;
 
@@ -102,7 +102,7 @@ pub fn put(args: Vec<Spanned<Expr>>) -> Result<InternalFunctionResponse, (String
     let url = match &args[0].node {
         Expr::String(s) => s,
         _ => return Err((
-            "put expects a string as the first argument".to_string(),
+            "http.put expects a string as the first argument".to_string(),
             args[0].span,
         )),
     };
@@ -110,7 +110,7 @@ pub fn put(args: Vec<Spanned<Expr>>) -> Result<InternalFunctionResponse, (String
     let body = match &args[1].node {
         Expr::String(s) => s,
         _ => return Err((
-            "put expects a string as the second argument".to_string(),
+            "http.put expects a string as the second argument".to_string(),
             args[1].span,
         )),
     };
@@ -120,7 +120,7 @@ pub fn put(args: Vec<Spanned<Expr>>) -> Result<InternalFunctionResponse, (String
         .body(body.clone())
         .send()
         .map_err(|e| (
-            format!("Failed to perform PUT request: {}", e),
+            format!("failed to perform PUT request: {}", e),
             args[0].span,
         ))?;
 
@@ -131,7 +131,7 @@ pub fn patch(args: Vec<Spanned<Expr>>) -> Result<InternalFunctionResponse, (Stri
     let url = match &args[0].node {
         Expr::String(s) => s,
         _ => return Err((
-            "patch expects a string as the first argument".to_string(),
+            "http.patch expects a string as the first argument".to_string(),
             args[0].span,
         )),
     };
@@ -139,7 +139,7 @@ pub fn patch(args: Vec<Spanned<Expr>>) -> Result<InternalFunctionResponse, (Stri
     let body = match &args[1].node {
         Expr::String(s) => s,
         _ => return Err((
-            "patch expects a string as the second argument".to_string(),
+            "http.patch expects a string as the second argument".to_string(),
             args[1].span,
         )),
     };
@@ -149,7 +149,7 @@ pub fn patch(args: Vec<Spanned<Expr>>) -> Result<InternalFunctionResponse, (Stri
         .body(body.clone())
         .send()
         .map_err(|e| (
-            format!("Failed to perform PATCH request: {}", e),
+            format!("failed to perform PATCH request: {}", e),
             args[0].span,
         ))?;
 
@@ -160,7 +160,7 @@ pub fn delete(args: Vec<Spanned<Expr>>) -> Result<InternalFunctionResponse, (Str
     let url = match &args[0].node {
         Expr::String(s) => s,
         _ => return Err((
-            "delete expects a string as the first argument".to_string(),
+            "http.delete expects a string as the first argument".to_string(),
             args[0].span,
         )),
     };
@@ -169,7 +169,7 @@ pub fn delete(args: Vec<Spanned<Expr>>) -> Result<InternalFunctionResponse, (Str
     let response = client.delete(url)
         .send()
         .map_err(|e| (
-            format!("Failed to perform DELETE request: {}", e),
+            format!("failed to perform DELETE request: {}", e),
             args[0].span,
         ))?;
 

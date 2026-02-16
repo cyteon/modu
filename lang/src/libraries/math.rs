@@ -3,7 +3,7 @@ use crate::{ast::{Expr, InternalFunctionResponse, Spanned, SpannedExpr}, lexer::
 pub fn mul(args: Vec<Spanned<Expr>>) -> Result<InternalFunctionResponse, (String, Span)> {
     if args.len() != 2 {
         return Err((
-            "mul takes exactly two arguments".to_string(),
+            "math.mul takes exactly two arguments".to_string(),
             args[0].span,
         ));
     }
@@ -42,7 +42,7 @@ pub fn mul(args: Vec<Spanned<Expr>>) -> Result<InternalFunctionResponse, (String
         }
 
         _ => Err((
-            "mul expects number arguments".to_string(),
+            "math.mul expects number arguments".to_string(),
             args[0].span,
         )),
     }
@@ -51,7 +51,7 @@ pub fn mul(args: Vec<Spanned<Expr>>) -> Result<InternalFunctionResponse, (String
 pub fn div(args: Vec<Spanned<Expr>>) -> Result<InternalFunctionResponse, (String, Span)> {
     if args.len() != 2 {
         return Err((
-            "div takes exactly two arguments".to_string(),
+            "math.div takes exactly two arguments".to_string(),
             args[0].span,
         ));
     }
@@ -114,7 +114,7 @@ pub fn div(args: Vec<Spanned<Expr>>) -> Result<InternalFunctionResponse, (String
         }
 
         _ => Err((
-            "div expects number arguments".to_string(),
+            "math.div expects number arguments".to_string(),
             args[0].span,
         )),
     }
@@ -123,7 +123,7 @@ pub fn div(args: Vec<Spanned<Expr>>) -> Result<InternalFunctionResponse, (String
 pub fn abs(args: Vec<Spanned<Expr>>) -> Result<InternalFunctionResponse, (String, Span)> {
     if args.len() != 1 {
         return Err((
-            "abs takes exactly one argument".to_string(),
+            "math.abs takes exactly one argument".to_string(),
             args[0].span,
         ));
     }
@@ -146,7 +146,7 @@ pub fn abs(args: Vec<Spanned<Expr>>) -> Result<InternalFunctionResponse, (String
         }
 
         _ => Err((
-            "abs expects a number argument".to_string(),
+            "math.abs expects a number argument".to_string(),
             args[0].span,
         )),
     }
@@ -155,7 +155,7 @@ pub fn abs(args: Vec<Spanned<Expr>>) -> Result<InternalFunctionResponse, (String
 pub fn pow(args: Vec<Spanned<Expr>>) -> Result<InternalFunctionResponse, (String, Span)> {
     if args.len() != 2 {
         return Err((
-            "pow takes exactly two arguments".to_string(),
+            "math.pow takes exactly two arguments".to_string(),
             args[0].span,
         ));
     }
@@ -194,7 +194,7 @@ pub fn pow(args: Vec<Spanned<Expr>>) -> Result<InternalFunctionResponse, (String
         }
 
         _ => Err((
-            "pow expects number arguments".to_string(),
+            "math.pow expects number arguments".to_string(),
             args[0].span,
         )),
     }

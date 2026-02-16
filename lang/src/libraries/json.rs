@@ -99,14 +99,14 @@ pub fn parse(args: Vec<Spanned<Expr>>) -> Result<InternalFunctionResponse, (Stri
         Expr::String(s) => s,
         _ => {
             return Err((
-                "parse expects a string as the first argument".to_string(),
+                "json.parse expects a string as the first argument".to_string(),
                 args[0].span,
             ))
         }
     };
 
     let mut parsed: HashMap<String, serde_json::Value> = serde_json::from_str(json_str).map_err(|e| (
-        format!("Failed to parse JSON: {}", e),
+        format!("failed to parse JSON: {}", e),
         args[0].span,
     ))?;
 
