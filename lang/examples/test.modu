@@ -71,3 +71,5 @@ fn red(string) {
 }
 
 print(red("this should be red"));
+
+print("i like potatoes".split(" "));
