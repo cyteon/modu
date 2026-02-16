@@ -8,7 +8,7 @@ Starting from modu **0.5.3** we also put releases on [github releases](https://g
 
 From [crates.io](https://crates.io/crates/modu):
 ```bash
-$ cargo +nightly install modu
+$ cargo install modu
 ```
 
 More methods coming soon \
