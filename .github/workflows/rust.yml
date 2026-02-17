@@ -13,40 +13,41 @@ jobs:
   test:
     runs-on: ubuntu-latest
     steps:
-    - uses: actions/checkout@v4
-    - name: Run tests
-      run: |
-        cd lang
-        cargo test --verbose
-  
+      - uses: actions/checkout@v4
+      - name: Run tests
+        run: |
+          cd lang
+          cargo test --verbose
+
   build:
-    runs-on: ubuntu-latest
+    name: Build (${{ matrix.os }})
+    runs-on: ${{ matrix.os }}
+
+    strategy:
+      matrix:
+        os: [ubuntu-latest, macos-latest, windows-latest]
+
     steps:
-    - uses: actions/checkout@v4
-    - name: Build for Linux
-      run: |
-        cd lang
-        cargo build --release --verbose
-    
-    - name: Setup for Windows
-      run: |
-        sudo apt-get update
-        sudo apt-get install -y mingw-w64
-        rustup target add x86_64-pc-windows-gnu
+      - uses: actions/checkout@v4
 
-    - name: Build for Windows
-      run: |
-        cd lang
-        cargo build --release --verbose --target x86_64-pc-windows-gnu
+      - name: Build
+        working-directory: lang
+        run: cargo build --release --verbose
 
-    - name: Prepare binaries
-      run: |
-        mkdir -p artifacts
-        cp lang/target/x86_64-pc-windows-gnu/release/modu.exe artifacts/modu.exe
-        cp lang/target/release/modu artifacts/modu-linux
+      - name: Prepare artifacts (Unix)
+        if: runner.os != 'Windows'
+        run: |
+          mkdir artifacts
+          cp lang/target/release/modu artifacts/modu-${{ runner.os }}
 
-    - name: Upload Artifacts
-      uses: actions/upload-artifact@v4
-      with:
-        name: binaries
-        path: artifacts/*
+      - name: Prepare artifacts (Windows)
+        if: runner.os == 'Windows'
+        run: |
+          mkdir artifacts
+          copy lang\target\release\modu.exe artifacts\modu-Windows.exe
+
+      - name: Upload artifacts
+        uses: actions/upload-artifact@v4
+        with:
+          name: binary-${{ runner.os }}
+          path: artifacts/*
