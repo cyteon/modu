@@ -6,12 +6,6 @@ unsafe extern "C" {
     fn _modu_print(ptr: *const u8, len: usize);
 }
 
-#[cfg(target_arch = "wasm32")]
-unsafe extern "C" {
-    fn _modu_eprint(ptr: *const u8, len: usize);
-}
-
-
 pub fn print(args: Vec<Spanned<Expr>>) -> Result<InternalFunctionResponse, (String, Span)> {
     let mut output = String::new();
 
@@ -56,7 +50,7 @@ pub fn eprint(args: Vec<Spanned<Expr>>) -> Result<InternalFunctionResponse, (Str
         let text = format!("{}\n", output);
 
         unsafe {
-            _modu_eprint(text.as_ptr(), text.len());
+            _modu_print(text.as_ptr(), text.len());
         }
     }
 
@@ -182,8 +176,12 @@ pub fn type_of(args: Vec<Spanned<Expr>>) -> Result<InternalFunctionResponse, (St
         Expr::Array(_) => "array",
         Expr::Object {..} => "object",
         Expr::Module { .. } => "module",
+        
+        #[cfg(not(target_arch = "wasm32"))]
         Expr::FFILibrary { .. } => "ffilibrary",
+        #[cfg(not(target_arch = "wasm32"))]
         Expr::File(_) => "file",
+
         _ => "unknown",
 
     }.to_string();

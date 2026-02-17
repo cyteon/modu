@@ -1,7 +1,8 @@
 use std::collections::HashMap;
+use std::sync::Arc;
+
 #[cfg(not(target_arch = "wasm32"))]
 use libloading::Library;
-use std::sync::Arc;
 
 use crate::lexer::Span;
 

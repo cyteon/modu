@@ -18,11 +18,11 @@ pub struct WasmWriter;
 impl std::io::Write for WasmWriter {
     fn write(&mut self, buf: &[u8]) -> std::io::Result<usize> {
         unsafe extern "C" {
-            fn _modu_eprint(ptr: *const u8, len: usize);
+            fn _modu_print(ptr: *const u8, len: usize);
         }
         
         unsafe {
-            _modu_eprint(buf.as_ptr(), buf.len());
+            _modu_print(buf.as_ptr(), buf.len());
         }
         
         Ok(buf.len())
