@@ -6,6 +6,12 @@ unsafe extern "C" {
     fn _modu_print(ptr: *const u8, len: usize);
 }
 
+#[cfg(target_arch = "wasm32")]
+unsafe extern "C" {
+    fn _modu_eprint(ptr: *const u8, len: usize);
+}
+
+
 pub fn print(args: Vec<Spanned<Expr>>) -> Result<InternalFunctionResponse, (String, Span)> {
     let mut output = String::new();
 
@@ -24,6 +30,33 @@ pub fn print(args: Vec<Spanned<Expr>>) -> Result<InternalFunctionResponse, (Stri
 
         unsafe {
             _modu_print(text.as_ptr(), text.len());
+        }
+    }
+
+    Ok(InternalFunctionResponse {
+        return_value: Expr::Null,
+        replace_self: None,
+    })
+}
+
+pub fn eprint(args: Vec<Spanned<Expr>>) -> Result<InternalFunctionResponse, (String, Span)> {
+    let mut output = String::new();
+
+    for arg in args {
+        output.push_str(&format!("{}", arg.node));
+    }
+
+    #[cfg(not(target_arch = "wasm32"))]
+    {
+        eprintln!("{}", output);
+    }
+
+    #[cfg(target_arch = "wasm32")]
+    {
+        let text = format!("{}\n", output);
+
+        unsafe {
+            _modu_eprint(text.as_ptr(), text.len());
         }
     }
 
@@ -81,12 +114,12 @@ pub fn int(args: Vec<Spanned<Expr>>) -> Result<InternalFunctionResponse, (String
         Expr::Int(n) => *n,
         Expr::Float(f) => *f as i64,
         Expr::String(s) => s.parse::<i64>().map_err(|e| (
-            format!("Could not convert string to int: {}", e),
+            format!("could not convert string to int: {}", e),
             args[0].span,
         ))?,
         Expr::Bool(b) => if *b { 1 } else { 0 },
         _ => return Err((
-            format!("Cannot convert {:?} to int", args[0].node),
+            format!("cannot convert {} to int", args[0].node),
             args[0].span,
         )),
     }; 
@@ -102,12 +135,12 @@ pub fn float(args: Vec<Spanned<Expr>>) -> Result<InternalFunctionResponse, (Stri
         Expr::Int(n) => *n as f64,
         Expr::Float(f) => *f,
         Expr::String(s) => s.parse::<f64>().map_err(|e| (
-            format!("Could not convert string to float: {}", e),
+            format!("could not convert string to float: {}", e),
             args[0].span,
         ))?,
         Expr::Bool(b) => if *b { 1.0 } else { 0.0 },
         _ => return Err((
-            format!("Cannot convert {:?} to float", args[0].node),
+            format!("cannot convert '{}' to float", args[0].node),
             args[0].span,
         )),
     }; 
@@ -126,7 +159,7 @@ pub fn bool(args: Vec<Spanned<Expr>>) -> Result<InternalFunctionResponse, (Strin
         Expr::Bool(b) => *b,
         Expr::Null => false,
         _ => return Err((
-            format!("Cannot convert {:?} to bool", args[0].node),
+            format!("cannot convert '{}' to bool", args[0].node),
             args[0].span,
         )),
     }; 
@@ -168,6 +201,15 @@ pub fn fill_context(context: &mut HashMap<String, Expr>) {
             name: "print".to_string(),
             args: vec!["__args__".to_string()],
             func: print,
+        },
+    );
+
+    context.insert(
+        "eprint".to_string(),
+        Expr::InternalFunction {
+            name: "eprint".to_string(),
+            args: vec!["__args__".to_string()],
+            func: eprint,
         },
     );
 

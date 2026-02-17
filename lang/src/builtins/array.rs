@@ -65,6 +65,49 @@ pub fn pop(args: Vec<Spanned<Expr>>) -> Result<InternalFunctionResponse, (String
     })
 }
 
+pub fn join(args: Vec<Spanned<Expr>>) -> Result<InternalFunctionResponse, (String, Span)> {
+    let array = match &args[0].node {
+        Expr::Array(elements) => elements,
+        _ => unreachable!(),
+    };
+
+    let delimiter = match &args[1].node {
+        Expr::String(s) => s,
+        _ => {
+            return Err((
+                "join expects a string delimiter".to_string(),
+                args[1].span,
+            ))
+        }
+    };
+
+    let mut string_vec = Vec::new();
+
+    for element in array {
+        match &element.node {
+            Expr::String(s) => string_vec.push(s.clone()),
+            Expr::Int(i) => string_vec.push(i.to_string()),
+            Expr::Float(f) => string_vec.push(f.to_string()),
+            Expr::Bool(b) => string_vec.push(b.to_string()),
+            Expr::Null => string_vec.push("null".to_string()),
+            Expr::Array(_) => string_vec.push(format!("{}", element.node)),
+            _ => {
+                return Err((
+                    format!("join cannot join value '{}'", element.node),
+                    element.span,
+                ))
+            }
+        }
+    }
+
+    let joined = string_vec.join(delimiter);
+
+    Ok(InternalFunctionResponse {
+        return_value: Expr::String(joined),
+        replace_self: None,
+    })
+}
+
 pub fn get_fn(name: &str) -> Option<Expr> {
     Some(Expr::InternalFunction {
         name: name.to_string(),
@@ -73,6 +116,7 @@ pub fn get_fn(name: &str) -> Option<Expr> {
             "clear" => vec!["self".to_string()],
             "push" => vec!["self".to_string(), "value".to_string()],
             "pop" => vec!["self".to_string()],
+            "join" => vec!["self".to_string(), "delimiter".to_string()],
             _ => vec![],
         },
         func: match name {
@@ -80,6 +124,7 @@ pub fn get_fn(name: &str) -> Option<Expr> {
             "clear" => clear,
             "push" => push,
             "pop" => pop,
+            "join" => join,
             _ => return None,
         },
     })

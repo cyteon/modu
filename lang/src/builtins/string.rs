@@ -37,6 +37,40 @@ pub fn split(args: Vec<Spanned<Expr>>) -> Result<InternalFunctionResponse, (Stri
     })
 }
 
+pub fn replace(args: Vec<Spanned<Expr>>) -> Result<InternalFunctionResponse, (String, Span)> {
+    let string = match &args[0].node {
+        Expr::String(s) => s,
+        _ => unreachable!(),
+    };
+
+    let a = match &args[1].node {
+        Expr::String(s) => s,
+        _ => {
+            return Err((
+                "replace expects a string to replace".to_string(),
+                args[1].span,
+            ))
+        }
+    };
+
+    let b = match &args[2].node {
+        Expr::String(s) => s,
+        _ => {
+            return Err((
+                "replace expects a string to replace with".to_string(),
+                args[2].span,
+            ))
+        }
+    };
+
+    let replaced = string.replace(a, b);
+
+    Ok(InternalFunctionResponse {
+        return_value: Expr::String(replaced),
+        replace_self: None,
+    })
+}
+
 pub fn len(args: Vec<Spanned<Expr>>) -> Result<InternalFunctionResponse, (String, Span)> {
     let string = match &args[0].node {
         Expr::String(s) => s,
@@ -56,11 +90,13 @@ pub fn get_fn(name: &str) -> Option<Expr> {
         name: name.to_string(),
         args: match name {
             "split" => vec!["self".to_string(), "delimiter".to_string()],
+            "replace" => vec!["self".to_string(), "a".to_string(), "b".to_string()],
             "len" => vec!["self".to_string()],
             _ => vec![],
         },
         func: match name {
             "split" => split,
+            "replace" => replace,
             "len" => len,
             _ => return None,
         },

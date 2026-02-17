@@ -74,3 +74,9 @@ print(red("this should be red"));
 
 print("i like potatoes".split(" "));
 print("1.min(2).max(5) = ", 1.min(2).max(5));
+
+print("i like potatoes".replace("potatoes", "arson"));
+print("i like potatoes".split(" ").join(", "));
+print( [ 1, 1.5, null, false, "hi", [ "test", "test2" ] ].join(", ") );
+
+eprint("wow error");
