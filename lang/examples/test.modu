@@ -80,3 +80,5 @@ print("i like potatoes".split(" ").join(", "));
 print( [ 1, 1.5, null, false, "hi", [ "test", "test2" ] ].join(", ") );
 
 eprint("wow error");
+
+print("abc"[-1]); // b

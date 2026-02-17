@@ -874,6 +874,32 @@ pub fn eval<'src>(expr: &'src SpannedExpr, context: &mut HashMap<String, Expr>) 
                     }
                 }
 
+                (Expr::String(s), Expr::Int(i)) => {
+                    let idx = if i < 0 {
+                        s.len() as i64 + i
+                    } else {
+                        i
+                    };
+
+                    if idx < 0 || idx >= s.len() as i64 {
+                        return Err(EvalError {
+                            message: format!("index {} is out of bounds", i),
+                            message_short: "index out of bounds".to_string(),
+                            span: expr.span,
+                        });
+                    }
+
+                    if let Some(char) = s.chars().nth(idx as usize) {
+                        Ok(Flow::Continue(Expr::String(char.to_string())))
+                    } else {
+                        return Err(EvalError {
+                            message: format!("could not get char with index {}", i),
+                            message_short: "could not get char".to_string(),
+                            span: expr.span,
+                        });
+                    }
+                }
+
                 (v, _) => Err(EvalError {
                     message: format!("cannot index into value '{}'", v),
                     message_short: "cannot index".to_string(),

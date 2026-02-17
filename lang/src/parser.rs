@@ -102,7 +102,7 @@ fn parser<'src>() -> impl Parser<
                     },
 
                     Postfix::Index(index) => SpannedExpr {
-                        span: Span::from(obj.span.start..index.span.end),
+                        span: Span::from(obj.span.start..(index.span.end + 1)), // + 1 to get the ] too
                         node: Expr::IndexAccess {
                             object: Box::new(obj.clone()),
                             index: Box::new(index),
