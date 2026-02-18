@@ -1,5 +1,4 @@
 # Foreign Function Interface (FFI)
-> Disabled on the server due to security >:D
 
 ⚠️ FFI functions can only take strings, integers, floats, booleans and null as arguments
 

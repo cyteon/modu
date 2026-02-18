@@ -1,5 +1,4 @@
 # File I/O
-> Disabled on the server :P
 
 ### Opening files
 In order to read or write to an file, you first have to open i

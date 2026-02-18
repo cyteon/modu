@@ -1,4 +1,4 @@
-import { Home, Baseline, File, FileBox, Equal, Server, Library, AppWindowIcon, Box, Braces, Wifi, Repeat2, CaseLower, MessageSquareLock } from "lucide-svelte"
+import { Home, Baseline, File, FileBox, Equal, Library, AppWindowIcon, Box, Braces, Wifi, Repeat2, CaseLower, MessageSquareLock } from "lucide-svelte"
 
 export default {
     pages: [
@@ -66,11 +66,6 @@ export default {
             "path": "cryptography",
             "title": "Cryptography",
             "icon": MessageSquareLock,
-        },
-        {
-            "path": "server",
-            "title": "Server",
-            "icon": Server,
         }
     ]
 }

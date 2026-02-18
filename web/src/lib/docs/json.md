@@ -1,5 +1,4 @@
 # JSON
-> Introduced in Modu v0.5.4
 
 The JSON library has 3 functions, **.new()**, **.to_string(object)**, and **.parse(string)**.
 ```rust

@@ -1,5 +1,4 @@
 # HTTP
-> Introduced in Modu v1.0.0
 
 The http library is used to interact with the internet.
 

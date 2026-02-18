@@ -1,4 +1,5 @@
 # Math
+
 Additions and Subtractions cant be easily used with - and +, while more advanced stuff requires the math package for now.
 
 ```rust

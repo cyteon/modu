@@ -1,5 +1,4 @@
 # Loops
-> Introduced in Modu v1.1.0, disabled on the server to prevent cooking it
 
 All types of loops can be broken with "break".
 
