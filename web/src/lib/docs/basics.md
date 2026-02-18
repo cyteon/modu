@@ -11,22 +11,13 @@ Like this:
 let a = 1;
 let b = "a";
 let c = false;
+let d = a;
 ```
-
-You can also define variables with other variables like
-
-```rust
-let a = 1;
-let b = a;
-```
-
-In addition, you can define variables with math, see [Math](math).
 
 ## User Input
-User input can be gotten with the built-in function **input()**
+User input can be gotten with the built-in function **input()**, which takes any amount of arguments
 ```rust
 let name = input("What is your name? ");
-// use input() for no question/message on same line
 
 print("Hello, ", name, "!");
 ```
@@ -48,7 +39,7 @@ yap("Hello, World!");
 // Hello, World!
 ```
 
-Functions defined in a file, can be also be accessed in other files when imported, see [Imports](imports).
+Functions defined in a file, can be also be accessed in other files when imported, see [imports](imports).
 
 ## Conditions
 

@@ -81,4 +81,12 @@ print( [ 1, 1.5, null, false, "hi", [ "test", "test2" ] ].join(", ") );
 
 eprint("wow error");
 
-print("abc"[-1]); // b
+print("abc"[-1]); // b, "abc"[1] would say the same
+
+if a {
+    print("a is smth");
+}
+
+if dosent_exist {
+    print("nah");
+}
