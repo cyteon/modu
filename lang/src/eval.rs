@@ -659,11 +659,30 @@ pub fn eval<'src>(expr: &'src SpannedExpr, context: &mut HashMap<String, Expr>) 
                     }
                 },
 
-                _ => Err(EvalError {
-                    message: format!("condition must be a boolean, got '{}'", condition_value),
-                    message_short: "invalid condition".to_string(),
-                    span: expr.span,
-                }),
+                Expr::Int(n) => {
+                    if n != 0 {
+                        eval(then_branch, context)
+                    } else {
+                        if let Some(else_branch) = else_branch {
+                            eval(else_branch, context)
+                        } else {
+                            Ok(Flow::Continue(Expr::Null))
+                        }
+                    }
+                }
+
+                Expr::Null => {
+                    if let Some(else_branch) = else_branch {
+                        eval(else_branch, context)
+                    } else {
+                        Ok(Flow::Continue(Expr::Null))
+                    }
+                }
+
+                // so u can do like "if var", and it will run if var is not null
+                _ => {
+                    eval(then_branch, context)
+                }
             }
         }
 
