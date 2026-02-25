@@ -193,6 +193,95 @@ pub fn eval<'src>(expr: &'src SpannedExpr, context: &mut HashMap<String, Expr>) 
             }
         }
 
+        Expr::Mul(left, right) => {
+            let left_value = eval(left, context)?.unwrap();
+            let right_value = eval(right, context)?.unwrap();
+
+            match (left_value, right_value) {
+                (Expr::Int(l), Expr::Int(r)) => Ok(Flow::Continue(Expr::Int(l * r))),
+                (Expr::Float(l), Expr::Float(r)) => Ok(Flow::Continue(Expr::Float(l * r))),
+                (Expr::Int(l), Expr::Float(r)) => Ok(Flow::Continue(Expr::Float(l as f64 * r))),
+                (Expr::Float(l), Expr::Int(r)) => Ok(Flow::Continue(Expr::Float(l * r as f64))),
+                (Expr::String(l), Expr::Int(r)) => Ok(Flow::Continue(Expr::String(l.repeat(r as usize)))),
+                
+                _ => Err(EvalError {
+                    message: format!("cannot multiply values '{}' and '{}'", left.node, right.node),
+                    message_short: "cannot multiply".to_string(),
+                    span: expr.span,
+                }),
+            }
+        }
+
+        Expr::Div(left, right) => {
+            let left_value = eval(left, context)?.unwrap();
+            let right_value = eval(right, context)?.unwrap();
+
+            if matches!(right_value, Expr::Int(0) | Expr::Float(0.0)) {
+                return Err(EvalError {
+                    message: "division by zero".to_string(),
+                    message_short: "division by zero".to_string(),
+                    span: expr.span,
+                });
+            }
+
+            match (left_value, right_value) {
+                (Expr::Int(l), Expr::Int(r)) => Ok(Flow::Continue(Expr::Int(l / r))),
+                (Expr::Float(l), Expr::Float(r)) => Ok(Flow::Continue(Expr::Float(l / r))),
+                (Expr::Int(l), Expr::Float(r)) => Ok(Flow::Continue(Expr::Float(l as f64 / r))),
+                (Expr::Float(l), Expr::Int(r)) => Ok(Flow::Continue(Expr::Float(l / r as f64))),
+                
+                _ => Err(EvalError {
+                    message: format!("cannot divide values '{}' and '{}'", left.node, right.node),
+                    message_short: "cannot divide".to_string(),
+                    span: expr.span,
+                }),
+            }
+        }
+
+        Expr::Pow(left, right) => {
+            let left_value = eval(left, context)?.unwrap();
+            let right_value = eval(right, context)?.unwrap();
+
+            match (left_value, right_value) {
+                (Expr::Int(l), Expr::Int(r)) => Ok(Flow::Continue(Expr::Int(l.pow(r as u32)))),
+                (Expr::Float(l), Expr::Float(r)) => Ok(Flow::Continue(Expr::Float(l.powf(r)))),
+                (Expr::Int(l), Expr::Float(r)) => Ok(Flow::Continue(Expr::Float((l as f64).powf(r)))),
+                (Expr::Float(l), Expr::Int(r)) => Ok(Flow::Continue(Expr::Float(l.powi(r as i32)))),
+                
+                _ => Err(EvalError {
+                    message: format!("cannot exponentiate values '{}' and '{}'", left.node, right.node),
+                    message_short: "cannot exponentiate".to_string(),
+                    span: expr.span,
+                }),
+            }
+        }
+
+        Expr::Mod(left, right) => {
+            let left_value = eval(left, context)?.unwrap();
+            let right_value = eval(right, context)?.unwrap();
+
+            if matches!(right_value, Expr::Int(0) | Expr::Float(0.0)) {
+                return Err(EvalError {
+                    message: "modulo by zero".to_string(),
+                    message_short: "modulo by zero".to_string(),
+                    span: expr.span,
+                });
+            }
+
+            match (left_value, right_value) {
+                (Expr::Int(l), Expr::Int(r)) => Ok(Flow::Continue(Expr::Int(l % r))),
+                (Expr::Float(l), Expr::Float(r)) => Ok(Flow::Continue(Expr::Float(l % r))),
+                (Expr::Int(l), Expr::Float(r)) => Ok(Flow::Continue(Expr::Float((l as f64) % r))),
+                (Expr::Float(l), Expr::Int(r)) => Ok(Flow::Continue(Expr::Float(l % (r as f64)))),
+                
+                _ => Err(EvalError {
+                    message: format!("cannot modulo values '{}' and '{}'", left.node, right.node),
+                    message_short: "cannot modulo".to_string(),
+                    span: expr.span,
+                }),
+            }
+        }
+
         Expr::Identifier(name) => {
             match context.get(name) {
                 Some(value) => Ok(Flow::Continue(value.clone())),
