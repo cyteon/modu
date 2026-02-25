@@ -103,6 +103,15 @@ pub enum Token {
 
     #[token("*")]
     Star,
+
+    #[token("**")]
+    Pow,
+
+    #[token("/")]
+    Slash,
+
+    #[token("%")]
+    Mod,
     
     #[token("+")]
     Plus,
