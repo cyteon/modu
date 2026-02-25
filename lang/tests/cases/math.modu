@@ -1,10 +1,11 @@
 import "math" as math;
 
 print(2 + 3);
-print(10 - 5);
-print(5 - 5 + 5);
+print(3 - -2);
+print(-5 * -1);
+print(10 / 2);
+print(1 * 1 + 2 * 2);
+print(3 ** 2 - 2 ** 2);
+print(4 + 10 % 3);
 
-print(math.mul(2, 3));
-print(math.div(10, 2));
 print(math.abs(-5));
-print(math.pow(3, 2));
