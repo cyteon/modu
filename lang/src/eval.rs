@@ -225,7 +225,7 @@ pub fn eval<'src>(expr: &'src SpannedExpr, context: &mut HashMap<String, Expr>) 
             }
 
             match (left_value, right_value) {
-                (Expr::Int(l), Expr::Int(r)) => Ok(Flow::Continue(Expr::Int(l / r))),
+                (Expr::Int(l), Expr::Int(r)) => Ok(Flow::Continue(Expr::Float((l as f64 / r as f64)))),
                 (Expr::Float(l), Expr::Float(r)) => Ok(Flow::Continue(Expr::Float(l / r))),
                 (Expr::Int(l), Expr::Float(r)) => Ok(Flow::Continue(Expr::Float(l as f64 / r))),
                 (Expr::Float(l), Expr::Int(r)) => Ok(Flow::Continue(Expr::Float(l / r as f64))),

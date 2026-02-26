@@ -50,7 +50,9 @@ pub fn div(args: Vec<Spanned<Expr>>) -> Result<InternalFunctionResponse, (String
                     args[1].span,
                 ));
             }
+
             let result = (*a as f64) / (*b as f64);
+
             Ok(InternalFunctionResponse {
                 return_value: Expr::Float(result),
                 replace_self: None,
@@ -64,7 +66,9 @@ pub fn div(args: Vec<Spanned<Expr>>) -> Result<InternalFunctionResponse, (String
                     args[1].span,
                 ));
             }
+
             let result = a / b;
+
             Ok(InternalFunctionResponse {
                 return_value: Expr::Float(result),
                 replace_self: None,
@@ -78,7 +82,9 @@ pub fn div(args: Vec<Spanned<Expr>>) -> Result<InternalFunctionResponse, (String
                     args[1].span,
                 ));
             }
+
             let result = (*a as f64) / b;
+            
             Ok(InternalFunctionResponse {
                 return_value: Expr::Float(result),
                 replace_self: None,
@@ -92,7 +98,9 @@ pub fn div(args: Vec<Spanned<Expr>>) -> Result<InternalFunctionResponse, (String
                     args[1].span,
                 ));
             }
+
             let result = a / (*b as f64);
+
             Ok(InternalFunctionResponse {
                 return_value: Expr::Float(result),
                 replace_self: None,

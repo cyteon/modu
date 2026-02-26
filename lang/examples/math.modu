@@ -1,7 +1,8 @@
 print(5 + 5); // 10
 print(10 - 2); // 8
 print(5 * 5); // 25
-print(10 / 2); // 5
+print(10 / 2); // 5.0
+print(5 / 2); // 2.5
 print(1 + 2 * 2); // 5
 print((1 + 2) * 2); // 6
 print(3 ** 2); // 9
@@ -12,7 +13,7 @@ import "math";
 
 // mul, div and pow can also be used as a function in math
 print(math.mul(2, 3)); // 6
-print(math.div(10, 2)); // 5
+print(math.div(5, 2)); // 2.5
 print(math.pow(3, 2)); // 9
 
 print();
