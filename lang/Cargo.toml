@@ -1,6 +1,6 @@
 [package]
 name = "modu"
-version = "2.4.1"
+version = "2.5.0"
 edition = "2024"
 repository = "https://github.com/cyteon/modu"
 homepage = "https://modu.cyteon.dev"
@@ -41,6 +41,7 @@ md5 = "0.8.0"
 chumsky = "0.12.0"
 ariadne = "0.6.0"
 colored = "3.1.1"
+rustyline = "17.0.2"
 
 [target.'cfg(target_arch = "wasm32")'.dependencies]
 wasm-bindgen = "0.2"

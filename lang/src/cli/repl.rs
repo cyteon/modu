@@ -1,42 +1,58 @@
 
-use std::io::Write;
+use rustyline::error::ReadlineError;
+use rustyline::DefaultEditor;
 use crate::parser::parse;
 
 pub fn repl() {
     println!("Modu REPL");
 
     let context = &mut crate::utils::create_context();
-    
-    let mut history: Vec<String> = Vec::new();
+    let mut rl = DefaultEditor::new().unwrap();
+
     let mut open_functions = 0;
-    let mut input = String::new();
+    let mut buffer = String::new();
 
     loop {
-        if open_functions > 0 {
-            print!("|{}", " ".repeat(open_functions * 4));
+        let prompt = if open_functions > 0 {
+            format!("|{}", " ".repeat(open_functions * 4))
         } else {
-            input.clear();
-            print!("> ");
-        }
+            "> ".to_string()
+        };
 
-        std::io::stdout().flush().unwrap();
+        match rl.readline(&prompt) {
+            Ok(line) => {
+                if line.trim() == "exit" {
+                    break;
+                }
 
-        let mut this_input = String::new();
-        std::io::stdin().read_line(&mut this_input).unwrap();
-        history.push(input.clone());
+                rl.add_history_entry(line.as_str()).unwrap();
+                
+                open_functions += line.chars().filter(|&c| c == '{').count();
+                open_functions = open_functions.saturating_sub(line.chars().filter(|&c| c == '}').count());
 
-        if this_input.contains("{") {
-            open_functions += 1;
-        }
+                buffer.push_str(&line);
+                buffer.push('\n');
 
-        if this_input.contains("}") {
-            open_functions = open_functions.saturating_sub(1);
-        }
+                if open_functions == 0 {
+                    parse(&buffer, "<repl>", context);
+                    buffer.clear();
+                }
+            }
 
-        input.push_str(&this_input);
+            Err(ReadlineError::Interrupted) => {
+                println!("^C");
+                buffer.clear();
+                open_functions = 0;
+            }
 
-        if open_functions == 0 {
-            parse(&input, "<repl>", context);
+            Err(ReadlineError::Eof) => {
+                break;
+            }
+
+            Err(err) => {
+                println!("Error: {:?}", err);
+                break;
+            }
         }
     }
 }
