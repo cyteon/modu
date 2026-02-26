@@ -899,14 +899,35 @@ pub fn eval<'src>(expr: &'src SpannedExpr, context: &mut HashMap<String, Expr>) 
             }
         },
 
-        Expr::If { condition, then_branch, else_branch } => {
+        Expr::If { condition, then_branch, else_if_branches, else_branch } => {
             let condition_value = eval(condition, context)?.unwrap();
 
             match condition_value {
                 Expr::Bool(true) => eval(then_branch, context),
                 
                 Expr::Bool(false) | Expr::Null => {
-                    if let Some(else_branch) = else_branch {
+                    if !else_if_branches.is_empty() {
+                        for (else_if_condition, else_if_branch) in else_if_branches {
+                            let else_if_condition_value = eval(else_if_condition, context)?.unwrap();
+
+                            match else_if_condition_value {
+                                Expr::Bool(true) => return eval(else_if_branch, context),
+                                Expr::Bool(false) | Expr::Null => continue,
+
+                                _ => return Err(EvalError {
+                                    message: format!("else if condition must be a boolean, got '{}'", else_if_condition_value),
+                                    message_short: "invalid else if condition".to_string(),
+                                    span: expr.span,
+                                }),
+                            }
+                        }
+
+                        if let Some(else_branch) = else_branch {
+                            eval(else_branch, context)
+                        } else {
+                            Ok(Flow::Continue(Expr::Null))
+                        }
+                    } else if let Some(else_branch) = else_branch {
                         eval(else_branch, context)
                     } else {
                         Ok(Flow::Continue(Expr::Null))
@@ -917,7 +938,28 @@ pub fn eval<'src>(expr: &'src SpannedExpr, context: &mut HashMap<String, Expr>) 
                     if n != 0 {
                         eval(then_branch, context)
                     } else {
-                        if let Some(else_branch) = else_branch {
+                        if !else_if_branches.is_empty() {
+                            for (else_if_condition, else_if_branch) in else_if_branches {
+                                let else_if_condition_value = eval(else_if_condition, context)?.unwrap();
+
+                                match else_if_condition_value {
+                                    Expr::Bool(true) => return eval(else_if_branch, context),
+                                    Expr::Bool(false) | Expr::Null => continue,
+
+                                    _ => return Err(EvalError {
+                                        message: format!("else if condition must be a boolean, got '{}'", else_if_condition_value),
+                                        message_short: "invalid else if condition".to_string(),
+                                        span: expr.span,
+                                    }),
+                                }
+                            }
+
+                            if let Some(else_branch) = else_branch {
+                                eval(else_branch, context)
+                            } else {
+                                Ok(Flow::Continue(Expr::Null))
+                            }
+                        } else if let Some(else_branch) = else_branch {
                             eval(else_branch, context)
                         } else {
                             Ok(Flow::Continue(Expr::Null))

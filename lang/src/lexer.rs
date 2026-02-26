@@ -95,6 +95,9 @@ pub enum Token {
     #[token("as")]
     As,
 
+    #[token("else if")]
+    ElseIf,
+
     #[token("if")]
     If,
 
