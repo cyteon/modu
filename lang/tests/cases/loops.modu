@@ -35,3 +35,9 @@ for i in start..=5 {
 for n in 1..=end {
     print(n);
 }
+
+let x = 0;
+while x < 5 {
+    x = x + 1;
+    print(x);
+}

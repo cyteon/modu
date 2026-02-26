@@ -1,0 +1,15 @@
+fn check(v) {
+    if v > 0 {
+        print("v is positive");
+    } else if v == 5 {
+        print("uhh this shouldnt print");
+    } else if v < 0 {
+        print("v is negative");
+    } else {
+        print("v is zero");
+    }
+}
+
+check(5);
+check(-3);
+check(0);

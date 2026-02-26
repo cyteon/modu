@@ -26,23 +26,8 @@ fn basic_print() {
 }
 
 #[test]
-fn nesting_funcs() {
-    run_test("nesting_funcs");
-}
-
-#[test]
-fn type_conversion() {
-    run_test("type_conversion");
-}
-
-#[test]
-fn http_requests() {
-    run_test("http");
-}
-
-#[test]
-fn loops() {
-    run_test("loops");
+fn crypto() {
+    run_test("crypto");
 }
 
 #[test]
@@ -51,8 +36,23 @@ fn encoding() {
 }
 
 #[test]
-fn crypto() {
-    run_test("crypto");
+fn http() {
+    run_test("http");
+}
+
+#[test]
+fn if_statements() {
+    run_test("if_statements");
+}
+
+#[test]
+fn loops() {
+    run_test("loops");
+}
+
+#[test]
+fn math() {
+    run_test("math");
 }
 
 #[test]
@@ -61,6 +61,11 @@ fn minskys_machine() {
 }
 
 #[test]
-fn math() {
-    run_test("math");
+fn nesting_funcs() {
+    run_test("nesting_funcs");
+}
+
+#[test]
+fn type_conversion() {
+    run_test("type_conversion");
 }
