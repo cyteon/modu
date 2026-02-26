@@ -29,7 +29,6 @@ rand = "0.8.5"
 serde_json = "1.0.134"
 toml = "0.9.11"
 serde = { version = "1.0.228", features = ["derive"] }
-modu_ffi = "1.1.2"
 base64 = "0.22.1"
 sha2 = "0.10.9"
 blake3 = "1.8.3"
@@ -41,7 +40,6 @@ md5 = "0.8.0"
 chumsky = "0.12.0"
 ariadne = "0.6.0"
 colored = "3.1.1"
-libc = "0.2.182"
 
 [target.'cfg(target_arch = "wasm32")'.dependencies]
 wasm-bindgen = "0.2.113"
@@ -59,6 +57,8 @@ libloading = "0.9.0"
 zip = "8.1.0"
 rustyline = { version = "17.0.2", features = ["derive"] }
 regex = "1.12.3"
+libc = "0.2.182"
+modu_ffi = "1.1.2"
 
 [dev-dependencies]
 assert_cmd = "2.1.2"
