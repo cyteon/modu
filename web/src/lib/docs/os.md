@@ -3,7 +3,7 @@
 The built-in library to interact with the OS.
 
 Currently has the following functions:
-- `exec(command)` - Runs a command
+- `exec(command)` - Run a command, returns `{ stderr: string, stdout: string, status: i64 }`
 
 And the following variables:
 - `name` - Returns the OS name: windows/linux/macos/unkown
@@ -20,10 +20,10 @@ if os.name == "windows" {
     exit();
 }
 
-print("I am ", os.exec("whoami"), " and I use ", os.name);
+print("I am ", os.exec("whoami").stdout.trim(), " and I use ", os.name);
 
 os.exec("echo 'Hello, World!' > tmp.txt");
-print(os.exec("cat tmp.txt"));
+print(os.exec("cat tmp.txt").stdout.trim());
 os.exec("rm tmp.txt");
 
 // Expected Output
