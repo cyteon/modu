@@ -34,6 +34,10 @@ pub enum Expr {
     Neg(Box<Spanned<Expr>>),
     Add(Box<Spanned<Expr>>, Box<Spanned<Expr>>),
     Sub(Box<Spanned<Expr>>, Box<Spanned<Expr>>),
+    Mul(Box<Spanned<Expr>>, Box<Spanned<Expr>>),
+    Div(Box<Spanned<Expr>>, Box<Spanned<Expr>>),
+    Mod(Box<Spanned<Expr>>, Box<Spanned<Expr>>),
+    Pow(Box<Spanned<Expr>>, Box<Spanned<Expr>>),
 
     Let {
         name: String,

@@ -1,0 +1,11 @@
+import "math" as math;
+
+print(2 + 3);
+print(3 - -2);
+print(-5 * -1);
+print(10 / 2);
+print(1 * 1 + 2 * 2);
+print(3 ** 2 - 2 ** 2);
+print(4 + 10 % 3);
+
+print(math.abs(-5));

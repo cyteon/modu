@@ -69,7 +69,7 @@
 			"patterns": [
 				{
 					"name": "keyword.operator.arithmetic.modu",
-					"match": "\\+|-"
+					"match": "\\+|-|\\*|\\/|%|\\*\\*"
 				},
 				{
 					"name": "keyword.operator.comparison.modu",

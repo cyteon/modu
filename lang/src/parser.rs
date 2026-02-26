@@ -125,12 +125,49 @@ fn parser<'src>() -> impl Parser<
 
                 expr
             });
-
-        let additive = unary.clone()
+        
+        let power = unary.clone()
+           .separated_by(select! { (Token::Pow, _span) => () })
+            .at_least(1)
+            .collect::<Vec<SpannedExpr>>()
+            .map(|mut exprs: Vec<SpannedExpr>| {
+                let mut result = exprs.pop().unwrap();
+                while let Some(left) = exprs.pop() {
+                    result = SpannedExpr {
+                        node: Expr::Pow(Box::new(left.clone()), Box::new(result.clone())),
+                        span: Span::from(left.span.start..result.span.end),
+                    };
+                }
+                result
+            })
+            .boxed();
+        
+        let multiplicative = power.clone()
             .foldl(
                 choice((
-                    select! { (Token::Plus, span) => span }.then(unary.clone()).map(|(span, right)| (Token::Plus, span, right)),
-                    select! { (Token::Minus, span) => span }.then(unary.clone()).map(|(span, right)| (Token::Minus, span, right)),
+                    select! { (Token::Star, span) => span }.then(power.clone()).map(|(span, right)| (Token::Star, span, right)),
+                    select! { (Token::Slash, span) => span }.then(power.clone()).map(|(span, right)| (Token::Slash, span, right)),
+                    select! { (Token::Mod, span) => span }.then(power.clone()).map(|(span, right)| (Token::Mod, span, right)),
+                ))
+                .repeated(),
+ 
+                |left: SpannedExpr, (op, _span, right): (Token, Span, SpannedExpr)| SpannedExpr {
+                    node: match op {
+                        Token::Star => Expr::Mul(Box::new(left.clone()), Box::new(right.clone())),
+                        Token::Slash => Expr::Div(Box::new(left.clone()), Box::new(right.clone())),
+                        Token::Mod => Expr::Mod(Box::new(left.clone()), Box::new(right.clone())),
+                        _ => unreachable!(),
+                    },
+                    span: Span::from(left.span.start..right.span.end),
+                }
+            )
+            .boxed();
+
+        let additive = multiplicative.clone()
+            .foldl(
+                choice((
+                    select! { (Token::Plus, span) => span }.then(multiplicative.clone()).map(|(span, right)| (Token::Plus, span, right)),
+                    select! { (Token::Minus, span) => span }.then(multiplicative.clone()).map(|(span, right)| (Token::Minus, span, right)),
                 ))
                 .repeated(),
 
@@ -142,7 +179,8 @@ fn parser<'src>() -> impl Parser<
                     },
                     span: Span::from(left.span.start..right.span.end),
                 }
-            );
+            )
+            .boxed();
         
         let range = additive.clone()
             .then(
@@ -162,7 +200,8 @@ fn parser<'src>() -> impl Parser<
 
                     None => start,
                 }
-            });
+            })
+            .boxed();
         
         let inclusive_range = range.clone()
             .then(
@@ -181,7 +220,8 @@ fn parser<'src>() -> impl Parser<
                     },
                     None => start,
                 }
-            });
+            })
+            .boxed();
         
         inclusive_range.clone()
             .foldl(
@@ -308,7 +348,7 @@ fn parser<'src>() -> impl Parser<
                 }),
             });
         
-        let retun_stmt = select! { (Token::Return, span) => span }
+        let return_stmt = select! { (Token::Return, span) => span }
             .then(expr.clone().or_not())
             .then(select! { (Token::Semicolon, span) => span }.labelled("semicolon"))
             .map(|((start, value), end): ((Span, Option<SpannedExpr>), Span)| SpannedExpr {
@@ -350,15 +390,17 @@ fn parser<'src>() -> impl Parser<
                 }
             });
                 
-        let_stmt
-            .or(fn_stmt)
-            .or(infinite_loop_stmt)
-            .or(for_loop_stmt)
-            .or(if_stmt)
-            .or(import_stmt)
-            .or(retun_stmt)
-            .or(block)
-            .or(expr_stmt)
+        choice((
+            let_stmt,
+            fn_stmt,
+            infinite_loop_stmt,
+            for_loop_stmt,
+            if_stmt,
+            import_stmt,
+            return_stmt,
+            block,
+            expr_stmt,
+        )).boxed()
     });
 
     stmt.repeated().collect::<Vec<_>>().then_ignore(end())

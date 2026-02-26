@@ -11,6 +11,9 @@ authors = ["cyteon"]
 keywords = ["programming-language", "cli", "interpreter", "language"]
 exclude = ["/examples", "/tmp", "/tests"]
 
+[profile.dev]
+debug = 0
+
 [lib]
 name = "modu"
 path = "src/lib.rs"

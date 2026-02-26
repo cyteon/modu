@@ -59,3 +59,8 @@ fn crypto() {
 fn minskys_machine() {
     run_test("minskys_machine");
 }
+
+#[test]
+fn math() {
+    run_test("math");
+}

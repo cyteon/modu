@@ -30,6 +30,10 @@ jobs:
     steps:
       - uses: actions/checkout@v4
 
+      - name: Install LLVM (macOS)
+        if: runner.os == 'macOS'
+        run: brew install llvm lld
+
       - name: Build
         working-directory: lang
         run: cargo build --release --verbose
