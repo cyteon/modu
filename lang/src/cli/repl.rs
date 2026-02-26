@@ -30,7 +30,7 @@ pub fn repl() {
         }
 
         if this_input.contains("}") {
-            let _ = open_functions.saturating_sub(1);
+            open_functions = open_functions.saturating_sub(1);
         }
 
         input.push_str(&this_input);
