@@ -107,6 +107,9 @@ pub enum Token {
     #[token("for")]
     For,
 
+    #[token("while")]
+    While,
+
     #[token("in")]
     In,
 

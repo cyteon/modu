@@ -753,6 +753,33 @@ pub fn eval<'src>(expr: &'src SpannedExpr, context: &mut HashMap<String, Expr>) 
             }
         }
 
+        Expr::WhileLoop { condition, body } => {
+            loop {
+                let condition_value = eval(condition, context)?.unwrap();
+
+                match condition_value {
+                    Expr::Bool(true) => {
+                        match eval(body, context)? {
+                            Flow::Continue(_) => {},
+                            Flow::Return(v) => return Ok(Flow::Return(v)),
+                            Flow::Break => break,
+                            Flow::Skip => continue,
+                        }
+                    },
+
+                    Expr::Bool(false) => break,
+
+                    _ => return Err(EvalError {
+                        message: format!("while loop condition must be a boolean, got '{}'", condition_value),
+                        message_short: "invalid while condition".to_string(),
+                        span: expr.span,
+                    }),
+                }
+            }
+
+            Ok(Flow::Continue(Expr::Null))
+        }
+
         Expr::Return(value) => {
             let return_value = eval(value, context)?.unwrap();
             Ok(Flow::Return(return_value))
