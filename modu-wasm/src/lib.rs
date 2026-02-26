@@ -53,3 +53,24 @@ pub extern "C" fn _modu_print(ptr: *const u8, len: usize) {
     let mut output = OUTPUT.lock().unwrap();
     output.push_str(text);
 }
+
+#[unsafe(no_mangle)]
+pub extern "C" fn _modu_input(ptr: *const u8, len: usize, out_len: *mut usize) -> *mut u8 {
+    let prompt = unsafe {
+        std::str::from_utf8(std::slice::from_raw_parts(ptr, len)).unwrap()
+    };
+
+    let input = web_sys::window().unwrap().prompt_with_message(prompt).unwrap_or_default().unwrap_or_default();
+
+    let mut output = OUTPUT.lock().unwrap();
+    output.push_str(&format!("> {}\n", input));
+
+    let mut bytes = input.into_bytes();
+    bytes.shrink_to_fit();
+    let len = bytes.len();
+    let ptr = bytes.as_mut_ptr();
+    std::mem::forget(bytes);
+
+    unsafe { *out_len = len; }
+    ptr
+}
