@@ -41,7 +41,6 @@ md5 = "0.8.0"
 chumsky = "0.12.0"
 ariadne = "0.6.0"
 colored = "3.1.1"
-rustyline = "17.0.2"
 
 [target.'cfg(target_arch = "wasm32")'.dependencies]
 wasm-bindgen = "0.2"
@@ -57,6 +56,8 @@ reqwest = { version = "0.13.1", features = ["blocking", "json"]}
 rouille = { version = "3.6.2" }
 libloading = { version = "0.9.0" }
 zip = { version = "7.2.0" }
+rustyline = { version = "17.0.2", features = ["derive"] }
+regex = "1.12.3"
 
 [dev-dependencies]
 assert_cmd = "2.1.2"
