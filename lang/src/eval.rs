@@ -1170,6 +1170,106 @@ pub fn eval<'src>(expr: &'src SpannedExpr, context: &mut HashMap<String, Expr>) 
                     Ok(Flow::Continue(elements[idx as usize].node.clone()))
                 }
 
+                (Expr::Array(elements), Expr::Range { start, end }) => {
+                    let start = match eval(&start, context)?.unwrap() {
+                        Expr::Int(n) => n,
+
+                        _ => {
+                            return Err(EvalError {
+                                message: format!("range start must be an integer, got '{}'", start.node),
+                                message_short: "invalid range start".to_string(),
+                                span: expr.span,
+                            });
+                        }
+                    };
+
+                    let end = match eval(&end, context)?.unwrap() {
+                        Expr::Int(n) => n,
+
+                        _ => {
+                            return Err(EvalError {
+                                message: format!("range end must be an integer, got '{}'", end.node),
+                                message_short: "invalid range end".to_string(),
+                                span: expr.span,
+                            });
+                        }
+                    };
+
+                    let len = elements.len() as i64;
+
+                    let start_idx = if start < 0 {
+                        len + start
+                    } else {
+                        start
+                    };
+
+                    let end_idx = if end < 0 {
+                        len + end
+                    } else {
+                        end
+                    };
+
+                    if start_idx < 0 || start_idx > len || end_idx < 0 || end_idx > len || start_idx > end_idx {
+                        return Err(EvalError {
+                            message: format!("range {}..{} is out of bounds", start, end),
+                            message_short: "range out of bounds".to_string(),
+                            span: expr.span,
+                        });
+                    }
+
+                    Ok(Flow::Continue(Expr::Array(elements.iter().skip(start_idx as usize).take((end_idx - start_idx) as usize).cloned().collect())))
+                }
+
+                (Expr::Array(elements), Expr::InclusiveRange { start, end }) => {
+                    let start = match eval(&start, context)?.unwrap() {
+                        Expr::Int(n) => n,
+
+                        _ => {
+                            return Err(EvalError {
+                                message: format!("range start must be an integer, got '{}'", start.node),
+                                message_short: "invalid range start".to_string(),
+                                span: expr.span,
+                            });
+                        }
+                    };
+
+                    let end = match eval(&end, context)?.unwrap() {
+                        Expr::Int(n) => n,
+
+                        _ => {
+                            return Err(EvalError {
+                                message: format!("range end must be an integer, got '{}'", end.node),
+                                message_short: "invalid range end".to_string(),
+                                span: expr.span,
+                            });
+                        }
+                    };
+
+                    let len = elements.len() as i64;
+
+                    let start_idx = if start < 0 {
+                        len + start
+                    } else {
+                        start
+                    };
+
+                    let end_idx = if end < 0 {
+                        len + end
+                    } else {
+                        end
+                    };
+
+                    if start_idx < 0 || start_idx > len || end_idx < 0 || end_idx > len || start_idx > end_idx {
+                        return Err(EvalError {
+                            message: format!("range {}..={} is out of bounds", start, end),
+                            message_short: "range out of bounds".to_string(),
+                            span: expr.span,
+                        });
+                    }
+
+                    Ok(Flow::Continue(Expr::Array(elements.iter().skip(start_idx as usize).take((end_idx - start_idx + 1) as usize).cloned().collect())))
+                }
+
                 (Expr::Object { properties }, Expr::String(key)) => {
                     match properties.get(&key) {
                         Some(value) => Ok(Flow::Continue(value.clone())),
@@ -1207,9 +1307,109 @@ pub fn eval<'src>(expr: &'src SpannedExpr, context: &mut HashMap<String, Expr>) 
                     }
                 }
 
-                (v, _) => Err(EvalError {
-                    message: format!("cannot index into value '{}'", v),
-                    message_short: "cannot index".to_string(),
+                (Expr::String(s), Expr::Range { start, end }) => {
+                    let start = match eval(&start, context)?.unwrap() {
+                        Expr::Int(n) => n,
+
+                        _ => {
+                            return Err(EvalError {
+                                message: format!("range start must be an integer, got '{}'", start.node),
+                                message_short: "invalid range start".to_string(),
+                                span: expr.span,
+                            });
+                        }
+                    };
+
+                    let end = match eval(&end, context)?.unwrap() {
+                        Expr::Int(n) => n,
+
+                        _ => {
+                            return Err(EvalError {
+                                message: format!("range end must be an integer, got '{}'", end.node),
+                                message_short: "invalid range end".to_string(),
+                                span: expr.span,
+                            });
+                        }
+                    };
+
+                    let len = s.len() as i64;
+
+                    let start_idx = if start < 0 {
+                        len + start
+                    } else {
+                        start
+                    };
+
+                    let end_idx = if end < 0 {
+                        len + end
+                    } else {
+                        end
+                    };
+
+                    if start_idx < 0 || start_idx > len || end_idx < 0 || end_idx > len || start_idx > end_idx {
+                        return Err(EvalError {
+                            message: format!("range {}..{} is out of bounds", start, end),
+                            message_short: "range out of bounds".to_string(),
+                            span: expr.span,
+                        });
+                    }
+
+                    Ok(Flow::Continue(Expr::String(s.chars().skip(start_idx as usize).take((end_idx - start_idx) as usize).collect())))
+                }
+                
+                (Expr::String(s), Expr::InclusiveRange { start, end }) => {
+                    let start = match eval(&start, context)?.unwrap() {
+                        Expr::Int(n) => n,
+
+                        _ => {
+                            return Err(EvalError {
+                                message: format!("range start must be an integer, got '{}'", start.node),
+                                message_short: "invalid range start".to_string(),
+                                span: expr.span,
+                            });
+                        }
+                    };
+
+                    let end = match eval(&end, context)?.unwrap() {
+                        Expr::Int(n) => n,
+
+                        _ => {
+                            return Err(EvalError {
+                                message: format!("range end must be an integer, got '{}'", end.node),
+                                message_short: "invalid range end".to_string(),
+                                span: expr.span,
+                            });
+                        }
+                    };
+
+                    let len = s.len() as i64;
+
+                    let start_idx = if start < 0 {
+                        len + start
+                    } else {
+                        start
+                    };
+
+                    let end_idx = if end < 0 {
+                        len + end
+                    } else {
+                        end
+                    };
+
+                    if start_idx < 0 || start_idx > len || end_idx < 0 || end_idx > len || start_idx > end_idx {
+                        return Err(EvalError {
+                            message: format!("range {}..={} is out of bounds", start, end),
+                            message_short: "range out of bounds".to_string(),
+                            span: expr.span,
+                        });
+                    }
+
+                    Ok(Flow::Continue(Expr::String(s.chars().skip(start_idx as usize).take((end_idx - start_idx + 1) as usize).collect())))
+                }
+
+                (_, i) => Err(EvalError {
+                    message: format!("'{}' cannot be used as a index", i),
+                    message_short: "invalid index".to_string(),
                     span: expr.span,
                 }),
             }
