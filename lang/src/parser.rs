@@ -2,7 +2,7 @@ use std::collections::HashMap;
 use ariadne::{Color, Label, Report, ReportKind, Source};
 use chumsky::prelude::*;
 use colored::Colorize;
-use crate::{ast::{Expr, SpannedExpr}, eval, lexer::{Span, Token, lex}};
+use crate::{ast::{Expr, SpannedExpr, AssignOp}, eval, lexer::{Span, Token, lex}};
 
 enum Postfix {
     Property(String, Span),
@@ -259,6 +259,26 @@ fn parser<'src>() -> impl Parser<
                 node: Expr::Let { name, value: Box::new(value) },
                 span: Span::from(start.start..end.end),
             });
+        
+        let assign_stmt = select! { (Token::Identifier(name), span) => (name, span) }
+            .then(
+                choice((
+                    select! { (Token::Assign, span) => (None, span) },
+                    select! { (Token::AddAssign, span) => (Some(AssignOp::Add), span) },
+                    select! { (Token::SubAssign, span) => (Some(AssignOp::Sub), span) },
+                    select! { (Token::MulAssign, span) => (Some(AssignOp::Mul), span) },
+                    select! { (Token::DivAssign, span) => (Some(AssignOp::Div), span) },
+                    select! { (Token::ModAssign, span) => (Some(AssignOp::Mod), span) },
+                ))
+            )
+            .then(expr.clone())
+            .then(select! { (Token::Semicolon, span) => span }.labelled("semicolon"))
+            .map(|((((name, name_span), (op, op_span)), value), end): ((((String, Span), (Option<AssignOp>, Span)), SpannedExpr), Span)| {
+                SpannedExpr {
+                    node: Expr::Assign { name, value: Box::new(value), operator: op },
+                    span: Span::from(name_span.start..end.end),
+                }
+            });
 
         let expr_stmt = expr.clone()
             .map_with(|expr, e| (expr, e.span()))
@@ -392,6 +412,7 @@ fn parser<'src>() -> impl Parser<
                 
         choice((
             let_stmt,
+            assign_stmt,
             fn_stmt,
             infinite_loop_stmt,
             for_loop_stmt,
