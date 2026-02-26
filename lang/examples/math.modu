@@ -15,4 +15,13 @@ print(math.mul(2, 3)); // 6
 print(math.div(10, 2)); // 5
 print(math.pow(3, 2)); // 9
 
-print(math.abs(-5)); // 5
+print();
+
+print(math.PI);
+print(math.E);
+print(math.abs(-5));
+print(math.ceil(math.PI));
+print(math.floor(math.E));
+print(math.round(1.4));
+print(math.round(1.6));
+print(math.sqrt(16));

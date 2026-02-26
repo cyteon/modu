@@ -1,13 +1,6 @@
 use crate::{ast::{Expr, InternalFunctionResponse, Spanned, SpannedExpr}, lexer::Span};
 
 pub fn mul(args: Vec<Spanned<Expr>>) -> Result<InternalFunctionResponse, (String, Span)> {
-    if args.len() != 2 {
-        return Err((
-            "math.mul takes exactly two arguments".to_string(),
-            args[0].span,
-        ));
-    }
-
     match (&args[0].node, &args[1].node) {
         (Expr::Int(a), Expr::Int(b)) => {
             let result = a * b;
@@ -49,13 +42,6 @@ pub fn mul(args: Vec<Spanned<Expr>>) -> Result<InternalFunctionResponse, (String
 }
 
 pub fn div(args: Vec<Spanned<Expr>>) -> Result<InternalFunctionResponse, (String, Span)> {
-    if args.len() != 2 {
-        return Err((
-            "math.div takes exactly two arguments".to_string(),
-            args[0].span,
-        ));
-    }
-
     match (&args[0].node, &args[1].node) {
         (Expr::Int(a), Expr::Int(b)) => {
             if *b == 0 {
@@ -121,13 +107,6 @@ pub fn div(args: Vec<Spanned<Expr>>) -> Result<InternalFunctionResponse, (String
 }
 
 pub fn abs(args: Vec<Spanned<Expr>>) -> Result<InternalFunctionResponse, (String, Span)> {
-    if args.len() != 1 {
-        return Err((
-            "math.abs takes exactly one argument".to_string(),
-            args[0].span,
-        ));
-    }
-
     match &args[0].node {
         Expr::Int(n) => {
             let abs_value = n.abs();
@@ -153,13 +132,6 @@ pub fn abs(args: Vec<Spanned<Expr>>) -> Result<InternalFunctionResponse, (String
 }
 
 pub fn pow(args: Vec<Spanned<Expr>>) -> Result<InternalFunctionResponse, (String, Span)> {
-    if args.len() != 2 {
-        return Err((
-            "math.pow takes exactly two arguments".to_string(),
-            args[0].span,
-        ));
-    }
-
     match (&args[0].node, &args[1].node) {
         (Expr::Int(a), Expr::Int(b)) => {
             let result = a.pow(*b as u32);
@@ -195,6 +167,98 @@ pub fn pow(args: Vec<Spanned<Expr>>) -> Result<InternalFunctionResponse, (String
 
         _ => Err((
             "math.pow expects number arguments".to_string(),
+            args[0].span,
+        )),
+    }
+}
+
+pub fn floor(args: Vec<Spanned<Expr>>) -> Result<InternalFunctionResponse, (String, Span)> {
+    match &args[0].node {
+        Expr::Float(f) => {
+            let result = f.floor();
+            Ok(InternalFunctionResponse {
+                return_value: Expr::Float(result),
+                replace_self: None,
+            })
+        }
+
+        _ => Err((
+            "math.floor expects a float argument".to_string(),
+            args[0].span,
+        )),
+    }
+}
+
+pub fn ceil(args: Vec<Spanned<Expr>>) -> Result<InternalFunctionResponse, (String, Span)> {
+    match &args[0].node {
+        Expr::Float(f) => {
+            let result = f.ceil();
+            Ok(InternalFunctionResponse {
+                return_value: Expr::Float(result),
+                replace_self: None,
+            })
+        }
+
+        _ => Err((
+            "math.ceil expects a float argument".to_string(),
+            args[0].span,
+        )),
+    }
+}
+
+pub fn round(args: Vec<Spanned<Expr>>) -> Result<InternalFunctionResponse, (String, Span)> {
+    match &args[0].node {
+        Expr::Float(f) => {
+            let result = f.round();
+            Ok(InternalFunctionResponse {
+                return_value: Expr::Float(result),
+                replace_self: None,
+            })
+        }
+
+        _ => Err((
+            "math.round expects a float argument".to_string(),
+            args[0].span,
+        )),
+    }
+}
+
+pub fn sqrt(args: Vec<Spanned<Expr>>) -> Result<InternalFunctionResponse, (String, Span)> {
+    match &args[0].node {
+        Expr::Float(f) => {
+            if *f < 0.0 {
+                return Err((
+                    "cannot take square root of a negative number".to_string(),
+                    args[0].span,
+                ));
+            }
+
+            let result = f.sqrt();
+
+            Ok(InternalFunctionResponse {
+                return_value: Expr::Float(result),
+                replace_self: None,
+            })
+        }
+
+        Expr::Int(n) => {
+            if *n < 0 {
+                return Err((
+                    "cannot take square root of a negative number".to_string(),
+                    args[0].span,
+                ));
+            }
+
+            let result = (*n as f64).sqrt();
+
+            Ok(InternalFunctionResponse {
+                return_value: Expr::Float(result),
+                replace_self: None,
+            })
+        }
+
+        _ => Err((
+            "math.sqrt expects a number argument".to_string(),
             args[0].span,
         )),
     }
@@ -247,6 +311,71 @@ pub fn get_object() -> Expr {
                 args: vec!["base".to_string(), "exponent".to_string()],
                 func: pow,
             },
+            span: Span::default(),
+        },
+    );
+
+    symbols.insert(
+        "floor".to_string(),
+        SpannedExpr {
+            node: Expr::InternalFunction {
+                name: "floor".to_string(),
+                args: vec!["x".to_string()],
+                func: floor,
+            },
+            span: Span::default(),
+        },
+    );
+
+    symbols.insert(
+        "ceil".to_string(),
+        SpannedExpr {
+            node: Expr::InternalFunction {
+                name: "ceil".to_string(),
+                args: vec!["x".to_string()],
+                func: ceil,
+            },
+            span: Span::default(),
+        },
+    );
+
+    symbols.insert(
+        "round".to_string(),
+        SpannedExpr {
+            node: Expr::InternalFunction {
+                name: "round".to_string(),
+                args: vec!["x".to_string()],
+                func: round,
+            },
+            span: Span::default(),
+        },
+    );
+
+    symbols.insert(
+        "sqrt".to_string(),
+        SpannedExpr {
+            node: Expr::InternalFunction {
+                name: "sqrt".to_string(),
+                args: vec!["x".to_string()],
+                func: sqrt,
+            },
+            span: Span::default(),
+        },
+    );
+
+    // constants
+    symbols.insert(
+        "PI".to_string(),
+        SpannedExpr {
+            node: Expr::Float(std::f64::consts::PI),
+            span: Span::default(),
+        },
+    );
+
+    symbols.insert(
+        "E".to_string(),
+        SpannedExpr {
+            node: Expr::Float(std::f64::consts::E),
             span: Span::default(),
         },
     );
