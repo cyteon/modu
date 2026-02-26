@@ -26,3 +26,4 @@ print(math.floor(math.E));
 print(math.round(1.4));
 print(math.round(1.6));
 print(math.sqrt(16));
+print(math.rand());

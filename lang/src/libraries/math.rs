@@ -84,7 +84,7 @@ pub fn div(args: Vec<Spanned<Expr>>) -> Result<InternalFunctionResponse, (String
             }
 
             let result = (*a as f64) / b;
-            
+
             Ok(InternalFunctionResponse {
                 return_value: Expr::Float(result),
                 replace_self: None,
@@ -272,6 +272,15 @@ pub fn sqrt(args: Vec<Spanned<Expr>>) -> Result<InternalFunctionResponse, (Strin
     }
 }
 
+pub fn rand(args: Vec<Spanned<Expr>>) -> Result<InternalFunctionResponse, (String, Span)> {
+    let random_value = rand::random::<f64>();
+
+    Ok(InternalFunctionResponse {
+        return_value: Expr::Float(random_value),
+        replace_self: None,
+    })
+}
+
 pub fn get_object() -> Expr {
     let mut symbols = std::collections::HashMap::new();
 
@@ -366,6 +375,18 @@ pub fn get_object() -> Expr {
                 name: "sqrt".to_string(),
                 args: vec!["x".to_string()],
                 func: sqrt,
+            },
+            span: Span::default(),
+        },
+    );
+
+    symbols.insert(
+        "rand".to_string(),
+        SpannedExpr {
+            node: Expr::InternalFunction {
+                name: "rand".to_string(),
+                args: vec![],
+                func: rand,
             },
             span: Span::default(),
         },
