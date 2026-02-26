@@ -61,7 +61,8 @@ pub fn exec(args: Vec<Spanned<Expr>>) -> Result<InternalFunctionResponse, (Strin
 
             map.insert("stdout".to_string(), Expr::String(stdout));
             map.insert("stderr".to_string(), Expr::String(stderr));
-            map.insert("status".to_string(), Expr::Int(status_code as i64));
+            map.insert("status_code".to_string(), Expr::Int(status_code as i64));
+            map.insert("success".to_string(), Expr::Bool(output.status.success()));
 
             map
         },

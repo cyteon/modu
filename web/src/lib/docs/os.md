@@ -3,7 +3,7 @@
 The built-in library to interact with the OS.
 
 Currently has the following functions:
-- `exec(command)` - Run a command, returns `{ stderr: string, stdout: string, status: i64 }`
+- `exec(command)` - Run a command, returns `{ stderr: string, stdout: string, status_code: i64, success: bool }`
 
 And the following variables:
 - `name` - Returns the OS name: windows/linux/macos/unkown
