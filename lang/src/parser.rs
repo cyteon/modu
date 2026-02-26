@@ -263,17 +263,17 @@ fn parser<'src>() -> impl Parser<
         let assign_stmt = select! { (Token::Identifier(name), span) => (name, span) }
             .then(
                 choice((
-                    select! { (Token::Assign, span) => (None, span) },
-                    select! { (Token::AddAssign, span) => (Some(AssignOp::Add), span) },
-                    select! { (Token::SubAssign, span) => (Some(AssignOp::Sub), span) },
-                    select! { (Token::MulAssign, span) => (Some(AssignOp::Mul), span) },
-                    select! { (Token::DivAssign, span) => (Some(AssignOp::Div), span) },
-                    select! { (Token::ModAssign, span) => (Some(AssignOp::Mod), span) },
+                    select! { (Token::Assign, _) => None },
+                    select! { (Token::AddAssign, _) => Some(AssignOp::Add) },
+                    select! { (Token::SubAssign, _) => Some(AssignOp::Sub) },
+                    select! { (Token::MulAssign, _) => Some(AssignOp::Mul) },
+                    select! { (Token::DivAssign, _) => Some(AssignOp::Div) },
+                    select! { (Token::ModAssign, _) => Some(AssignOp::Mod) },
                 ))
             )
             .then(expr.clone())
             .then(select! { (Token::Semicolon, span) => span }.labelled("semicolon"))
-            .map(|((((name, name_span), (op, op_span)), value), end): ((((String, Span), (Option<AssignOp>, Span)), SpannedExpr), Span)| {
+            .map(|((((name, name_span), op), value), end): ((((String, Span), Option<AssignOp>), SpannedExpr), Span)| {
                 SpannedExpr {
                     node: Expr::Assign { name, value: Box::new(value), operator: op },
                     span: Span::from(name_span.start..end.end),
