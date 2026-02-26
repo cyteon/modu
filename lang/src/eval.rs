@@ -119,7 +119,7 @@ pub fn eval<'src>(expr: &'src SpannedExpr, context: &mut HashMap<String, Expr>) 
 
                 #[cfg(not(target_arch = "wasm32"))]
                 Expr::File(_) => {
-                    match crate::libraries::file::get_fn(property) {
+                    match crate::libraries::fs::get_fn(property) {
                         Some(value) => Ok(Flow::Continue(value)),
                         None => Err(EvalError {
                             message: format!("file has no method named '{}'", property),

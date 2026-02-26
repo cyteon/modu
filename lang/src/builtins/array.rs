@@ -27,13 +27,6 @@ pub fn push(args: Vec<Spanned<Expr>>) -> Result<InternalFunctionResponse, (Strin
         _ => unreachable!(),
     };
 
-    if args.len() < 2 {
-        return Err((
-            "push expects 2 arguments".to_string(),
-            args[1].span.clone(),
-        ));
-    }
-
     let mut new_array = array.clone();
     new_array.push(args[1].clone());
 

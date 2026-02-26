@@ -1,0 +1,15 @@
+import "fs";
+
+let path = input("file path: ");
+let file = fs.open(path);
+
+print("file: ", file);
+let content_write = input("content to write: ");
+let content_append = input("content to append: ");
+
+file.write(content_write);
+file.append(content_append);
+
+file.close();
+print(file);
+file.write("this should fail");

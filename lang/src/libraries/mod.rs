@@ -1,3 +1,5 @@
+use colored::Colorize;
+
 mod time;
 mod encoding;
 mod uuid;
@@ -6,7 +8,7 @@ mod json;
 mod crypto;
 
 #[cfg(not(target_arch = "wasm32"))]
-pub mod file;
+pub mod fs;
 #[cfg(not(target_arch = "wasm32"))]
 mod http;
 #[cfg(not(target_arch = "wasm32"))]
@@ -60,7 +62,18 @@ pub fn get_package(name: &str) -> Option<crate::ast::Expr> {
                 return None;
             }
 
-            Some(file::get_object())
+            println!("{}", "warning: the 'file' package has been renamed to 'fs' to better represent it, the 'file' import will be removed in a future version".dimmed());  
+            Some(fs::get_object())
+        }
+
+        #[cfg(not(target_arch = "wasm32"))]
+        "fs" => {
+            let sys_args = std::env::args().collect::<Vec<String>>();
+            if sys_args.len() > 1 && sys_args[1] == "server" {
+                return None;
+            }
+
+            Some(fs::get_object())
         }
 
         _ => None,
