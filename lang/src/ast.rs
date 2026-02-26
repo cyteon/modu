@@ -127,6 +127,11 @@ pub enum Expr {
         body: Box<Spanned<Expr>>,
     },
 
+    WhileLoop {
+        condition: Box<Spanned<Expr>>,
+        body: Box<Spanned<Expr>>,
+    },
+
     Range {
         start: Box<Spanned<Expr>>,
         end: Box<Spanned<Expr>>,

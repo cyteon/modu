@@ -345,6 +345,17 @@ fn parser<'src>() -> impl Parser<
                 }
             });
         
+        let while_loop_stmt = select! { (Token::While, span) => span }
+            .then(expr.clone())
+            .then(block.clone())
+            .map(|((start, condition), body): ((Span, SpannedExpr), SpannedExpr)| SpannedExpr {
+                node: Expr::WhileLoop {
+                    condition: Box::new(condition.clone()),
+                    body: Box::new(body.clone()),
+                },
+                span: Span::from(start.start..body.span.end),
+            });
+        
         let if_stmt = select! { (Token::If, span) => span }
             .then(expr.clone())
             .then(block.clone())
@@ -416,6 +427,7 @@ fn parser<'src>() -> impl Parser<
             fn_stmt,
             infinite_loop_stmt,
             for_loop_stmt,
+            while_loop_stmt,
             if_stmt,
             import_stmt,
             return_stmt,

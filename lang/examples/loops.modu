@@ -39,3 +39,11 @@ let end = 5;
 for n in 1..end {
     print(n);
 }
+
+print("\nwhile loop: (should print 1-5)\n");
+
+let i = 0;
+while i < 5 {
+    i = i + 1;
+    print(i);
+}
