@@ -740,6 +740,7 @@ pub fn eval<'src>(expr: &'src SpannedExpr, context: &mut HashMap<String, Expr>) 
 
             match condition_value {
                 Expr::Bool(true) => eval(then_branch, context),
+                
                 Expr::Bool(false) | Expr::Null => {
                     if let Some(else_branch) = else_branch {
                         eval(else_branch, context)
@@ -757,14 +758,6 @@ pub fn eval<'src>(expr: &'src SpannedExpr, context: &mut HashMap<String, Expr>) 
                         } else {
                             Ok(Flow::Continue(Expr::Null))
                         }
-                    }
-                }
-
-                Expr::Null => {
-                    if let Some(else_branch) = else_branch {
-                        eval(else_branch, context)
-                    } else {
-                        Ok(Flow::Continue(Expr::Null))
                     }
                 }
 

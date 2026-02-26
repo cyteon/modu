@@ -184,7 +184,7 @@ yap("Hello, World!");
 
         <div class="bg-bg1 w-full p-6 pt-4 h-full rounded-md flex flex-col md:w-1/3 border border-bg2">
             <h1 class="text-3xl font-bold">Output</h1>
-            <pre class="px-4 py-2 mt-4 text-xl break-words whitespace-pre-wrap bg-bg h-full">{@html output}</pre>
+            <pre class="px-4 py-2 mt-4 text-xl break-words whitespace-pre-wrap bg-bg h-full overflow-y-auto">{@html output}</pre>
         </div>
     </div>
 </div>

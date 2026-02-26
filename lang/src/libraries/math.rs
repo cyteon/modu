@@ -272,7 +272,7 @@ pub fn sqrt(args: Vec<Spanned<Expr>>) -> Result<InternalFunctionResponse, (Strin
     }
 }
 
-pub fn rand(args: Vec<Spanned<Expr>>) -> Result<InternalFunctionResponse, (String, Span)> {
+pub fn rand(_args: Vec<Spanned<Expr>>) -> Result<InternalFunctionResponse, (String, Span)> {
     let random_value = rand::random::<f64>();
 
     Ok(InternalFunctionResponse {

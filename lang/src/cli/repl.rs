@@ -63,7 +63,7 @@ impl Highlighter for Syntax {
     fn highlight_prompt<'a, 'b: 'a, 'p: 'a>(
         &self,
         prompt: &'p str,
-        default: bool,
+        _default: bool,
     ) -> std::borrow::Cow<'a, str> {
         std::borrow::Cow::Borrowed(prompt)
     }
