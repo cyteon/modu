@@ -16,4 +16,5 @@ if os.name == "unknown" {
     print("*explodes*");
 }
 
-print("My name is ", os.exec("whoami"), " and I use ", os.name);
+print("Your name is ", os.exec("whoami").stdout.trim(), " and you use ", os.name);
+print(os.exec("kaboom"));

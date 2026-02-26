@@ -1,4 +1,5 @@
 use std::process::Command;
+use std::collections::HashMap;
 use crate::{ast::{Expr, InternalFunctionResponse, Spanned, SpannedExpr}, lexer::Span};
 
 #[cfg(windows)]
@@ -50,21 +51,24 @@ pub fn exec(args: Vec<Spanned<Expr>>) -> Result<InternalFunctionResponse, (Strin
         args[0].span,
     ))?;
 
-    if !output.status.success() {
-        return Err((
-            format!(
-                "command exited with non-zero status code {}, stderr: {}",
-                output.status,
-                String::from_utf8_lossy(&output.stderr)
-            ),
-            args[0].span,
-        ));
-    }
-
     let stdout = String::from_utf8_lossy(&output.stdout).to_string();
+    let stderr = String::from_utf8_lossy(&output.stderr).to_string();
+    let status_code = output.status.code().unwrap_or(-1);
+
+    let obj = Expr::Object {
+        properties: {
+            let mut map = HashMap::new();
+
+            map.insert("stdout".to_string(), Expr::String(stdout));
+            map.insert("stderr".to_string(), Expr::String(stderr));
+            map.insert("status".to_string(), Expr::Int(status_code as i64));
+
+            map
+        },
+    };
 
     Ok(InternalFunctionResponse {
-        return_value: Expr::String(stdout),
+        return_value: obj,
         replace_self: None,
     })
 }
