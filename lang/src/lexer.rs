@@ -39,6 +39,21 @@ pub enum Token {
     #[token("=")]
     Assign,
 
+    #[token("+=")]
+    AddAssign,
+
+    #[token("-=")]
+    SubAssign,
+
+    #[token("*=")]
+    MulAssign,
+
+    #[token("/=")]
+    DivAssign,
+
+    #[token("%=")]
+    ModAssign,
+
     #[token(";")]
     Semicolon,
 
@@ -101,11 +116,11 @@ pub enum Token {
     #[token(".")]
     Dot,
 
-    #[token("*")]
-    Star,
-
     #[token("**")]
     Pow,
+
+    #[token("*")]
+    Star,
 
     #[token("/")]
     Slash,

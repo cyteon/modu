@@ -14,6 +14,13 @@ let c = false;
 let d = a;
 ```
 
+Variables can also be redefined with `=`, `+=`, `-=`, `*=`, `/=` and `%=`.
+```rust
+let a = 1;
+a += 1; // a is 2
+a *= 3; // a is 6
+```
+
 ## User Input
 User input can be gotten with the built-in function **input()**, which takes any amount of arguments
 ```rust

@@ -1,7 +1,7 @@
 use std::collections::HashMap;
 use chumsky::span::SimpleSpan;
 
-use crate::ast::{Expr, SpannedExpr};
+use crate::ast::{Expr, SpannedExpr, AssignOp};
 use crate::lexer::Span;
 
 #[derive(Debug)]
@@ -465,7 +465,144 @@ pub fn eval<'src>(expr: &'src SpannedExpr, context: &mut HashMap<String, Expr>) 
             context.insert(name.clone(), value);
             
             Ok(Flow::Continue(Expr::Null))
+        }
 
+        Expr::Assign { name, value, operator } => {
+            if !context.contains_key(name) {
+                return Err(EvalError {
+                    message: format!("undefined variable '{}'", name),
+                    message_short: "define with let".to_string(),
+                    span: expr.span,
+                });
+            }
+
+            let value = eval(value, context)?.unwrap();
+
+            match operator {
+                None => {
+                    context.insert(name.clone(), value);
+                    Ok(Flow::Continue(Expr::Null))
+                },
+
+                Some(op) => {
+                    match op {
+                        AssignOp::Add => {
+                            let current_value = context.get(name).unwrap().clone();
+                            let new_value = match (current_value, value) {
+                                (Expr::Int(l), Expr::Int(r)) => Expr::Int(l + r),
+                                (Expr::Float(l), Expr::Float(r)) => Expr::Float(l + r),
+                                (Expr::Int(l), Expr::Float(r)) => Expr::Float(l as f64 + r),
+                                (Expr::Float(l), Expr::Int(r)) => Expr::Float(l + r as f64),
+                                (Expr::String(l), Expr::String(r)) => Expr::String(l + &r),
+
+                                (l, r) => return Err(EvalError {
+                                    message: format!("cannot add values '{}' and '{}'", l, r),
+                                    message_short: "cannot add".to_string(),
+                                    span: expr.span,
+                                }),
+                            };
+
+                            context.insert(name.clone(), new_value);
+                            Ok(Flow::Continue(Expr::Null))
+                        },
+
+                        AssignOp::Sub => {
+                            let current_value = context.get(name).unwrap().clone();
+                            let new_value = match (current_value, value) {
+                                (Expr::Int(l), Expr::Int(r)) => Expr::Int(l - r),
+                                (Expr::Float(l), Expr::Float(r)) => Expr::Float(l - r),
+                                (Expr::Int(l), Expr::Float(r)) => Expr::Float(l as f64 - r),
+                                (Expr::Float(l), Expr::Int(r)) => Expr::Float(l - r as f64),
+                                
+                                (l, r) => return Err(EvalError {
+                                    message: format!("cannot subtract values '{}' and '{}'", l, r),
+                                    message_short: "cannot subtract".to_string(),
+                                    span: expr.span,
+                                }),
+                            };
+
+                            context.insert(name.clone(), new_value);
+                            Ok(Flow::Continue(Expr::Null))
+                        },
+
+                        AssignOp::Mul => {
+                            let current_value = context.get(name).unwrap().clone();
+                            let new_value = match (current_value, value) {
+                                (Expr::Int(l), Expr::Int(r)) => Expr::Int(l * r),
+                                (Expr::Float(l), Expr::Float(r)) => Expr::Float(l * r),
+                                (Expr::Int(l), Expr::Float(r)) => Expr::Float(l as f64 * r),
+                                (Expr::Float(l), Expr::Int(r)) => Expr::Float(l * r as f64),
+                                (Expr::String(l), Expr::Int(r)) => Expr::String(l.repeat(r as usize)),
+                                
+                                (l, r) => return Err(EvalError {
+                                    message: format!("cannot multiply values '{}' and '{}'", l, r),
+                                    message_short: "cannot multiply".to_string(),
+                                    span: expr.span,
+                                }),
+                            };
+
+                            context.insert(name.clone(), new_value);
+                            Ok(Flow::Continue(Expr::Null))
+                        },
+
+                        AssignOp::Div => {
+                            let current_value = context.get(name).unwrap().clone();
+
+                            if matches!(value, Expr::Int(0) | Expr::Float(0.0)) {
+                                return Err(EvalError {
+                                    message: "division by zero".to_string(),
+                                    message_short: "division by zero".to_string(),
+                                    span: expr.span,
+                                });
+                            }
+
+                            let new_value = match (current_value, value) {
+                                (Expr::Int(l), Expr::Int(r)) => Expr::Float(l as f64 / r as f64),
+                                (Expr::Float(l), Expr::Float(r)) => Expr::Float(l / r),
+                                (Expr::Int(l), Expr::Float(r)) => Expr::Float(l as f64 / r),
+                                (Expr::Float(l), Expr::Int(r)) => Expr::Float(l / r as f64),
+                                
+                                (l, r) => return Err(EvalError {
+                                    message: format!("cannot divide values '{}' and '{}'", l, r),
+                                    message_short: "cannot divide".to_string(),
+                                    span: expr.span,
+                                }),
+                            };
+
+                            context.insert(name.clone(), new_value);
+                            Ok(Flow::Continue(Expr::Null))
+                        },
+
+                        AssignOp::Mod => {
+                            let current_value = context.get(name).unwrap().clone();
+
+                            if matches!(value, Expr::Int(0) | Expr::Float(0.0)) {
+                                return Err(EvalError {
+                                    message: "modulo by zero".to_string(),
+                                    message_short: "modulo by zero".to_string(),
+                                    span: expr.span,
+                                });
+                            }
+
+                            let new_value = match (current_value, value) {
+                                (Expr::Int(l), Expr::Int(r)) => Expr::Int(l % r),
+                                (Expr::Float(l), Expr::Float(r)) => Expr::Float(l % r),
+                                (Expr::Int(l), Expr::Float(r)) => Expr::Float((l as f64) % r),
+                                (Expr::Float(l), Expr::Int(r)) => Expr::Float(l % (r as f64)),
+                                
+                                (l, r) => return Err(EvalError {
+                                    message: format!("cannot modulo values '{}' and '{}'", l, r),
+                                    message_short: "cannot modulo".to_string(),
+                                    span: expr.span,
+                                }),
+                            };
+
+                            context.insert(name.clone(), new_value);
+                            Ok(Flow::Continue(Expr::Null))
+                        }
+                    }
+                }
+            }
         }
 
         Expr::Function { name, args, body } => {

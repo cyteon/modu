@@ -1,5 +1,5 @@
 let a = "Hello, World!";
-let b = 1.5;
+let b = 1.5; b = b + 1.0;
 let c = true;
 let d = c;
 
@@ -8,9 +8,20 @@ print(b);
 print(c);
 print(d);
 
+b -= 0.5;
+b /= 2.0;
+b *= 3.0;
+b %= 2.0;
+
+print(b);
+
+dosent_exist = 5;
+
 // Expected Output:
 //
 // Hello, World!
-// 1.5
+// 2.5
 // true
 // true
+// 1
+// error

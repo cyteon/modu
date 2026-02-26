@@ -20,6 +20,15 @@ pub struct InternalFunctionResponse {
 }
 
 #[derive(Debug, Clone)]
+pub enum AssignOp {
+    Add,
+    Sub,
+    Mul,
+    Div,
+    Mod,
+}
+
+#[derive(Debug, Clone)]
 pub enum Expr {
     Int(i64),
     Float(f64),
@@ -42,6 +51,12 @@ pub enum Expr {
     Let {
         name: String,
         value: Box<Spanned<Expr>>,
+    },
+
+    Assign {
+        name: String,
+        value: Box<Spanned<Expr>>,
+        operator: Option<AssignOp>,
     },
 
     Call {
