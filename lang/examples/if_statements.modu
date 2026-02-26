@@ -35,6 +35,21 @@ if null {
     print("oh nyo");
 }
 
+fn test(a) {
+    if a > 0 {
+        print("a is positive");
+    } else if a < 0 {
+        print("a is negative");
+    } else {
+        print("a is zero");
+    }
+}
+
+print("\ntesting else if:\n");
+test(5);
+test(-3);
+test(0);
+
 // Expected Output:
 //
 // a == 1

@@ -360,23 +360,30 @@ fn parser<'src>() -> impl Parser<
             .then(expr.clone())
             .then(block.clone())
             .then(
+                select! { (Token::ElseIf, span) => span }
+                    .then(expr.clone())
+                    .then(block.clone())
+                    .repeated()
+                    .collect::<Vec<_>>()
+            )
+            .then(
                 select! { (Token::Else, span) => span }
                     .then(block.clone())
                     .or_not()
             )
-            .map(|(((start, condition), then_branch), else_branch): (((Span, SpannedExpr), SpannedExpr), Option<(Span, SpannedExpr)>)| SpannedExpr {
-                node: Expr::If {
-                    condition: Box::new(condition.clone()),
-                    then_branch: Box::new(then_branch.clone()),
-                    else_branch: else_branch.clone().map(|(_, eb)| Box::new(eb.clone())),
-                },
-
-                span: Span::from(start.start..{
-                    match &else_branch {
-                        Some((_, eb)) => eb.span.end,
-                        None => then_branch.span.end,
-                    }
-                }),
+            .map(|((((start, condition), then_branch), else_if_branches), else_branch): ((((Span, SpannedExpr), SpannedExpr), Vec<((Span, SpannedExpr), SpannedExpr)>), Option<(Span, SpannedExpr)>)| {
+                let else_if_branches = else_if_branches.into_iter().map(|((_, cond), block)| (cond, block)).collect();
+                let else_branch = else_branch.map(|(_, block)| Box::new(block.clone()));
+                
+                SpannedExpr {
+                    node: Expr::If {
+                        condition: Box::new(condition.clone()),
+                        then_branch: Box::new(then_branch.clone()),
+                        else_if_branches,
+                        else_branch,
+                    },
+                    span: Span::from(start.start..then_branch.span.end),
+                }
             });
         
         let return_stmt = select! { (Token::Return, span) => span }

@@ -114,6 +114,7 @@ pub enum Expr {
     If {
         condition: Box<Spanned<Expr>>,
         then_branch: Box<Spanned<Expr>>,
+        else_if_branches: Vec<(Spanned<Expr>, Spanned<Expr>)>, // (condition, block)
         else_branch: Option<Box<Spanned<Expr>>>,
     },
 
