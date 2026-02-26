@@ -1,5 +1,5 @@
 use std::collections::HashMap;
-
+use base64::prelude::*;
 use crate::{ast::{Expr, InternalFunctionResponse, Spanned, SpannedExpr}, lexer::Span};
 
 pub fn encode_base64(args: Vec<Spanned<Expr>>) -> Result<InternalFunctionResponse, (String, Span)> {
@@ -11,7 +11,7 @@ pub fn encode_base64(args: Vec<Spanned<Expr>>) -> Result<InternalFunctionRespons
         )),
     };
 
-    let encoded = base64::encode(input);
+    let encoded = BASE64_STANDARD.encode(input.as_bytes());
 
     Ok(InternalFunctionResponse {
         return_value: Expr::String(encoded),
@@ -28,7 +28,7 @@ pub fn decode_base64(args: Vec<Spanned<Expr>>) -> Result<InternalFunctionRespons
         )),
     };
 
-    let decoded_bytes = base64::decode(input).map_err(|e| (
+    let decoded_bytes = BASE64_STANDARD.decode(input).map_err(|e| (
         format!("failed to decode base64 string: {}", e),
         args[0].span,
     ))?;

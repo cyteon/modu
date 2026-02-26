@@ -980,7 +980,7 @@ pub fn eval<'src>(expr: &'src SpannedExpr, context: &mut HashMap<String, Expr>) 
                 None => name.clone(),
             };
 
-            let mut path: std::path::PathBuf = std::path::PathBuf::new();
+            let mut path: std::path::PathBuf;
 
             #[cfg(not(target_arch = "wasm32"))]
             {
@@ -1010,6 +1010,15 @@ pub fn eval<'src>(expr: &'src SpannedExpr, context: &mut HashMap<String, Expr>) 
             }
 
             if name.ends_with(".modu") {
+                #[cfg(target_arch = "wasm32")]
+                {
+                    return Err(EvalError {
+                        message: "cannot import .modu files in wasm".to_string(),
+                        message_short: "cannot import .modu files".to_string(),
+                        span: expr.span,
+                    });
+                }
+
                 path.push(name);
                 
                 let source = std::fs::read_to_string(path.clone()).map_err(|e| EvalError {
