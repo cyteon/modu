@@ -5,7 +5,7 @@
 For writing ffi modules in rust, you should use [modu_ffi](https://crates.io/crates/modu_ffi) for rust. \
 For C or anything else, check out the C headers: [modu_ffi.h](https://github.com/cyteon/modu/blob/1.0.0/ffi/modu_ffi.h).
 
-Using FFI is actually really simple, just import a **.dll/.so/.dylib** file and u can run its functions with ffi.call, here is an example:
+Using FFI is actually really simple, just import a **.dll/.so/.dylib** file and u can run its functions with `ffi.function_name()`, here is an example:
 ```rust
 import "ffi" as ffi;
 
@@ -42,7 +42,7 @@ Here are some examples:
 
 
 ## Arguments
-To use arguments call the function like **ffi.call(path, function, arg1, arg2, ...)**
+To use arguments call the function like any other function: `ffi.function_name(arg1, arg2, arg3, ...)`
 
 Here is an example:
 ```rust

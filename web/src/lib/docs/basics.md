@@ -22,7 +22,7 @@ a *= 3; // a is 6
 ```
 
 ## User Input
-User input can be gotten with the built-in function **input()**, which takes any amount of arguments
+User input can be gotten with the built-in function `input()`, which takes any amount of arguments
 ```rust
 let name = input("What is your name? ");
 
@@ -31,7 +31,7 @@ print("Hello, ", name, "!");
 
 ## Functions
 
-Functions are defined with the 'fn' keyword, then with arguments inside of parentheses. \
+Functions are defined with the `fn` keyword, then with arguments inside of parentheses. \
 There is currently no support for default values, and modu will return an error if you provide the wrong number of arguments.
 
 ```rust
@@ -50,12 +50,14 @@ Functions defined in a file, can be also be accessed in other files when importe
 
 ## Conditions
 
-Modu has the following operators: **==**, **!=**, **>**, **&lt;**, **>=** and **<=** \
+Modu has the following operators: `==`, `!=`, `>`, `&lt;`, `>=` and `<=` \
 If the condition given returns true, the code inside of the brackets is ran.
 
 ```rust
 if 1 == 1 {
     print("yes");
+} else if 1 == 2 {
+    print("never");
 } else {
     print("we are cooked");
 }
@@ -70,7 +72,7 @@ if 1 != 2 {
 // duh
 ```
 
-You can also use conditions to a check if a value is not null or false in a simpler, more clean way:
+You can also use conditions to a check if a value is not null or false like this, instead of `== true`:
 ```rust
 if a {
     print("a exists and is not null");

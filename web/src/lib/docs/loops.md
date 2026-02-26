@@ -26,4 +26,15 @@ for n in 1..5 {
     print(n); 
 }
 ```
-This will print the numbers 1 to 5.
+This will print the numbers 1 to (but not including) 5. If you want to include 5, you can use `..=` instead of `..`:
+
+## While Loops
+These loops will run while the condition is true. These can be also be stopped prematurely with "break".
+```rust
+let x = 0;
+while x < 5 {
+    x = x + 1;
+    print(x);
+}
+```
+This will print the numbers 1 to (and including) 5.

@@ -40,13 +40,13 @@ print(math.rand());
 
 ## Strings
 
-You can use '+' to join strings, like this:
+You can use `+` to join strings, like this:
 ```rust
 let a = "Hello,";
 print(a + " World!");
 ```
 
-And you can use '*' to repeat strings, like this:
+And you can use `*` to repeat strings, like this:
 ```rust
 let a = "Hello! ";
 print(a * 3);

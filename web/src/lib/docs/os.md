@@ -3,10 +3,10 @@
 The built-in library to interact with the OS.
 
 Currently has the following functions:
-- **exec(command)** - Runs a command
+- `exec(command)` - Runs a command
 
 And the following variables:
-- **name** - Returns the OS name: windows/linux/macos/unkown
+- `name` - Returns the OS name: windows/linux/macos/unkown
 
 Example:
 

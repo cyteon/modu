@@ -1,6 +1,6 @@
 # JSON
 
-The JSON library has 3 functions, **.new()**, **.to_string(object)**, and **.parse(string)**.
+The JSON library has 3 functions, `.new()`, `.to_string(object)`, and `.parse(string)`.
 ```rust
 import "json" as json; // Alternatively `as *;` then use new(), etc
 

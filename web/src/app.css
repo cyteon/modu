@@ -20,7 +20,20 @@ body {
 }
 
 .docs code {
-    font-size: 1.2rem !important;
+    font-size: 1rem !important;
+    font-weight: normal !important;
+}
+
+.docs code:not(pre code) {
+    padding: 0.1em 0.5em !important;
+    border-radius: 0.25rem !important;
+    @apply bg-bg0_h
+    
+}
+
+.docs code:not(pre code)::before,
+.docs code:not(pre code)::after {
+    content: "" !important;
 }
 
 .ansi-red-fg {
