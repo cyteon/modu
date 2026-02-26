@@ -5,18 +5,9 @@ use crate::{ast::{Expr, InternalFunctionResponse, Spanned, SpannedExpr}, lexer::
 #[cfg(windows)]
 use std::os::windows::process::CommandExt;
 
-fn clean_command(cmd: String) -> String {
-	let clean = cmd.trim()
-		.trim_matches('"')
-		.trim_matches('\'')
-		.to_string();
-
-	return clean;
-}
-
 pub fn exec(args: Vec<Spanned<Expr>>) -> Result<InternalFunctionResponse, (String, crate::lexer::Span)> {
     let command_str = match &args[0].node {
-        Expr::String(s) => clean_command(s.clone()),
+        Expr::String(s) => s.clone(),
         _ => return Err((
             "os.exec expects a string argument".to_string(),
             args[0].span,
