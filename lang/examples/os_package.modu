@@ -2,19 +2,21 @@ import "os" as os;
 
 if os.name == "linux" {
     print("i use arch btw");
-}
-
-if os.name == "macos" {
+} else if os.name == "macos" {
     print("me like expensive apple");
-}
-
-if os.name == "windows" {
+} else if os.name == "windows" {
     print("'normal person' os");
-}
-
-if os.name == "unknown" {
+} else {
     print("*explodes*");
 }
 
 print("Your name is ", os.exec("whoami").stdout.trim(), " and you use ", os.name);
 print(os.exec("kaboom"));
+print("pid: ", os.pid());
+print("uid: ", os.uid());
+print("gid: ", os.gid());
+print("env.HOME: ", os.getenv("HOME"));
+os.setenv("TEST_VAR", "hello world");
+print("env.TEST_VAR: ", os.getenv("TEST_VAR"));
+os.unsetenv("TEST_VAR");
+print("env.TEST_VAR (after unsetenv): ", os.getenv("TEST_VAR"));
