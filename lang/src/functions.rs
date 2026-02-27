@@ -229,6 +229,24 @@ pub fn type_of(args: Vec<Spanned<Expr>>) -> Result<InternalFunctionResponse, (St
     })
 }
 
+pub fn sleep(args: Vec<Spanned<Expr>>) -> Result<InternalFunctionResponse, (String, Span)> {
+    let duration_ms = match &args[0].node {
+        Expr::Int(n) => *n as u64,
+        Expr::Float(f) => *f as u64,
+        _ => return Err((
+            format!("sleep expects a number of milliseconds, got '{}'", args[0].node),
+            args[0].span,
+        )),
+    };
+
+    std::thread::sleep(std::time::Duration::from_millis(duration_ms));
+
+    Ok(InternalFunctionResponse {
+        return_value: Expr::Null,
+        replace_self: None,
+    })
+}
+
 pub fn fill_context(context: &mut HashMap<String, Expr>) {
     context.insert(
         "print".to_string(),
@@ -308,6 +326,15 @@ pub fn fill_context(context: &mut HashMap<String, Expr>) {
             name: "type".to_string(),
             args: vec!["value".to_string()],
             func: type_of,
+        },
+    );
+
+    context.insert(
+        "sleep".to_string(),
+        Expr::InternalFunction {
+            name: "sleep".to_string(),
+            args: vec!["duration_ms".to_string()],
+            func: sleep,
         },
     );
 }

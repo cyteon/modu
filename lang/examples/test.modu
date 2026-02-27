@@ -101,3 +101,7 @@ print(string.to_lower());
 print(string.starts_with("te"));
 print(string.ends_with("st"));
 print(string.chars());
+
+sleep(2000);
+
+print("i slept for 2s");
