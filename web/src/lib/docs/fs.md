@@ -1,10 +1,10 @@
-# File I/O
+# Filesystem
 
 ### Opening files
 In order to read or write to an file, you first have to open i
 ```rust
-import "file";
-let f = file.open("file.txt");
+import "fs";
+let f = fs.open("file.txt");
 ```
 
 ### Reading files
