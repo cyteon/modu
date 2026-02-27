@@ -94,3 +94,10 @@ if is_null {
 
 print("i like potatoes"[7..=-1]);
 print([1,2,3,4][1..-1]);
+
+let string = "Test";
+print(string.to_upper());
+print(string.to_lower());
+print(string.starts_with("te"));
+print(string.ends_with("st"));
+print(string.chars());
