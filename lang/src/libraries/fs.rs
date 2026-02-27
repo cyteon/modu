@@ -27,6 +27,89 @@ pub fn open(args: Vec<Spanned<Expr>>) -> Result<InternalFunctionResponse, (Strin
     })
 }
 
+pub fn exists(args: Vec<Spanned<Expr>>) -> Result<InternalFunctionResponse, (String, Span)> {
+    let path = match &args[0].node {
+        Expr::String(s) => s,
+        _ => return Err((
+            "fs.exists expects a string argument".to_string(),
+            args[0].span,
+        )),
+    };
+
+    let exists = std::path::Path::new(path).exists();
+
+    Ok(InternalFunctionResponse {
+        return_value: Expr::Bool(exists),
+        replace_self: None,
+    })
+}
+
+pub fn mkdir(args: Vec<Spanned<Expr>>) -> Result<InternalFunctionResponse, (String, Span)> {
+    let path = match &args[0].node {
+        Expr::String(s) => s,
+        _ => return Err((
+            "fs.mkdir expects a string argument".to_string(),
+            args[0].span,
+        )),
+    };
+
+    match std::fs::create_dir(path) {
+        Ok(_) => (),
+        Err(e) => {
+            if e.kind() != std::io::ErrorKind::AlreadyExists {
+                return Err((
+                    format!("failed to create directory: {}", e),
+                    args[0].span,
+                ))
+            }
+        }
+    }
+
+    Ok(InternalFunctionResponse {
+        return_value: Expr::Null,
+        replace_self: None,
+    })
+}
+
+pub fn rmdir(args: Vec<Spanned<Expr>>) -> Result<InternalFunctionResponse, (String, Span)> {
+    let path = match &args[0].node {
+        Expr::String(s) => s,
+        _ => return Err((
+            "fs.rmdir expects a string argument".to_string(),
+            args[0].span,
+        )),
+    };
+
+    std::fs::remove_dir(path).map_err(|e| (
+        format!("failed to remove directory: {}", e),
+        args[0].span,
+    ))?;
+
+    Ok(InternalFunctionResponse {
+        return_value: Expr::Null,
+        replace_self: None,
+    })
+}
+
+pub fn remove(args: Vec<Spanned<Expr>>) -> Result<InternalFunctionResponse, (String, Span)> {
+    let path = match &args[0].node {
+        Expr::String(s) => s,
+        _ => return Err((
+            "fs.remove expects a string argument".to_string(),
+            args[0].span,
+        )),
+    };
+
+    std::fs::remove_file(path).map_err(|e| (
+        format!("failed to delete file: {}", e),
+        args[0].span,
+    ))?;
+
+    Ok(InternalFunctionResponse {
+        return_value: Expr::Null,
+        replace_self: None,
+    })
+}
 
 pub fn get_object() -> Expr {
     let mut symbols = std::collections::HashMap::new();
@@ -38,6 +121,54 @@ pub fn get_object() -> Expr {
                 name: "open".to_string(),
                 args: vec!["path".to_string()],
                 func: open,
+            },
+            span: Span::default(),
+        },
+    );
+
+    symbols.insert(
+        "exists".to_string(),
+        SpannedExpr {
+            node: Expr::InternalFunction {
+                name: "exists".to_string(),
+                args: vec!["path".to_string()],
+                func: exists,
+            },
+            span: Span::default(),
+        },
+    );
+
+    symbols.insert(
+        "mkdir".to_string(),
+        SpannedExpr {
+            node: Expr::InternalFunction {
+                name: "mkdir".to_string(),
+                args: vec!["path".to_string()],
+                func: mkdir,
+            },
+            span: Span::default(),
+        },
+    );
+
+    symbols.insert(
+        "rmdir".to_string(),
+        SpannedExpr {
+            node: Expr::InternalFunction {
+                name: "rmdir".to_string(),
+                args: vec!["path".to_string()],
+                func: rmdir,
+            },
+            span: Span::default(),
+        },
+    );
+
+    symbols.insert(
+        "remove".to_string(),
+        SpannedExpr {
+            node: Expr::InternalFunction {
+                name: "remove".to_string(),
+                args: vec!["path".to_string()],
+                func: remove,
             },
             span: Span::default(),
         },
@@ -147,6 +278,54 @@ pub fn append(args: Vec<Spanned<Expr>>) -> Result<InternalFunctionResponse, (Str
     })
 }
 
+pub fn stat(args: Vec<Spanned<Expr>>) -> Result<InternalFunctionResponse, (String, Span)> {
+    let file = match &args[0].node {
+        Expr::File(file) => file,
+        _ => return Err((
+            "file.stat expects a file argument".to_string(),
+            args[0].span,
+        )),
+    };
+
+    let metadata = (&**file).metadata().map_err(|e| (
+        format!("failed to get file metadata: {}", e),
+        args[0].span,
+    ))?;
+
+    let file_type = if metadata.is_file() {
+        "file"
+    } else if metadata.is_dir() {
+        "directory"
+    } else {
+        "other"
+    };
+
+    let obj = Expr::Object {
+        properties: {
+            let mut map = std::collections::HashMap::new();
+
+            map.insert("type".to_string(), Expr::String(file_type.to_string()));
+            map.insert("size".to_string(), Expr::Int(metadata.len() as i64));
+            map.insert("readonly".to_string(), Expr::Bool(metadata.permissions().readonly()));
+            map.insert("created".to_string(), match metadata.created() {
+                Ok(time) => Expr::Int(time.duration_since(std::time::UNIX_EPOCH).unwrap().as_secs() as i64),
+                Err(_) => Expr::Null,
+            });
+            map.insert("modified".to_string(), match metadata.modified() {
+                Ok(time) => Expr::Int(time.duration_since(std::time::UNIX_EPOCH).unwrap().as_secs() as i64),
+                Err(_) => Expr::Null,
+            });
+
+            map
+        }
+    };
+
+    Ok(InternalFunctionResponse {
+        return_value: obj,
+        replace_self: None,
+    })
+}
+
 pub fn close(args: Vec<Spanned<Expr>>) -> Result<InternalFunctionResponse, (String, Span)> {
     let file = match &args[0].node {
         Expr::File(file) => file.clone(),
@@ -180,6 +359,7 @@ pub fn get_fn(name: &str) -> Option<Expr> {
             "write" => vec!["self".to_string(), "content".to_string()],
             "append" => vec!["self".to_string(), "content".to_string()],
             "close" => vec!["self".to_string()],
+            "stat" => vec!["self".to_string()],
             _ => vec![],
         },
         func: match name {
@@ -187,6 +367,7 @@ pub fn get_fn(name: &str) -> Option<Expr> {
             "write" => write,
             "append" => append,
             "close" => close,
+            "stat" => stat,
             _ => return None,
         },
     })
