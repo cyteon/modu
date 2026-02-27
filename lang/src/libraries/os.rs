@@ -67,7 +67,7 @@ pub fn pid(_args: Vec<Spanned<Expr>>) -> Result<InternalFunctionResponse, (Strin
     })
 }
 
-pub fn uid(_args: Vec<Spanned<Expr>>) -> Result<InternalFunctionResponse, (String, crate::lexer::Span)> {
+pub fn uid(args: Vec<Spanned<Expr>>) -> Result<InternalFunctionResponse, (String, crate::lexer::Span)> {
     #[cfg(unix)]
     {
         use libc::getuid;
@@ -88,7 +88,7 @@ pub fn uid(_args: Vec<Spanned<Expr>>) -> Result<InternalFunctionResponse, (Strin
     }
 }
 
-pub fn gid(_args: Vec<Spanned<Expr>>) -> Result<InternalFunctionResponse, (String, crate::lexer::Span)> {
+pub fn gid(args: Vec<Spanned<Expr>>) -> Result<InternalFunctionResponse, (String, crate::lexer::Span)> {
     #[cfg(unix)]
     {
         use libc::getgid;
