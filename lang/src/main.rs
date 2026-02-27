@@ -5,6 +5,8 @@ mod ast;
 mod eval;
 mod lexer;
 mod parser;
+mod functions;
+
 mod cli;
 mod utils;
 mod libraries;
