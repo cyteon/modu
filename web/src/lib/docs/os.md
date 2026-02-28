@@ -2,19 +2,22 @@
 
 The built-in library to interact with the OS.
 
-Currently has the following functions:
-- `exec(command)` - Run a command, returns `{ stderr: string, stdout: string, status_code: i64, success: bool }`
-- `pid()` - Returns the current process ID
-- `uid()` - Returns the user ID of the current user (UNIX-like OS only)
-- `gid()` - Returns the group ID of the current user (UNIX-like OS only)
-- `getenv(key)` - Returns the value of an environment variable
-- `setenv(key, value)` - Sets the value of an environment variable
-- `unsetenv(key)` - Unsets an environment variable
+```txt
+os.exec(string)       - executes a command in the terminal and returns an object with the following properties:
+    stdout  - the output of the command
+    stderr  - the error output of the command, if any
+    code    - the exit code of the command
+    success - true if the command exited with code 0, false otherwise
+os.pid()              - the current process id
+os.uid()              - the current user id, only works on unix-like operating systems
+os.gid()              - the current group id, only works on unix-like operating systems
+os.getenv(var)        - gets the value of an environment variable
+os.setenv(var, value) - sets the value of an environment variable
+os.unsetenv(var)      - unsets an environment variable
+os.name               - the name of the operating system, can be "windows", "linux", "macos" or "unknown"
+```
 
-And the following variables:
-- `name` - Returns the OS name: windows/linux/macos/unkown
-
-Example:
+## Example
 
 ```rust
 // UNIX-like OS only
@@ -22,7 +25,7 @@ Example:
 import "os" as os;
 
 if os.name == "windows" {
-    print("this example dosent run on windows :C");
+    print("this example dosent run on windows :C\nbut if u wanted to know, the pid was ", os.pid());
     exit();
 }
 

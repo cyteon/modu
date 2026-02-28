@@ -27,12 +27,12 @@ print(yapper.abc);
 ```
 
 This should output:
-```
+```txt
 Hello, World!
 123
 ```
 
-You can also import with an * to remove the need of "yapper." on the start
+You can also import with an * to directly import all variables and functions into the context.
 ```rust
 import "yapper.modu" as *;
 
@@ -42,13 +42,13 @@ print(abc);
 
 ## Internal packages
 
-Internal/Installed packages are imported without **.modu** like:
+Internal and installed packages are imported without **.modu** like:
 ```rust
 import "math" as math;
 import "file" as file;
 
 let a = math.abs(-5);
-let b = file.read("input.modu");
+let b = file.open("input.modu");
 ```
 or alternatively
 ```rust
@@ -56,7 +56,7 @@ import "math";
 import "file";
 
 let a = math.abs(-5);
-let b = file.read("input.modu");
+let b = file.open("input.modu");
 ```
 or even
 ```rust
@@ -64,5 +64,5 @@ import "math" as *;
 import "file" as *;
 
 let a = abs(-5);
-let b = read("input.modu");
+let b = open("input.modu");
 ```

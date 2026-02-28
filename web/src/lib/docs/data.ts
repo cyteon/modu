@@ -34,7 +34,7 @@ export default {
         },
         {
             "path": "os",
-            "title": "OS Lib",
+            "title": "OS",
             "icon": AppWindowIcon,
         },
         {
