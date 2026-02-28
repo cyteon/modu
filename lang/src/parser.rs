@@ -266,7 +266,7 @@ fn parser<'src>() -> impl Parser<
 
     let stmt = recursive(|stmt| {
         let let_stmt = select! { (Token::Let, span) => span }
-            .then(select! { (Token::Identifier(name), _) => name })
+            .then(select! { (Token::Identifier(name), _) => name }.labelled("variable name"))
             .then_ignore(select! { (Token::Assign, _) => () })
             .then(expr.clone().labelled("an expression after '='"))
             .then(select! { (Token::Semicolon, span) => span }.labelled("semicolon"))
@@ -352,7 +352,7 @@ fn parser<'src>() -> impl Parser<
             .then(block.clone().labelled("loop body"))
             .map(|((((start, iterator_name), is_deprecated), iterator_range), body): ((((Span, String), bool), SpannedExpr), SpannedExpr)| {
                 if is_deprecated {
-                    println!("{}", format!("Warning: using '=' in for loops is deprecated and will be removed in an future version. Use 'in' instead. ").dimmed());
+                    println!("{}", format!("Warning: using '=' in for loops is deprecated and will be removed in a future version. Use 'in' instead. ").dimmed());
                 }   
                 
                 SpannedExpr {
@@ -410,7 +410,7 @@ fn parser<'src>() -> impl Parser<
             .labelled("if statement");
         
         let return_stmt = select! { (Token::Return, span) => span }
-            .then(expr.clone().or_not())
+            .then(expr.clone().or_not().labelled("an expression after 'return'"))
             .then(select! { (Token::Semicolon, span) => span }.labelled("semicolon"))
             .map(|((start, value), end): ((Span, Option<SpannedExpr>), Span)| SpannedExpr {
                 node: Expr::Return(
@@ -427,7 +427,7 @@ fn parser<'src>() -> impl Parser<
             .labelled("return statement");
         
         let import_stmt = select! { (Token::Import, span) => span }
-            .then(expr.clone())
+            .then(expr.clone().labelled("module name"))
             .then(
                 select! { (Token::As, span) => span }
                     .then(
@@ -435,6 +435,7 @@ fn parser<'src>() -> impl Parser<
                             .or(select! { (Token::Star, _) => "*".to_string() })
                     )
                     .or_not()
+                    .labelled("optional 'as' clause")
             )
             .then(select! { (Token::Semicolon, span) => span }.labelled("semicolon"))
             .map(|(((start, name_expr), import_as), end): (((Span, SpannedExpr), Option<(Span, String)>), Span)| {
@@ -465,7 +466,7 @@ fn parser<'src>() -> impl Parser<
             return_stmt,
             block,
             expr_stmt,
-        )).boxed()
+        )).boxed().labelled("statement")
     });
 
     stmt.repeated().collect::<Vec<_>>().then_ignore(end()).labelled("program")
