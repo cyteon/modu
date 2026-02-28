@@ -223,30 +223,36 @@ fn parser<'src>() -> impl Parser<
             })
             .boxed();
         
-        inclusive_range.clone()
+        let comparison = inclusive_range.clone()
             .foldl(
                 choice((
-                    select! { (Token::DoubleEqual, span) => span }.then(inclusive_range.clone()).map(|(span, right)| (Token::DoubleEqual, span, right)),
+                    select! { (Token::Equal, span) => span }.then(inclusive_range.clone()).map(|(span, right)| (Token::Equal, span, right)),
                     select! { (Token::NotEqual, span) => span }.then(inclusive_range.clone()).map(|(span, right)| (Token::NotEqual, span, right)),
                     select! { (Token::LessThan, span) => span }.then(inclusive_range.clone()).map(|(span, right)| (Token::LessThan, span, right)),
                     select! { (Token::LessThanOrEqual, span) => span }.then(inclusive_range.clone()).map(|(span, right)| (Token::LessThanOrEqual, span, right)),
                     select! { (Token::GreaterThan, span) => span }.then(inclusive_range.clone()).map(|(span, right)| (Token::GreaterThan, span, right)),
                     select! { (Token::GreaterThanOrEqual, span) => span }.then(inclusive_range.clone()).map(|(span, right)| (Token::GreaterThanOrEqual, span, right)),
+                    select! { (Token::In, span) => span }.then(inclusive_range.clone()).map(|(span, right)| (Token::In, span, right)),
+                    select! { (Token::NotIn, span) => span }.then(inclusive_range.clone()).map(|(span, right)| (Token::NotIn, span, right)),
                 )).repeated(),
 
                 |left: SpannedExpr, (op, _span, right): (Token, Span, SpannedExpr)| SpannedExpr {
                     node: match op {
-                        Token::DoubleEqual => Expr::Equal(Box::new(left.clone()), Box::new(right.clone())),
+                        Token::Equal => Expr::Equal(Box::new(left.clone()), Box::new(right.clone())),
                         Token::NotEqual => Expr::NotEqual(Box::new(left.clone()), Box::new(right.clone())),
                         Token::LessThan => Expr::LessThan(Box::new(left.clone()), Box::new(right.clone())),
                         Token::LessThanOrEqual => Expr::LessThanOrEqual(Box::new(left.clone()), Box::new(right.clone())),
                         Token::GreaterThan => Expr::GreaterThan(Box::new(left.clone()), Box::new(right.clone())),
                         Token::GreaterThanOrEqual => Expr::GreaterThanOrEqual(Box::new(left.clone()), Box::new(right.clone())),
+                        Token::In => Expr::In(Box::new(left.clone()), Box::new(right.clone())),
+                        Token::NotIn => Expr::NotIn(Box::new(left.clone()), Box::new(right.clone())),
                         _ => unreachable!(),
                     },
                     span: Span::from(left.span.start..right.span.end),
                 }
-            ) 
+            );
+        
+        comparison
     });
 
     let stmt = recursive(|stmt| {

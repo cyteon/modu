@@ -105,3 +105,19 @@ print(string.chars());
 sleep(2000);
 
 print("i slept for 2s");
+
+if "est" in "test" {
+    print("est is in test");
+}
+
+if "kaboom" not in "test" {
+    print("kaboom is not in test");
+}
+
+if 1 in [1, 2, 3] {
+    print("1 is in the list");
+}
+
+if 4 not in [1, 2, 3] {
+    print("4 is not in the list");
+}

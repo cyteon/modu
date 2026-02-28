@@ -26,6 +26,11 @@ fn basic_print() {
 }
 
 #[test]
+fn comparisons() {
+    run_test("comparisons");
+}
+
+#[test]
 fn crypto() {
     run_test("crypto");
 }
