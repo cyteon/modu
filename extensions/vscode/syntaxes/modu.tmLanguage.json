@@ -19,7 +19,7 @@
 		"keywords": {
 			"patterns": [{
 				"name": "keyword.control.modu",
-				"match": "\\b(if|else|fn|let|import|as|return|loop|break|continue|for|in|while)\\b"
+				"match": "\\b(if|else|fn|let|import|as|return|loop|break|continue|for|in|not in|while)\\b"
 			}]
 		},
 
