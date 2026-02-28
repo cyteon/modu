@@ -1,6 +1,7 @@
 /* tslint:disable */
 /* eslint-disable */
 export const memory: WebAssembly.Memory;
+export const _modu_input: (a: number, b: number, c: number) => number;
 export const _modu_print: (a: number, b: number) => void;
 export const eval_modu: (a: number, b: number) => [number, number];
 export const init: () => void;

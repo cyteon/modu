@@ -149,6 +149,8 @@ pub enum Expr {
     LessThanOrEqual(Box<Spanned<Expr>>, Box<Spanned<Expr>>),
     GreaterThan(Box<Spanned<Expr>>, Box<Spanned<Expr>>),
     GreaterThanOrEqual(Box<Spanned<Expr>>, Box<Spanned<Expr>>),
+    In(Box<Spanned<Expr>>, Box<Spanned<Expr>>),
+    NotIn(Box<Spanned<Expr>>, Box<Spanned<Expr>>),
 }
 
 impl std::fmt::Display for Expr {
@@ -211,6 +213,34 @@ impl std::fmt::Display for Expr {
             }
 
             _ => write!(f, "{:?}", self),
+        }
+    }
+}
+
+impl PartialEq for Expr {
+    fn eq(&self, other: &Self) -> bool {
+        match (self, other) {
+            (Expr::Int(a), Expr::Int(b)) => a == b,
+            (Expr::Float(a), Expr::Float(b)) => a == b,
+            (Expr::String(a), Expr::String(b)) => a == b,
+            (Expr::Identifier(a), Expr::Identifier(b)) => a == b,
+            (Expr::Bool(a), Expr::Bool(b)) => a == b,
+            (Expr::Array(a), Expr::Array(b)) => {
+                if a.len() != b.len() {
+                    return false;
+                }
+
+                for (elem_a, elem_b) in a.iter().zip(b.iter()) {
+                    if elem_a.node != elem_b.node {
+                        return false;
+                    }
+                }
+
+                true
+            }
+            (Expr::Object { properties: a }, Expr::Object { properties: b }) => a == b,
+            (Expr::Null, Expr::Null) => true,
+            _ => false,
         }
     }
 }

@@ -6,6 +6,11 @@ unsafe extern "C" {
     fn _modu_print(ptr: *const u8, len: usize);
 }
 
+#[cfg(target_arch = "wasm32")]
+unsafe extern "C" {
+    fn _modu_input(ptr: *const u8, len: usize, out_len: *mut usize) -> *mut u8;
+}
+
 pub fn print(args: Vec<Spanned<Expr>>) -> Result<InternalFunctionResponse, (String, Span)> {
     let mut output = String::new();
 
@@ -69,15 +74,47 @@ pub fn input(args: Vec<Spanned<Expr>>) -> Result<InternalFunctionResponse, (Stri
     
     let span = args.first().map(|a| a.span.clone()).unwrap_or_default();
 
-    io::stdout().flush().map_err(|e| (format!("Failed to flush stdout: {}", e), span))?;
+    #[cfg(not(target_arch = "wasm32"))]
+    {
+        io::stdout().flush().map_err(|e| (format!("Failed to flush stdout: {}", e), span))?;
 
-    let mut input = String::new();
-    io::stdin().read_line(&mut input).map_err(|e| (format!("Failed to read input: {}", e), span))?;
+        let mut input = String::new();
+        io::stdin().read_line(&mut input).map_err(|e| (format!("Failed to read input: {}", e), span))?;
 
-    Ok(InternalFunctionResponse {
-        return_value: Expr::String(input.trim_end().to_string()),
-        replace_self: None,
-    })
+        Ok(InternalFunctionResponse {
+            return_value: Expr::String(input.trim_end().to_string()),
+            replace_self: None,
+        })
+    }
+
+    #[cfg(target_arch = "wasm32")]
+    {
+        let prompt = args.iter().map(|a| format!("{}", a.node)).collect::<String>();
+        let input;
+
+        unsafe {
+            let mut out_len: usize = 0;
+            let ptr = _modu_input(prompt.as_ptr(), prompt.len(), &mut out_len as *mut usize);
+
+            if ptr.is_null() {
+                return Err((
+                    "Failed to read input from JavaScript".to_string(),
+                    span,
+                ));
+            }
+
+            let bytes = Vec::from_raw_parts(ptr, out_len, out_len);
+            input = String::from_utf8(bytes).map_err(|e| (
+                format!("Invalid UTF-8 input from JavaScript: {}", e),
+                span,
+            ))?;
+        }
+
+        Ok(InternalFunctionResponse {
+            return_value: Expr::String(input),
+            replace_self: None,
+        })
+    }
 }
 
 pub fn exit(_: Vec<Spanned<Expr>>) -> Result<InternalFunctionResponse, (String, Span)> {
@@ -192,6 +229,24 @@ pub fn type_of(args: Vec<Spanned<Expr>>) -> Result<InternalFunctionResponse, (St
     })
 }
 
+pub fn sleep(args: Vec<Spanned<Expr>>) -> Result<InternalFunctionResponse, (String, Span)> {
+    let duration_ms = match &args[0].node {
+        Expr::Int(n) => *n as u64,
+        Expr::Float(f) => *f as u64,
+        _ => return Err((
+            format!("sleep expects a number of milliseconds, got '{}'", args[0].node),
+            args[0].span,
+        )),
+    };
+
+    std::thread::sleep(std::time::Duration::from_millis(duration_ms));
+
+    Ok(InternalFunctionResponse {
+        return_value: Expr::Null,
+        replace_self: None,
+    })
+}
+
 pub fn fill_context(context: &mut HashMap<String, Expr>) {
     context.insert(
         "print".to_string(),
@@ -271,6 +326,15 @@ pub fn fill_context(context: &mut HashMap<String, Expr>) {
             name: "type".to_string(),
             args: vec!["value".to_string()],
             func: type_of,
+        },
+    );
+
+    context.insert(
+        "sleep".to_string(),
+        Expr::InternalFunction {
+            name: "sleep".to_string(),
+            args: vec!["duration_ms".to_string()],
+            func: sleep,
         },
     );
 }

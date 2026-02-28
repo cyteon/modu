@@ -119,7 +119,7 @@ pub fn eval<'src>(expr: &'src SpannedExpr, context: &mut HashMap<String, Expr>) 
 
                 #[cfg(not(target_arch = "wasm32"))]
                 Expr::File(_) => {
-                    match crate::libraries::file::get_fn(property) {
+                    match crate::libraries::fs::get_fn(property) {
                         Some(value) => Ok(Flow::Continue(value)),
                         None => Err(EvalError {
                             message: format!("file has no method named '{}'", property),
@@ -797,34 +797,14 @@ pub fn eval<'src>(expr: &'src SpannedExpr, context: &mut HashMap<String, Expr>) 
             let left_value = eval(left, context)?.unwrap();
             let right_value = eval(right, context)?.unwrap();
 
-            match (left_value, right_value) {
-                (Expr::Int(l), Expr::Int(r)) => Ok(Flow::Continue(Expr::Bool(l == r))),
-                (Expr::Float(l), Expr::Float(r)) => Ok(Flow::Continue(Expr::Bool(l == r))),
-                (Expr::Int(l), Expr::Float(r)) => Ok(Flow::Continue(Expr::Bool((l as f64) == r))),
-                (Expr::Float(l), Expr::Int(r)) => Ok(Flow::Continue(Expr::Bool(l == (r as f64)))),
-                (Expr::Bool(l), Expr::Bool(r)) => Ok(Flow::Continue(Expr::Bool(l == r))),
-                (Expr::String(l), Expr::String(r)) => Ok(Flow::Continue(Expr::Bool(l == r))),
-                (Expr::Null, Expr::Null) => Ok(Flow::Continue(Expr::Bool(true))),
-
-                _ => Ok(Flow::Continue(Expr::Bool(false))),
-            }
+            Ok(Flow::Continue(Expr::Bool(left_value == right_value)))
         },
 
         Expr::NotEqual(left, right) => {
             let left_value = eval(left, context)?.unwrap();
             let right_value = eval(right, context)?.unwrap();
 
-            match (left_value, right_value) {
-                (Expr::Int(l), Expr::Int(r)) => Ok(Flow::Continue(Expr::Bool(l != r))),
-                (Expr::Float(l), Expr::Float(r)) => Ok(Flow::Continue(Expr::Bool(l != r))),
-                (Expr::Int(l), Expr::Float(r)) => Ok(Flow::Continue(Expr::Bool((l as f64) != r))),
-                (Expr::Float(l), Expr::Int(r)) => Ok(Flow::Continue(Expr::Bool(l != (r as f64)))),
-                (Expr::Bool(l), Expr::Bool(r)) => Ok(Flow::Continue(Expr::Bool(l != r))),
-                (Expr::String(l), Expr::String(r)) => Ok(Flow::Continue(Expr::Bool(l != r))),
-                (Expr::Null, Expr::Null) => Ok(Flow::Continue(Expr::Bool(false))),
-
-                _ => Ok(Flow::Continue(Expr::Bool(true))),
-            }
+            Ok(Flow::Continue(Expr::Bool(left_value != right_value)))
         },
 
         Expr::LessThan(left, right) => {
@@ -898,6 +878,76 @@ pub fn eval<'src>(expr: &'src SpannedExpr, context: &mut HashMap<String, Expr>) 
                 }),
             }
         },
+
+        Expr::In(left, right) => {
+            let left_value = eval(left, context)?.unwrap();
+            let right_value = eval(right, context)?.unwrap();
+
+            match right_value {
+                Expr::Array(elements) => {
+                    for element in elements {
+                        if element.node == left_value {
+                            return Ok(Flow::Continue(Expr::Bool(true)));
+                        }
+                    }
+
+                    Ok(Flow::Continue(Expr::Bool(false)))
+                }
+
+                Expr::String(s) => {
+                    if let Expr::String(sub) = left_value {
+                        return Ok(Flow::Continue(Expr::Bool(s.contains(&sub))));
+                    } else {
+                        return Err(EvalError {
+                            message: format!("left operand of 'in' must be a string when right operand is a string, got '{}'", left_value),
+                            message_short: "invalid 'in' operand".to_string(),
+                            span: expr.span,
+                        });
+                    }
+                }
+
+                _ => Err(EvalError {
+                    message: format!("right operand of 'in' must be an array, got '{}'", right_value),
+                    message_short: "invalid 'in' operand".to_string(),
+                    span: expr.span,
+                }),
+            }
+        }
+
+        Expr::NotIn(left, right) => {
+            let left_value = eval(left, context)?.unwrap();
+            let right_value = eval(right, context)?.unwrap();
+
+            match right_value {
+                Expr::Array(elements) => {
+                    for element in elements {
+                        if element.node == left_value {
+                            return Ok(Flow::Continue(Expr::Bool(false)));
+                        }
+                    }
+
+                    Ok(Flow::Continue(Expr::Bool(true)))
+                }
+
+                Expr::String(s) => {
+                    if let Expr::String(sub) = left_value {
+                        return Ok(Flow::Continue(Expr::Bool(!s.contains(&sub))));
+                    } else {
+                        return Err(EvalError {
+                            message: format!("left operand of 'not in' must be a string when right operand is a string, got '{}'", left_value),
+                            message_short: "invalid 'not in' operand".to_string(),
+                            span: expr.span,
+                        });
+                    }
+                }
+
+                _ => Err(EvalError {
+                    message: format!("right operand of 'not in' must be an array, got '{}'", right_value),
+                    message_short: "invalid 'not in' operand".to_string(),
+                    span: expr.span,
+                }),
+            }
+        }
 
         Expr::If { condition, then_branch, else_if_branches, else_branch } => {
             let condition_value = eval(condition, context)?.unwrap();
@@ -980,7 +1030,7 @@ pub fn eval<'src>(expr: &'src SpannedExpr, context: &mut HashMap<String, Expr>) 
                 None => name.clone(),
             };
 
-            let mut path: std::path::PathBuf = std::path::PathBuf::new();
+            let mut path: std::path::PathBuf;
 
             #[cfg(not(target_arch = "wasm32"))]
             {
@@ -1010,6 +1060,15 @@ pub fn eval<'src>(expr: &'src SpannedExpr, context: &mut HashMap<String, Expr>) 
             }
 
             if name.ends_with(".modu") {
+                #[cfg(target_arch = "wasm32")]
+                {
+                    return Err(EvalError {
+                        message: "cannot import .modu files in wasm".to_string(),
+                        message_short: "cannot import .modu files".to_string(),
+                        span: expr.span,
+                    });
+                }
+
                 path.push(name);
                 
                 let source = std::fs::read_to_string(path.clone()).map_err(|e| EvalError {

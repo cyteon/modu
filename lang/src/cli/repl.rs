@@ -19,7 +19,7 @@ pub struct Syntax {
 impl Syntax {
     pub fn new() -> Self {
         Self {
-            keyword_re: Regex::new(r"\b(if|else|fn|let|import|as|return|loop|break|continue|for|in)\b").unwrap(),
+            keyword_re: Regex::new(r"\b(if|else|fn|let|import|as|return|loop|break|continue|for|in|not in)\b").unwrap(),
             string_re: Regex::new(r#""([^"\\]|\\.)*"|'([^'\\]|\\.)*'"#).unwrap(),
             comment_re: Regex::new(r"//.*$|/\*.*?\*/").unwrap(),
             number_re: Regex::new(r"\b\d(?:_?\d)*\b").unwrap(),

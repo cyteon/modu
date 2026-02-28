@@ -1,9 +1,16 @@
+// headers are optional
+// for everything except get you need to provide body before headers
+// body can just be a empty string
+
 import "http" as http;
 import "json" as json;
 
+let headers = json.new();
+headers.set("User-Agent", "modu");
+
 print("HTTP GET Request:");
 
-let result = http.get("https://httpbin.org/get");
+let result = http.get("https://httpbin.org/get", headers);
 print("Status: ", result.status, " - ", result.status_text);
 print("\nHeaders: ", result.headers);
 print("\nBody:\n", result.body);
@@ -13,28 +20,28 @@ print("\nHTTP POST Request:");
 let data = json.new();
 data.set("name", "modu");
 
-let result = http.post("https://httpbin.org/post", data.to_string());
+let result = http.post("https://httpbin.org/post", data.to_string(), headers);
 print("Status: ", result.status, " - ", result.status_text);
 print("\nHeaders: ", result.headers);
 print("\nBody:\n", result.body);
 
 print("\nHTTP PUT Request:");
 
-let result = http.put("https://httpbin.org/put", data.to_string());
+let result = http.put("https://httpbin.org/put", data.to_string(), headers);
 print("Status: ", result.status, " - ", result.status_text);
 print("\nHeaders: ", result.headers);
 print("\nBody:\n", result.body);
 
 print("\nHTTP PATCH Request:");
 
-let result = http.patch("https://httpbin.org/patch", data.to_string());
+let result = http.patch("https://httpbin.org/patch", data.to_string(), headers);
 print("Status: ", result.status, " - ", result.status_text);
 print("\nHeaders: ", result.headers);
 print("\nBody:\n", result.body);
 
 print("\nHTTP DELETE Request:");
 
-let result = http.delete("https://httpbin.org/delete");
+let result = http.delete("https://httpbin.org/delete", headers);
 print("Status: ", result.status, " - ", result.status_text);
 print("\nHeaders: ", result.headers);
 print("\nBody:\n", result.body);

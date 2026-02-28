@@ -94,3 +94,30 @@ if is_null {
 
 print("i like potatoes"[7..=-1]);
 print([1,2,3,4][1..-1]);
+
+let string = "Test";
+print(string.to_upper());
+print(string.to_lower());
+print(string.starts_with("te"));
+print(string.ends_with("st"));
+print(string.chars());
+
+sleep(2000);
+
+print("i slept for 2s");
+
+if "est" in "test" {
+    print("est is in test");
+}
+
+if "kaboom" not in "test" {
+    print("kaboom is not in test");
+}
+
+if 1 in [1, 2, 3] {
+    print("1 is in the list");
+}
+
+if 4 not in [1, 2, 3] {
+    print("4 is not in the list");
+}

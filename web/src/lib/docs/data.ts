@@ -28,8 +28,8 @@ export default {
             "icon": Equal,
         },
         {
-            "path": "file",
-            "title": "File I/O",
+            "path": "fs",
+            "title": "Filesystem",
             "icon": File,
         },
         {

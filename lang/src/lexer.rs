@@ -116,6 +116,9 @@ pub enum Token {
     #[token("in")]
     In,
 
+    #[token("not in")]
+    NotIn,
+
     #[token(",")]
     Comma,
 
@@ -165,7 +168,7 @@ pub enum Token {
     InclusiveRange,
 
     #[token("==")]
-    DoubleEqual,
+    Equal,
 
     #[token("!=")]
     NotEqual,

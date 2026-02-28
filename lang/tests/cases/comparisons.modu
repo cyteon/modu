@@ -1,0 +1,29 @@
+print(1 == 1);
+print(1 == 2);
+print("a" == "a");
+print("a" != "b");
+print([] == []);
+print([1, 2] == [1, 2]);
+print([1, 2] == [2, 3]);
+print(null == null);
+
+print("abc" in "kaboom");
+print("test" in "a test a");
+print(1 in [1, 2, 3]);
+print(4 in [1, 2, 3]);
+print(4 not in [1, 2, 3]);
+print("est" not in "test");
+
+import "json";
+let obj1 = json.new();
+let obj2 = json.new();
+print(obj1 == obj2);
+
+obj1.set("key", "value");
+print(obj1 == obj2);
+
+obj2.set("key", "value");
+print(obj1 == obj2);
+
+obj1.set("key", "value2");
+print(obj1 == obj2);
