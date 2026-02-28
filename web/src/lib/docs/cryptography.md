@@ -1,5 +1,4 @@
 # Cryptography
-> Introduced in Modu v1.2.0
 
 The cryptography package currently features the hasing functions SHA256, SHA512, and BLAKE3. \
 And it also features password hashing algorithms like bcrypt, argon2 and scrypt.

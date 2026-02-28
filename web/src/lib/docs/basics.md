@@ -4,8 +4,7 @@
 
 ## Variables
 
-Variables can be defined, and redefined with 'let'. \
-Like this:
+Variables can be defined, and redefined with 'let', like this:
 
 ```rust
 let a = 1;
@@ -14,7 +13,7 @@ let c = false;
 let d = a;
 ```
 
-Variables can also be redefined with `=`, `+=`, `-=`, `*=`, `/=` and `%=`.
+And variables can also be redefined with `=`, `+=`, `-=`, `*=`, `/=` and `%=`:
 ```rust
 let a = 1;
 a += 1; // a is 2
@@ -50,14 +49,13 @@ Functions defined in a file, can be also be accessed in other files when importe
 
 ## Conditions
 
-Modu has the following operators: `==`, `!=`, `>`, `&lt;`, `>=` and `<=` \
-If the condition given returns true, the code inside of the brackets is ran.
+Modu has the following operators: `==`, `!=`, `>`, `<`, `>=` and `<=`, if the condition given returns true, the code inside of the brackets is ran.
 
 ```rust
 if 1 == 1 {
     print("yes");
-} else if 1 == 2 {
-    print("never");
+} else if 1 != 2 {
+    print("wont reach this branch");
 } else {
     print("we are cooked");
 }

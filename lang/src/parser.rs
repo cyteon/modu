@@ -492,7 +492,7 @@ pub fn parse(input: &str, filename: &str, context: &mut HashMap<String, Expr>) {
                                     .with_color(Color::Red)
                                     .with_message("unexpected return statement"),
                             )
-                            .with_help("Return statements can only be used inside functions")
+                            .with_note("Return statements can only be used inside functions")
                             .finish();
                         
                         report_error(report, filename, input);
@@ -509,7 +509,7 @@ pub fn parse(input: &str, filename: &str, context: &mut HashMap<String, Expr>) {
                                     .with_color(Color::Red)
                                     .with_message("unexpected break statement"),
                             )
-                            .with_help("Break statements can only be used inside loops")
+                            .with_note("Break statements can only be used inside loops")
                             .finish();
                         
                         report_error(report, filename, input);
@@ -526,7 +526,7 @@ pub fn parse(input: &str, filename: &str, context: &mut HashMap<String, Expr>) {
                                     .with_color(Color::Red)
                                     .with_message("unexpected continue statement"),
                             )
-                            .with_help("Continue statements can only be used inside loops")
+                            .with_note("Continue statements can only be used inside loops")
                             .finish();
                         
                         report_error(report, filename, input);
@@ -571,9 +571,11 @@ pub fn parse(input: &str, filename: &str, context: &mut HashMap<String, Expr>) {
                             Some(chumsky::util::MaybeRef::Val((tok, tok_span))) => {
                                 (format!("{:?}", tok), tok_span.clone())
                             },
+
                             Some(chumsky::util::MaybeRef::Ref((tok, tok_span))) => {
                                 (format!("{:?}", tok), tok_span.clone())
                             },
+                            
                             None => {
                                 ("end of input".to_string(), Span::from(input.len()-1..input.len()-1))
                             }

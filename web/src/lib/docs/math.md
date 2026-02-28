@@ -13,29 +13,15 @@ let g = 10 % 3;
 
 ## Math Package
 
-You can import the package with
-```rust
-import "math" as math;
-
-math.div(1,2); // can be used like this
-```
-or
-```rust
-import "math" as *; // can be accessed without any prefix
-
-div(1,2); // is not a property now
-```
-
-You can do the following with the math package currently:
-```rust
-print(math.PI);
-print(math.E);
-print(math.abs(-5));
-print(math.ceil(math.PI));
-print(math.floor(math.E));
-print(math.round(1.6));
-print(math.sqrt(16));
-print(math.rand());
+```txt
+math.PI           - 3.14...
+math.E            - 2.71...
+math.abs(number)  - absolute value
+math.ceil(float)  - rounds up
+math.floor(float) - rounds down
+math.round(float) - rounds to nearest integer
+math.sqrt(number) - square root
+math.rand()       - random number between 0 and 1
 ```
 
 ## Strings

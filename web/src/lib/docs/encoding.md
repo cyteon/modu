@@ -1,5 +1,4 @@
 # Encoding
-> Introduced in Modu v1.2.0
 
 The encoding package currently features base64 and base16 encoding and decoding functions.
 
