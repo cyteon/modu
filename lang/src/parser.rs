@@ -39,7 +39,7 @@ fn parser<'src>() -> impl Parser<
             (Token::Null, span) => SpannedExpr { node: Expr::Null, span },
             (Token::Break, span) => SpannedExpr { node: Expr::Break, span },
             (Token::Continue, span) => SpannedExpr { node: Expr::Continue, span },
-        };
+        }.labelled("atom");
 
         let array = select! { (Token::LBracket, span) => span }
             .then(
@@ -52,7 +52,8 @@ fn parser<'src>() -> impl Parser<
             .map(|((start, elements), end): ((Span, Vec<SpannedExpr>), Span)| SpannedExpr {
                 node: Expr::Array(elements),
                 span: Span::from(start.start..end.end),
-            });
+            })
+            .labelled("array literal");
 
         let primary = choice((
             atom,
@@ -60,7 +61,7 @@ fn parser<'src>() -> impl Parser<
             select! { (Token::LParen, _) => () }
                 .ignore_then(expr.clone())
                 .then_ignore(select! { (Token::RParen, _) => () })
-        ));
+        )).labelled("primary expression");
 
         let postfix = primary
             .foldl(
@@ -109,7 +110,8 @@ fn parser<'src>() -> impl Parser<
                         },
                     },
                 },
-            );
+            )
+            .boxed();
 
         let unary = select! { (Token::Minus, span) => span }
             .repeated()
@@ -124,7 +126,9 @@ fn parser<'src>() -> impl Parser<
                 }
 
                 expr
-            });
+            })
+            .boxed()
+            .labelled("unary expression");
         
         let power = unary.clone()
            .separated_by(select! { (Token::Pow, _span) => () })
@@ -140,7 +144,8 @@ fn parser<'src>() -> impl Parser<
                 }
                 result
             })
-            .boxed();
+            .boxed()
+            .labelled("power expression");
         
         let multiplicative = power.clone()
             .foldl(
@@ -150,7 +155,6 @@ fn parser<'src>() -> impl Parser<
                     select! { (Token::Mod, span) => span }.then(power.clone()).map(|(span, right)| (Token::Mod, span, right)),
                 ))
                 .repeated(),
- 
                 |left: SpannedExpr, (op, _span, right): (Token, Span, SpannedExpr)| SpannedExpr {
                     node: match op {
                         Token::Star => Expr::Mul(Box::new(left.clone()), Box::new(right.clone())),
@@ -161,7 +165,8 @@ fn parser<'src>() -> impl Parser<
                     span: Span::from(left.span.start..right.span.end),
                 }
             )
-            .boxed();
+            .boxed()
+            .labelled("multiplicative expression");
 
         let additive = multiplicative.clone()
             .foldl(
@@ -180,7 +185,8 @@ fn parser<'src>() -> impl Parser<
                     span: Span::from(left.span.start..right.span.end),
                 }
             )
-            .boxed();
+            .boxed()
+            .labelled("additive expression");
         
         let range = additive.clone()
             .then(
@@ -201,7 +207,8 @@ fn parser<'src>() -> impl Parser<
                     None => start,
                 }
             })
-            .boxed();
+            .boxed()
+            .labelled("range expression");
         
         let inclusive_range = range.clone()
             .then(
@@ -221,7 +228,8 @@ fn parser<'src>() -> impl Parser<
                     None => start,
                 }
             })
-            .boxed();
+            .boxed()
+            .labelled("inclusive range expression");
         
         let comparison = inclusive_range.clone()
             .foldl(
@@ -250,7 +258,8 @@ fn parser<'src>() -> impl Parser<
                     },
                     span: Span::from(left.span.start..right.span.end),
                 }
-            );
+            )
+            .boxed();
         
         comparison
     });
@@ -259,12 +268,13 @@ fn parser<'src>() -> impl Parser<
         let let_stmt = select! { (Token::Let, span) => span }
             .then(select! { (Token::Identifier(name), _) => name })
             .then_ignore(select! { (Token::Assign, _) => () })
-            .then(expr.clone())
+            .then(expr.clone().labelled("an expression after '='"))
             .then(select! { (Token::Semicolon, span) => span }.labelled("semicolon"))
             .map(|(((start, name), value), end): (((Span, String), SpannedExpr), Span)| SpannedExpr {
                 node: Expr::Let { name, value: Box::new(value) },
                 span: Span::from(start.start..end.end),
-            });
+            })
+            .labelled("let statement");
         
         let assign_stmt = select! { (Token::Identifier(name), span) => (name, span) }
             .then(
@@ -284,7 +294,8 @@ fn parser<'src>() -> impl Parser<
                     node: Expr::Assign { name, value: Box::new(value), operator: op },
                     span: Span::from(name_span.start..end.end),
                 }
-            });
+            })
+            .labelled("assignment");
 
         let expr_stmt = expr.clone()
             .map_with(|expr, e| (expr, e.span()))
@@ -295,7 +306,7 @@ fn parser<'src>() -> impl Parser<
                     span: Span::from(expr.span.start..end.end),
                 }
             })
-            .labelled("statement");
+            .labelled("expression");
         
         let block = select! { (Token::LBrace, span) => span }
             .then(stmt.clone().repeated().collect::<Vec<_>>())
@@ -303,10 +314,11 @@ fn parser<'src>() -> impl Parser<
             .map(|((start, stmts), end): ((Span, Vec<SpannedExpr>), Span)| SpannedExpr {
                 node: Expr::Block(stmts),
                 span: Span::from(start.start..end.end),
-            });
+            })
+            .labelled("block");
         
         let fn_stmt = select! { (Token::Function, span) => span }
-            .then(select! { (Token::Identifier(name), _) => name })
+            .then(select! { (Token::Identifier(name), _) => name }.labelled("function name"))
             .then_ignore(select! { (Token::LParen, _) => () })
             .then(
                 select! { (Token::Identifier(name), _) => name }
@@ -315,18 +327,20 @@ fn parser<'src>() -> impl Parser<
                     .collect::<Vec<_>>()
             )
             .then_ignore(select! { (Token::RParen, _) => () })
-            .then(block.clone())
+            .then(block.clone().labelled("function body"))
             .map(|(((start, name), args), body): (((Span, String), Vec<String>), SpannedExpr)| SpannedExpr {
                 node: Expr::Function { name, args, body: Box::new(body.clone()) },
                 span: Span::from(start.start..body.span.end),
-            });
+            })
+            .labelled("function declaration");
         
         let infinite_loop_stmt = select! { (Token::Loop, span) => span }
-            .then(block.clone())
+            .then(block.clone().labelled("loop body"))
             .map(|(start, body): (Span, SpannedExpr)| SpannedExpr {
                 node: Expr::InfiniteLoop { body: Box::new(body.clone()) },
                 span: Span::from(start.start..body.span.end),
-            });
+            })
+            .labelled("infinite loop");
         
         let for_loop_stmt = select! { (Token::For, span) => span }
             .then(select! { (Token::Identifier(name), _) => name })
@@ -334,8 +348,8 @@ fn parser<'src>() -> impl Parser<
                 select! { (Token::Assign, _) => true }
                     .or(select! { (Token::In, _) => false })
             )
-            .then(expr.clone())
-            .then(block.clone())
+            .then(expr.clone().labelled("iterable"))
+            .then(block.clone().labelled("loop body"))
             .map(|((((start, iterator_name), is_deprecated), iterator_range), body): ((((Span, String), bool), SpannedExpr), SpannedExpr)| {
                 if is_deprecated {
                     println!("{}", format!("Warning: using '=' in for loops is deprecated and will be removed in an future version. Use 'in' instead. ").dimmed());
@@ -349,22 +363,24 @@ fn parser<'src>() -> impl Parser<
                     },
                     span: Span::from(start.start..body.span.end),
                 }
-            });
+            })
+            .labelled("for loop");
         
         let while_loop_stmt = select! { (Token::While, span) => span }
-            .then(expr.clone())
-            .then(block.clone())
+            .then(expr.clone().labelled("condition"))
+            .then(block.clone().labelled("loop body"))
             .map(|((start, condition), body): ((Span, SpannedExpr), SpannedExpr)| SpannedExpr {
                 node: Expr::WhileLoop {
                     condition: Box::new(condition.clone()),
                     body: Box::new(body.clone()),
                 },
                 span: Span::from(start.start..body.span.end),
-            });
+            })
+            .labelled("while loop");
         
         let if_stmt = select! { (Token::If, span) => span }
-            .then(expr.clone())
-            .then(block.clone())
+            .then(expr.clone().labelled("condition"))
+            .then(block.clone().labelled("if body"))
             .then(
                 select! { (Token::ElseIf, span) => span }
                     .then(expr.clone())
@@ -390,7 +406,8 @@ fn parser<'src>() -> impl Parser<
                     },
                     span: Span::from(start.start..then_branch.span.end),
                 }
-            });
+            })
+            .labelled("if statement");
         
         let return_stmt = select! { (Token::Return, span) => span }
             .then(expr.clone().or_not())
@@ -406,7 +423,8 @@ fn parser<'src>() -> impl Parser<
                     }
                 ),
                 span: Span::from(start.start..end.end),
-            });
+            })
+            .labelled("return statement");
         
         let import_stmt = select! { (Token::Import, span) => span }
             .then(expr.clone())
@@ -432,7 +450,8 @@ fn parser<'src>() -> impl Parser<
                     },
                     span: Span::from(start.start..end.end),
                 }
-            });
+            })
+            .labelled("import statement");
                 
         choice((
             let_stmt,
@@ -449,7 +468,7 @@ fn parser<'src>() -> impl Parser<
         )).boxed()
     });
 
-    stmt.repeated().collect::<Vec<_>>().then_ignore(end())
+    stmt.repeated().collect::<Vec<_>>().then_ignore(end()).labelled("program")
 }
 
 pub fn parse(input: &str, filename: &str, context: &mut HashMap<String, Expr>) {
