@@ -77,20 +77,7 @@ pub fn join(args: Vec<Spanned<Expr>>) -> Result<InternalFunctionResponse, (Strin
     let mut string_vec = Vec::new();
 
     for element in array {
-        match &element.node {
-            Expr::String(s) => string_vec.push(s.clone()),
-            Expr::Int(i) => string_vec.push(i.to_string()),
-            Expr::Float(f) => string_vec.push(f.to_string()),
-            Expr::Bool(b) => string_vec.push(b.to_string()),
-            Expr::Null => string_vec.push("null".to_string()),
-            Expr::Array(_) => string_vec.push(format!("{}", element.node)),
-            _ => {
-                return Err((
-                    format!("join cannot join value '{}'", element.node),
-                    element.span,
-                ))
-            }
-        }
+        string_vec.push(format!("{}", element.node));
     }
 
     let joined = string_vec.join(delimiter);
