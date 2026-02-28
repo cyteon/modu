@@ -6,6 +6,7 @@ mod eval;
 mod lexer;
 mod parser;
 mod functions;
+mod validator;
 
 mod cli;
 mod utils;

@@ -457,7 +457,6 @@ pub fn parse(input: &str, filename: &str, context: &mut HashMap<String, Expr>) {
         Ok(toks) => toks,
         Err(e) => {
             let report = Report::build(ReportKind::Error, (filename, e.1.into_range()))
-                .with_code(0)
                 .with_message(format!("Lexing error: {:?}", e.0))
                 .with_label(
                     Label::new((filename, e.1.into_range()))
@@ -480,71 +479,16 @@ pub fn parse(input: &str, filename: &str, context: &mut HashMap<String, Expr>) {
                 println!("AST: {:#?}", ast);
             }
 
+            if let Err(()) = crate::validator::validate_ast(&ast, filename, input) {
+                return;
+            }
+
             for expr in ast {
-                match &expr.node {
-                    // should never be an return in the top-level
-                    Expr::Return(_) => {
-                        let report = Report::build(ReportKind::Error, (filename, expr.span.into_range()))
-                            .with_code(3)
-                            .with_message("Return statement not allowed in top-level")
-                            .with_label(
-                                Label::new((filename, expr.span.into_range()))
-                                    .with_color(Color::Red)
-                                    .with_message("unexpected return statement"),
-                            )
-                            .with_note("Return statements can only be used inside functions")
-                            .finish();
-                        
-                        report_error(report, filename, input);
-
-                        return;
-                    }
-
-                    Expr::Break => {
-                        let report = Report::build(ReportKind::Error, (filename, expr.span.into_range()))
-                            .with_code(4)
-                            .with_message("Break statement not allowed in top-level")
-                            .with_label(
-                                Label::new((filename, expr.span.into_range()))
-                                    .with_color(Color::Red)
-                                    .with_message("unexpected break statement"),
-                            )
-                            .with_note("Break statements can only be used inside loops")
-                            .finish();
-                        
-                        report_error(report, filename, input);
-
-                        return;
-                    }
-
-                    Expr::Continue => {
-                        let report = Report::build(ReportKind::Error, (filename, expr.span.into_range()))
-                            .with_code(5)
-                            .with_message("Continue statement not allowed in top-level")
-                            .with_label(
-                                Label::new((filename, expr.span.into_range()))
-                                    .with_color(Color::Red)
-                                    .with_message("unexpected continue statement"),
-                            )
-                            .with_note("Continue statements can only be used inside loops")
-                            .finish();
-                        
-                        report_error(report, filename, input);
-
-                        return;
-                    }
-
-                    _ => {}
-                }
-
                 match eval::eval(&expr, context) {
-                    Ok(_) => {
-                        
-                    }
+                    Ok(_) => {}
 
                     Err(e) => {
                         let report = Report::build(ReportKind::Error, (filename, e.span.into_range()))
-                            .with_code(1)
                             .with_message(format!("Evaluation error: {}", e.message))
                             .with_label(
                                 Label::new((filename, e.span.into_range()))
@@ -582,7 +526,6 @@ pub fn parse(input: &str, filename: &str, context: &mut HashMap<String, Expr>) {
                         };
 
                         let report = Report::build(ReportKind::Error, (filename, error_span.into_range()))
-                            .with_code(2)
                             .with_message(format!("I expected {:?}, but found {}", expected, found_str))
                             .with_label(
                                     Label::new((filename, error_span.into_range()))
