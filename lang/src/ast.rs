@@ -13,6 +13,18 @@ pub struct Spanned<T> {
     pub span: Span,
 }
 
+impl PartialEq for Spanned<Expr> {
+    fn eq(&self, other: &Self) -> bool {
+        self.node == other.node
+    }
+}
+
+impl std::fmt::Display for Spanned<Expr> {
+    fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
+        write!(f, "{}", self.node)
+    }
+}
+
 #[derive(Debug, Clone)]
 pub struct InternalFunctionResponse {
     pub return_value: Expr,
@@ -108,7 +120,7 @@ pub enum Expr {
     File(Arc<std::fs::File>),
 
     Object {
-        properties: HashMap<String, Expr>,
+        properties: HashMap<String, Spanned<Expr>>,
     },
 
     If {
@@ -196,12 +208,13 @@ impl std::fmt::Display for Expr {
 
                     first = false;
 
-                    let value_str = match value {
-                        Expr::String(s) => format!("\"{}\"", Self::process_escape_sequences(s)),
+                    let value_str = match &value.node {
+                        Expr::String(s) => format!("\"{}\"", Self::process_escape_sequences(&s)),
                         Expr::Int(n) => n.to_string(),
                         Expr::Float(fl) => fl.to_string(),
                         Expr::Bool(b) => b.to_string(),
                         Expr::Array(_) => format!("{}", value),
+                        Expr::Object { .. } => format!("{}", value),
                         Expr::Null => "null".to_string(),
                         _ => "\"<complex value>\"".to_string(),
                     };

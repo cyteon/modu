@@ -3,10 +3,10 @@
 // body can just be a empty string
 
 import "http" as http;
-import "json" as json;
 
-let headers = json.new();
-headers.set("User-Agent", "modu");
+let headers = {
+    "User-Agent": "modu",
+};
 
 print("HTTP GET Request:");
 
@@ -17,8 +17,9 @@ print("\nBody:\n", result.body);
 
 print("\nHTTP POST Request:");
 
-let data = json.new();
-data.set("name", "modu");
+let data = {
+    "name": "modu",
+};
 
 let result = http.post("https://httpbin.org/post", data.to_string(), headers);
 print("Status: ", result.status, " - ", result.status_text);

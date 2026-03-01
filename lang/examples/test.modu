@@ -121,3 +121,17 @@ if 1 in [1, 2, 3] {
 if 4 not in [1, 2, 3] {
     print("4 is not in the list");
 }
+
+let a = {
+    "key1": "value1",
+    "key2": 123,
+    "key3": [1, 2, 3],
+    "key4": {
+        "nested_key": "nested_value"
+    }
+};
+
+print(a);
+print({});
+print(a["key4"]["nested_key"]);
+print({ "a": 1 }["a"]);
