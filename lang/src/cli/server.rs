@@ -5,7 +5,7 @@ use colored::Colorize;
 use crate::parser::parse;
 
 pub fn server() {
-    println!("{}", "⚠️ Deprecated module, will be removed in future versions".dimmed());
+    println!("{}", "⚠️ Deprecated module, do not use, will be removed in the next version".dimmed());
 
     let args = std::env::args().collect::<Vec<String>>();
 

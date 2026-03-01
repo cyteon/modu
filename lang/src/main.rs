@@ -22,7 +22,6 @@ fn main() {
         println!("Commands:
     run     <file> - Run a Modu file
     repl           - Start the Modu REPL
-    server  [port] - DEPRECATED
     init           - Initialize a new Modu package
     login          - Login with Modu Packages
     publish        - Publish a Modu package
