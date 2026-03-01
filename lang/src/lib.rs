@@ -3,6 +3,7 @@ pub mod eval;
 pub mod lexer;
 pub mod parser;
 pub mod functions;
+pub mod validator;
 
 pub mod utils;
 pub mod builtins;
