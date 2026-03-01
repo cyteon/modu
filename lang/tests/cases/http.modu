@@ -1,26 +1,4 @@
 import "http" as http;
-import "json" as json;
 
-let data = json.new();
-data.set("name", "modu");
-
-let result = http.get("https://httpbin.org/get");
-print(result.status, " - ", result.status_text);
-
-let result = http.post("https://httpbin.org/post", data.to_string());
-print(result.status, " - ", result.status_text);
-
-let result = http.put("https://httpbin.org/put");
-print(result.status, " - ", result.status_text);
-
-let headers = json.new();
-headers.set("User-Agent", "modu");
-
-let result = http.patch("https://httpbin.org/patch", data.to_string(), headers);
-print(result.status, " - ", result.status_text);
-
-let result = http.delete("https://httpbin.org/delete", headers);
-print(result.status, " - ", result.status_text);
-
-let result = http.get("https://httpbin.org/delete");
+let result = http.get("http://example.com");
 print(result.status, " - ", result.status_text);
