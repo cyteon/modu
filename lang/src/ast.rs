@@ -214,6 +214,7 @@ impl std::fmt::Display for Expr {
                         Expr::Float(fl) => fl.to_string(),
                         Expr::Bool(b) => b.to_string(),
                         Expr::Array(_) => format!("{}", value),
+                        Expr::Object { .. } => format!("{}", value),
                         Expr::Null => "null".to_string(),
                         _ => "\"<complex value>\"".to_string(),
                     };
