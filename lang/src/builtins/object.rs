@@ -23,7 +23,7 @@ pub fn get(args: Vec<Spanned<Expr>>) -> Result<InternalFunctionResponse, (String
 
     match object.get(key) {
         Some(value) => Ok(InternalFunctionResponse {
-            return_value: value.clone(),
+            return_value: value.node.clone(),
             replace_self: None,
         }),
 
@@ -56,7 +56,7 @@ pub fn set(args: Vec<Spanned<Expr>>) -> Result<InternalFunctionResponse, (String
     };
 
     let mut new_properties = object;
-    new_properties.insert(key, args[2].node.clone());
+    new_properties.insert(key, args[2].clone());
 
     Ok(InternalFunctionResponse {
         return_value: Expr::Null,
@@ -134,12 +134,12 @@ pub fn to_string(args: Vec<Spanned<Expr>>) -> Result<InternalFunctionResponse, (
         Expr::Object { properties } => {
             let mut parts = vec![];
             for (key, value) in properties {
-                let value_str = match value {
+                let value_str = match &value.node {
                     Expr::String(s) => format!("\"{}\"", s),
                     Expr::Int(n) => n.to_string(),
                     Expr::Float(f) => f.to_string(),
                     Expr::Bool(b) => b.to_string(),
-                    Expr::Array(_) => format!("{}", value),
+                    Expr::Array(a) => format!("{}", value.node),
                     Expr::Null => "null".to_string(),
                     _ => "\"<complex value>\"".to_string(),
                 };
@@ -192,10 +192,7 @@ pub fn values(args: Vec<Spanned<Expr>>) -> Result<InternalFunctionResponse, (Str
 
     let result = match object {
         Expr::Object { properties } => {
-            let values: Vec<Spanned<Expr>> = properties.values().cloned().map(|v| Spanned {
-                node: v,
-                span: args[0].span.clone(),
-            }).collect();
+            let values: Vec<Spanned<Expr>> = properties.values().cloned().map(|v| v.clone()).collect();
 
             Expr::Array(values)
         }

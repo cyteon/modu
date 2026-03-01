@@ -54,10 +54,34 @@ fn parser<'src>() -> impl Parser<
                 span: Span::from(start.start..end.end),
             })
             .labelled("array literal");
+        
+        let object = select! { (Token::LBrace, start) => start }
+            .then(
+                select! { (Token::String(key), _) => key }
+                .then_ignore(select! { (Token::Colon, _) => () })
+                .then(expr.clone())
+                .separated_by(select! { (Token::Comma, _) => () })
+                .allow_trailing()
+                .collect::<Vec<_>>()
+            )
+            .then(select! { (Token::RBrace, end) => end })
+            .map(|((start, entries), end): ((Span, Vec<(String, SpannedExpr)>), Span)| {
+                let mut map = HashMap::new();
+
+                for (key, value) in entries {
+                    map.insert(key, value);
+                }
+
+                SpannedExpr {
+                    node: Expr::Object { properties: map },
+                    span: Span::from(start.start..end.end),
+                }
+            });
 
         let primary = choice((
             atom,
             array,
+            object,
             select! { (Token::LParen, _) => () }
                 .ignore_then(expr.clone())
                 .then_ignore(select! { (Token::RParen, _) => () })

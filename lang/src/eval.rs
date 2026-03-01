@@ -59,7 +59,7 @@ pub fn eval<'src>(expr: &'src SpannedExpr, context: &mut HashMap<String, Expr>) 
                 
                 Expr::Object { properties } => {
                     match properties.get(property) {
-                        Some(value) => Ok(Flow::Continue(value.clone())),
+                        Some(value) => Ok(Flow::Continue(value.node.clone())),
                         None => {
                             match crate::builtins::object::get_fn(property) {
                                 Some(value) => Ok(Flow::Continue(value)),
@@ -1206,6 +1206,20 @@ pub fn eval<'src>(expr: &'src SpannedExpr, context: &mut HashMap<String, Expr>) 
             Ok(Flow::Continue(Expr::Array(evaluated_elements)))
         }
 
+        Expr::Object { properties } => {
+            let mut evaluated_properties = HashMap::new();
+
+            for (key, value) in properties {
+                let evaluated_value = eval(value, context)?.unwrap();
+                evaluated_properties.insert(key.clone(), SpannedExpr {
+                    node: evaluated_value,
+                    span: value.span,
+                });
+            }
+
+            Ok(Flow::Continue(Expr::Object { properties: evaluated_properties }))
+        }
+
         Expr::IndexAccess { object, index } => {
             let object_value = eval(object, context)?.unwrap();
             let index_value = eval(index, context)?.unwrap();
@@ -1331,7 +1345,7 @@ pub fn eval<'src>(expr: &'src SpannedExpr, context: &mut HashMap<String, Expr>) 
 
                 (Expr::Object { properties }, Expr::String(key)) => {
                     match properties.get(&key) {
-                        Some(value) => Ok(Flow::Continue(value.clone())),
+                        Some(value) => Ok(Flow::Continue(value.node.clone())),
                         None => Err(EvalError {
                             message: format!("object has no property named '{}'", key),
                             message_short: "no such property".to_string(),

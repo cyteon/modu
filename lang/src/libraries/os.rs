@@ -43,10 +43,10 @@ pub fn exec(args: Vec<Spanned<Expr>>) -> Result<InternalFunctionResponse, (Strin
         properties: {
             let mut map = HashMap::new();
 
-            map.insert("stdout".to_string(), Expr::String(stdout));
-            map.insert("stderr".to_string(), Expr::String(stderr));
-            map.insert("status_code".to_string(), Expr::Int(status_code as i64));
-            map.insert("success".to_string(), Expr::Bool(output.status.success()));
+            map.insert("stdout".to_string(), SpannedExpr { node: Expr::String(stdout), span: args[0].span, });
+            map.insert("stderr".to_string(), SpannedExpr { node: Expr::String(stderr), span: args[0].span, });
+            map.insert("status_code".to_string(), SpannedExpr { node: Expr::Int(status_code as i64), span: args[0].span, });
+            map.insert("success".to_string(), SpannedExpr { node: Expr::Bool(output.status.success()), span: args[0].span, });
 
             map
         },

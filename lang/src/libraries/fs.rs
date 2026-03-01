@@ -304,16 +304,41 @@ pub fn stat(args: Vec<Spanned<Expr>>) -> Result<InternalFunctionResponse, (Strin
         properties: {
             let mut map = std::collections::HashMap::new();
 
-            map.insert("type".to_string(), Expr::String(file_type.to_string()));
-            map.insert("size".to_string(), Expr::Int(metadata.len() as i64));
-            map.insert("readonly".to_string(), Expr::Bool(metadata.permissions().readonly()));
-            map.insert("created".to_string(), match metadata.created() {
-                Ok(time) => Expr::Int(time.duration_since(std::time::UNIX_EPOCH).unwrap().as_secs() as i64),
-                Err(_) => Expr::Null,
+            map.insert("type".to_string(), SpannedExpr {
+                node: Expr::String(file_type.to_string()),
+                span: Span::default(),
             });
+            
+            map.insert("size".to_string(), SpannedExpr {
+                node: Expr::Int(metadata.len() as i64),
+                span: Span::default(),
+            });
+
+            map.insert("readonly".to_string(), SpannedExpr {
+                node: Expr::Bool(metadata.permissions().readonly()),
+                span: Span::default(),
+            });
+
+            map.insert("created".to_string(), match metadata.created() {
+                Ok(time) => SpannedExpr {
+                    node: Expr::Int(time.duration_since(std::time::UNIX_EPOCH).unwrap().as_secs() as i64),
+                    span: Span::default(),
+                },
+                Err(_) => SpannedExpr {
+                    node: Expr::Null,
+                    span: Span::default(),
+                },
+            });
+
             map.insert("modified".to_string(), match metadata.modified() {
-                Ok(time) => Expr::Int(time.duration_since(std::time::UNIX_EPOCH).unwrap().as_secs() as i64),
-                Err(_) => Expr::Null,
+                Ok(time) => SpannedExpr {
+                    node: Expr::Int(time.duration_since(std::time::UNIX_EPOCH).unwrap().as_secs() as i64),
+                    span: Span::default(),
+                },
+                Err(_) => SpannedExpr {
+                    node: Expr::Null,
+                    span: Span::default(),
+                },
             });
 
             map

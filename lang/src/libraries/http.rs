@@ -9,26 +9,38 @@ fn handle_response(response: reqwest::blocking::Response) -> Result<InternalFunc
 
     properties.insert(
         "status".to_string(),
-        Expr::Int(status.as_u16() as i64)
+        SpannedExpr {
+            node: Expr::Int(status.as_u16() as i64),
+            span: Span::default(),
+        }
     );
 
     properties.insert(
         "status_text".to_string(),
-        Expr::String(status.canonical_reason().unwrap_or("").to_string())
+        SpannedExpr {
+            node: Expr::String(status.canonical_reason().unwrap_or("").to_string()),
+            span: Span::default(),
+        }
     );
 
     let headers = Expr::Object {
         properties: response.headers().iter().map(|(k, v)| {
             (
                 k.to_string(),
-                Expr::String(v.to_str().unwrap_or("").to_string())
+                SpannedExpr {
+                    node: Expr::String(v.to_str().unwrap_or("").to_string()),
+                    span: Span::default(),
+                }
             )
         }).collect(),
     };
 
     properties.insert(
         "headers".to_string(),
-        headers
+        SpannedExpr {
+            node: headers,
+            span: Span::default(),
+        }
     );
 
     let body = response.text().map_err(|e| (
@@ -38,12 +50,18 @@ fn handle_response(response: reqwest::blocking::Response) -> Result<InternalFunc
 
     properties.insert(
         "body".to_string(),
-        Expr::String(body)
+        SpannedExpr {
+            node: Expr::String(body),
+            span: Span::default(),
+        }
     );
 
     properties.insert(
         "ok".to_string(),
-        Expr::Bool(status.is_success())
+        SpannedExpr {
+            node: Expr::Bool(status.is_success()),
+            span: Span::default(),
+        }
     );
 
     Ok(InternalFunctionResponse {
@@ -86,7 +104,7 @@ pub fn get(args: Vec<Spanned<Expr>>) -> Result<InternalFunctionResponse, (String
         };
 
         for (key, value) in headers {
-            let value = match value {
+            let value = match &value.node {
                 Expr::String(s) => s,
                 _ => return Err((
                     "http.get expects header values to be strings".to_string(),
@@ -152,7 +170,7 @@ pub fn post(args: Vec<Spanned<Expr>>) -> Result<InternalFunctionResponse, (Strin
         };
 
         for (key, value) in headers {
-            let value = match value {
+            let value = match &value.node {
                 Expr::String(s) => s,
                 _ => return Err((
                     "http.post expects header values to be strings".to_string(),
@@ -218,7 +236,7 @@ pub fn put(args: Vec<Spanned<Expr>>) -> Result<InternalFunctionResponse, (String
         };
 
         for (key, value) in headers {
-            let value = match value {
+            let value = match &value.node {
                 Expr::String(s) => s,
                 _ => return Err((
                     "http.put expects header values to be strings".to_string(),
@@ -284,7 +302,7 @@ pub fn patch(args: Vec<Spanned<Expr>>) -> Result<InternalFunctionResponse, (Stri
         };
 
         for (key, value) in headers {
-            let value = match value {
+            let value = match &value.node {
                 Expr::String(s) => s,
                 _ => return Err((
                     "http.patch expects header values to be strings".to_string(),
@@ -338,7 +356,7 @@ pub fn delete(args: Vec<Spanned<Expr>>) -> Result<InternalFunctionResponse, (Str
         };
 
         for (key, value) in headers {
-            let value = match value {
+            let value = match &value.node {
                 Expr::String(s) => s,
                 _ => return Err((
                     "http.delete expects header values to be strings".to_string(),
