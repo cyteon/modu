@@ -421,16 +421,17 @@ fn parser<'src>() -> impl Parser<
                     .or_not()
             )
             .map(|((((start, condition), then_branch), else_if_branches), else_branch): ((((Span, SpannedExpr), SpannedExpr), Vec<((Span, SpannedExpr), SpannedExpr)>), Option<(Span, SpannedExpr)>)| {
-                let else_if_branches = else_if_branches.into_iter().map(|((_, cond), block)| (cond, block)).collect();
-                let else_branch = else_branch.map(|(_, block)| Box::new(block.clone()));
+                let mut branches = Vec::new();
+
+                branches.push((Some(condition.clone()), then_branch.clone()));
+                branches.extend(else_if_branches.into_iter().map(|((_, cond), block)| (Some(cond), block)));
+                
+                if let Some((_, else_block)) = else_branch.clone() {
+                    branches.push((None, else_block));
+                }
                 
                 SpannedExpr {
-                    node: Expr::If {
-                        condition: Box::new(condition.clone()),
-                        then_branch: Box::new(then_branch.clone()),
-                        else_if_branches,
-                        else_branch,
-                    },
+                    node: Expr::If(branches),
                     span: Span::from(start.start..then_branch.span.end),
                 }
             })

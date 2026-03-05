@@ -123,12 +123,7 @@ pub enum Expr {
         properties: HashMap<String, Spanned<Expr>>,
     },
 
-    If {
-        condition: Box<Spanned<Expr>>,
-        then_branch: Box<Spanned<Expr>>,
-        else_if_branches: Vec<(Spanned<Expr>, Spanned<Expr>)>, // (condition, block)
-        else_branch: Option<Box<Spanned<Expr>>>,
-    },
+    If(Vec<(Option<Spanned<Expr>>, Spanned<Expr>)>), // (condition, block)
 
     InfiniteLoop {
         body: Box<Spanned<Expr>>,
@@ -295,5 +290,18 @@ impl Expr {
         }
         
         result
+    }
+
+    pub fn truthy(&self) -> bool {
+        match self {
+            Expr::Null => false,
+            Expr::Bool(b) => *b,
+            Expr::Int(n) => *n != 0,
+            Expr::Float(f) => *f != 0.0,
+            Expr::String(s) => !s.is_empty(),
+            Expr::Array(elements) => !elements.is_empty(),
+            Expr::Object { properties } => !properties.is_empty(),
+            _ => true,
+        }
     }
 }

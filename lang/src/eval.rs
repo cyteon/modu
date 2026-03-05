@@ -1039,74 +1039,20 @@ pub fn eval<'src>(expr: &'src SpannedExpr, context: &mut HashMap<String, Expr>) 
             }
         }
 
-        Expr::If { condition, then_branch, else_if_branches, else_branch } => {
-            let condition_value = eval(condition, context)?.unwrap();
-
-            match condition_value {
-                Expr::Bool(true) => eval(then_branch, context),
-                
-                Expr::Bool(false) | Expr::Null => {
-                    if !else_if_branches.is_empty() {
-                        for (else_if_condition, else_if_branch) in else_if_branches {
-                            let else_if_condition_value = eval(else_if_condition, context)?.unwrap();
-
-                            match else_if_condition_value {
-                                Expr::Bool(true) => return eval(else_if_branch, context),
-                                Expr::Bool(false) | Expr::Null => continue,
-
-                                _ => return Err(EvalError {
-                                    message: format!("else if condition must be a boolean, got '{}'", else_if_condition_value),
-                                    message_short: "invalid else if condition".to_string(),
-                                    help_message: None,
-                                    span: expr.span,
-                                }),
-                            }
-                        }
-
-                        if let Some(else_branch) = else_branch {
-                            eval(else_branch, context)
-                        } else {
-                            Ok(Flow::Continue(Expr::Null))
-                        }
-                    } else if let Some(else_branch) = else_branch {
-                        eval(else_branch, context)
-                    } else {
-                        Ok(Flow::Continue(Expr::Null))
-                    }
-                },
-
-                Expr::Int(n) => {
-                    if n != 0 {
-                        eval(then_branch, context)
-                    } else {
-                        if !else_if_branches.is_empty() {
-                            for (else_if_condition, else_if_branch) in else_if_branches {
-                                let else_if_condition_value = eval(else_if_condition, context)?.unwrap();
-
-                                match else_if_condition_value {
-                                    Expr::Bool(true) => return eval(else_if_branch, context),
-                                    Expr::Bool(false) | Expr::Null => continue,
-
-                                    _ => return eval(else_if_branch, context)
-                                }
-                            }
-
-                            if let Some(else_branch) = else_branch {
-                                eval(else_branch, context)
-                            } else {
-                                Ok(Flow::Continue(Expr::Null))
-                            }
-                        } else if let Some(else_branch) = else_branch {
-                            eval(else_branch, context)
-                        } else {
-                            Ok(Flow::Continue(Expr::Null))
+        Expr::If(branches) => {
+            for branch in branches {
+                match branch.0 {
+                    Some(ref condition) => {
+                        if eval(condition, context)?.unwrap().truthy() {
+                            return eval(&branch.1, context);
                         }
                     }
+
+                    None => return eval(&branch.1, context),
                 }
-
-                // so u can do like "if var", and it will run if var is not null
-                _ => eval(then_branch, context)
             }
+
+            Ok(Flow::Continue(Expr::Null))
         }
 
         Expr::Import { name, import_as } => {

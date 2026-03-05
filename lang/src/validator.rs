@@ -67,15 +67,13 @@ fn validate_expr(expr: &SpannedExpr, ctx: &mut ValidationContext) -> Result<(), 
             ctx.inside_loop -= 1;
         }
 
-        Expr::If { then_branch, else_if_branches, else_branch, .. } => {
-            validate_expr(&then_branch, ctx)?;
-
-            for (_, branch) in else_if_branches {
-                validate_expr(branch, ctx)?;
-            }
-
-            if let Some(else_branch) = else_branch {
-                validate_expr(else_branch, ctx)?;
+        Expr::If(branches) => {
+            for (condition, block) in branches {
+                if let Some(cond) = condition {
+                    validate_expr(cond, ctx)?;
+                }
+                
+                validate_expr(block, ctx)?;
             }
         }
 
