@@ -1,3 +1,5 @@
+use colored::Colorize;
+
 mod time;
 mod encoding;
 mod uuid;
