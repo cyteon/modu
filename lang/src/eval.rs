@@ -467,28 +467,42 @@ pub fn eval<'src>(expr: &'src SpannedExpr, context: &mut HashMap<String, Expr>) 
             Ok(Flow::Continue(Expr::Null))
         }
 
-        Expr::Assign { name, value, operator } => {
-            if !context.contains_key(name) {
-                return Err(EvalError {
-                    message: format!("undefined variable '{}'", name),
-                    message_short: "define with let".to_string(),
-                    span: expr.span,
-                });
+        Expr::Assign { target, value, operator } => {
+            let mut current_value;
+
+            match &target.node {
+                Expr::Identifier(name) => {
+                    if !context.contains_key(name) {
+                        return Err(EvalError {
+                            message: format!("undefined variable '{}'", name),
+                            message_short: "define with let".to_string(),
+                            span: expr.span,
+                        });
+                    }
+
+                    current_value = context.get(name).unwrap().clone();
+                }
+
+                _ => {
+                    return Err(EvalError {
+                        message: "assignment target must be a variable".to_string(),
+                        message_short: "invalid assignment target".to_string(),
+                        span: expr.span,
+                    });
+                }
             }
 
             let value = eval(value, context)?.unwrap();
 
-            match operator {
+            let new_value = match operator {
                 None => {
-                    context.insert(name.clone(), value);
-                    Ok(Flow::Continue(Expr::Null))
+                    value
                 },
 
                 Some(op) => {
                     match op {
                         AssignOp::Add => {
-                            let current_value = context.get(name).unwrap().clone();
-                            let new_value = match (current_value, value) {
+                            match (current_value, value) {
                                 (Expr::Int(l), Expr::Int(r)) => Expr::Int(l + r),
                                 (Expr::Float(l), Expr::Float(r)) => Expr::Float(l + r),
                                 (Expr::Int(l), Expr::Float(r)) => Expr::Float(l as f64 + r),
@@ -500,15 +514,11 @@ pub fn eval<'src>(expr: &'src SpannedExpr, context: &mut HashMap<String, Expr>) 
                                     message_short: "cannot add".to_string(),
                                     span: expr.span,
                                 }),
-                            };
-
-                            context.insert(name.clone(), new_value);
-                            Ok(Flow::Continue(Expr::Null))
+                            }
                         },
 
                         AssignOp::Sub => {
-                            let current_value = context.get(name).unwrap().clone();
-                            let new_value = match (current_value, value) {
+                            match (current_value, value) {
                                 (Expr::Int(l), Expr::Int(r)) => Expr::Int(l - r),
                                 (Expr::Float(l), Expr::Float(r)) => Expr::Float(l - r),
                                 (Expr::Int(l), Expr::Float(r)) => Expr::Float(l as f64 - r),
@@ -519,15 +529,11 @@ pub fn eval<'src>(expr: &'src SpannedExpr, context: &mut HashMap<String, Expr>) 
                                     message_short: "cannot subtract".to_string(),
                                     span: expr.span,
                                 }),
-                            };
-
-                            context.insert(name.clone(), new_value);
-                            Ok(Flow::Continue(Expr::Null))
+                            }
                         },
 
                         AssignOp::Mul => {
-                            let current_value = context.get(name).unwrap().clone();
-                            let new_value = match (current_value, value) {
+                            match (current_value, value) {
                                 (Expr::Int(l), Expr::Int(r)) => Expr::Int(l * r),
                                 (Expr::Float(l), Expr::Float(r)) => Expr::Float(l * r),
                                 (Expr::Int(l), Expr::Float(r)) => Expr::Float(l as f64 * r),
@@ -539,15 +545,10 @@ pub fn eval<'src>(expr: &'src SpannedExpr, context: &mut HashMap<String, Expr>) 
                                     message_short: "cannot multiply".to_string(),
                                     span: expr.span,
                                 }),
-                            };
-
-                            context.insert(name.clone(), new_value);
-                            Ok(Flow::Continue(Expr::Null))
+                            }
                         },
 
                         AssignOp::Div => {
-                            let current_value = context.get(name).unwrap().clone();
-
                             if matches!(value, Expr::Int(0) | Expr::Float(0.0)) {
                                 return Err(EvalError {
                                     message: "division by zero".to_string(),
@@ -556,7 +557,7 @@ pub fn eval<'src>(expr: &'src SpannedExpr, context: &mut HashMap<String, Expr>) 
                                 });
                             }
 
-                            let new_value = match (current_value, value) {
+                            match (current_value, value) {
                                 (Expr::Int(l), Expr::Int(r)) => Expr::Float(l as f64 / r as f64),
                                 (Expr::Float(l), Expr::Float(r)) => Expr::Float(l / r),
                                 (Expr::Int(l), Expr::Float(r)) => Expr::Float(l as f64 / r),
@@ -567,15 +568,10 @@ pub fn eval<'src>(expr: &'src SpannedExpr, context: &mut HashMap<String, Expr>) 
                                     message_short: "cannot divide".to_string(),
                                     span: expr.span,
                                 }),
-                            };
-
-                            context.insert(name.clone(), new_value);
-                            Ok(Flow::Continue(Expr::Null))
+                            }
                         },
 
                         AssignOp::Mod => {
-                            let current_value = context.get(name).unwrap().clone();
-
                             if matches!(value, Expr::Int(0) | Expr::Float(0.0)) {
                                 return Err(EvalError {
                                     message: "modulo by zero".to_string(),
@@ -584,7 +580,7 @@ pub fn eval<'src>(expr: &'src SpannedExpr, context: &mut HashMap<String, Expr>) 
                                 });
                             }
 
-                            let new_value = match (current_value, value) {
+                            match (current_value, value) {
                                 (Expr::Int(l), Expr::Int(r)) => Expr::Int(l % r),
                                 (Expr::Float(l), Expr::Float(r)) => Expr::Float(l % r),
                                 (Expr::Int(l), Expr::Float(r)) => Expr::Float((l as f64) % r),
@@ -595,14 +591,21 @@ pub fn eval<'src>(expr: &'src SpannedExpr, context: &mut HashMap<String, Expr>) 
                                     message_short: "cannot modulo".to_string(),
                                     span: expr.span,
                                 }),
-                            };
-
-                            context.insert(name.clone(), new_value);
-                            Ok(Flow::Continue(Expr::Null))
+                            }
                         }
                     }
                 }
+            };
+
+            match &target.node {
+                Expr::Identifier(name) => {
+                    context.insert(name.clone(), new_value);
+                }
+
+                _ => unreachable!()
             }
+
+            Ok(Flow::Continue(Expr::Null))
         }
 
         Expr::Function { name, args, body } => {

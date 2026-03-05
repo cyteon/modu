@@ -66,7 +66,7 @@ pub enum Expr {
     },
 
     Assign {
-        name: String,
+        target: Box<Spanned<Expr>>,
         value: Box<Spanned<Expr>>,
         operator: Option<AssignOp>,
     },
