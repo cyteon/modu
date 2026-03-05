@@ -196,6 +196,7 @@ pub fn eval<'src>(expr: &'src SpannedExpr, context: &mut HashMap<String, Expr>) 
             match value {
                 Expr::Int(n) => Ok(Flow::Continue(Expr::Int(-n))),
                 Expr::Float(f) => Ok(Flow::Continue(Expr::Float(-f))),
+
                 _ => Err(EvalError {
                     message: format!("cannot negate value '{}'", value),
                     message_short: "cannot negate".to_string(),
@@ -993,9 +994,9 @@ pub fn eval<'src>(expr: &'src SpannedExpr, context: &mut HashMap<String, Expr>) 
                 }
 
                 _ => Err(EvalError {
-                    message: format!("right operand of 'in' must be an array, got '{}'", right_value),
+                    message: format!("cannot evaluate 'in {}'", right_value),
                     message_short: "invalid 'in' operand".to_string(),
-                    help_message: None,
+                    help_message: Some("right operand must be an array or string".to_string()),
                     span: expr.span,
                 }),
             }
@@ -1030,9 +1031,9 @@ pub fn eval<'src>(expr: &'src SpannedExpr, context: &mut HashMap<String, Expr>) 
                 }
 
                 _ => Err(EvalError {
-                    message: format!("right operand of 'not in' must be an array, got '{}'", right_value),
+                    message: format!("cannot evaluate 'not in {}'", right_value),
                     message_short: "invalid 'not in' operand".to_string(),
-                    help_message: None,
+                    help_message: Some("right operand must be an array or string".to_string()),
                     span: expr.span,
                 }),
             }
@@ -1086,12 +1087,7 @@ pub fn eval<'src>(expr: &'src SpannedExpr, context: &mut HashMap<String, Expr>) 
                                     Expr::Bool(true) => return eval(else_if_branch, context),
                                     Expr::Bool(false) | Expr::Null => continue,
 
-                                    _ => return Err(EvalError {
-                                        message: format!("else if condition must be a boolean, got '{}'", else_if_condition_value),
-                                        message_short: "invalid else if condition".to_string(),
-                                        help_message: None,
-                                        span: expr.span,
-                                    }),
+                                    _ => return eval(else_if_branch, context)
                                 }
                             }
 
@@ -1109,9 +1105,7 @@ pub fn eval<'src>(expr: &'src SpannedExpr, context: &mut HashMap<String, Expr>) 
                 }
 
                 // so u can do like "if var", and it will run if var is not null
-                _ => {
-                    eval(then_branch, context)
-                }
+                _ => eval(then_branch, context)
             }
         }
 
