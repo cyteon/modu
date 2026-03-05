@@ -10,7 +10,7 @@
     import { base } from "$app/paths";
     import { AnsiUp } from "ansi_up";
 
-    import init, { eval_modu, modu_version } from "$lib/modu/modu_wasm.js";
+    import { init, eval_modu, modu_version } from "modu-wasm";
 
     let language = new Compartment, tabsize = new Compartment;
     let moduVersion = "";

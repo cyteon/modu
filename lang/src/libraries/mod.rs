@@ -1,5 +1,3 @@
-use colored::Colorize;
-
 mod time;
 mod encoding;
 mod uuid;
@@ -26,22 +24,22 @@ pub fn get_package(name: &str) -> Option<crate::ast::Expr> {
         "crypto" => Some(crypto::get_object()),
 
         #[cfg(not(target_arch = "wasm32"))]
-        "os" => Some(os::get_object())
+        "os" => Some(os::get_object()),
 
         #[cfg(not(target_arch = "wasm32"))]
-        "http" => Some(http::get_object())
+        "http" => Some(http::get_object()),
 
         #[cfg(not(target_arch = "wasm32"))]
-        "ffi" => Some(ffi::get_object())
+        "ffi" => Some(ffi::get_object()),
 
         #[cfg(not(target_arch = "wasm32"))]
         "file" => {
             println!("{}", "warning: the 'file' package has been renamed to 'fs' to better represent it, the 'file' import will be removed in a future version".dimmed());  
             Some(fs::get_object())
-        }
+        },
 
         #[cfg(not(target_arch = "wasm32"))]
-        "fs" => Some(fs::get_object())
+        "fs" => Some(fs::get_object()),
 
         _ => None,
     }
