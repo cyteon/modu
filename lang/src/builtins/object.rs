@@ -235,3 +235,7 @@ pub fn get_fn(name: &str) -> Option<Expr> {
         },
     })
 }
+
+pub fn list_fns() -> Vec<String> {
+    ["get", "set", "has", "delete", "to_string", "keys", "values"].map(String::from).to_vec()
+}

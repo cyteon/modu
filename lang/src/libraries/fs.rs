@@ -397,3 +397,7 @@ pub fn get_fn(name: &str) -> Option<Expr> {
         },
     })
 }
+
+pub fn list_fns() -> Vec<String> {
+    ["read", "write", "append", "close", "stat"].map(String::from).to_vec()
+}

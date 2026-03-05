@@ -8,6 +8,7 @@ use crate::lexer::Span;
 pub struct EvalError {
     pub message: String,
     pub message_short: String,
+    pub help_message: Option<String>,
     pub span: Span,
 }
 
@@ -34,6 +35,25 @@ impl std::fmt::Display for EvalError {
     }
 }
 
+fn find_closest<'a>(name: &str, options: impl Iterator<Item = &'a String>) -> Option<String> {
+    let options: Vec<&String> = options.collect();
+
+    if options.is_empty() {
+        return None;
+    }
+
+    let (best, score) = options
+        .iter()
+        .map(|c| (*c, strsim::jaro_winkler(name, c.as_str())))
+        .max_by(|a, b| a.1.partial_cmp(&b.1).unwrap())?;
+    
+    if score >= 0.75 {
+        Some(best.clone())
+    } else {
+        None
+    }
+}
+
 pub fn eval<'src>(expr: &'src SpannedExpr, context: &mut HashMap<String, Expr>) -> Result<Flow, EvalError> {    
     match &expr.node {
         Expr::Int(n) => Ok(Flow::Continue(Expr::Int(*n))),
@@ -52,6 +72,7 @@ pub fn eval<'src>(expr: &'src SpannedExpr, context: &mut HashMap<String, Expr>) 
                         None => Err(EvalError {
                             message: format!("module has no method named '{}'", property),
                             message_short: "no such property".to_string(),
+                            help_message: find_closest(property, symbols.keys()).map(|s| format!("did you mean '{}'?", s)),
                             span: expr.span,
                         }),
                     }
@@ -66,6 +87,7 @@ pub fn eval<'src>(expr: &'src SpannedExpr, context: &mut HashMap<String, Expr>) 
                                 None => Err(EvalError {
                                     message: format!("object has no method named '{}'", property),
                                     message_short: "no such property".to_string(),
+                                    help_message: find_closest(property, properties.keys()).map(|s| format!("did you mean '{}'?", s)),
                                     span: expr.span,
                                 }),
                             }
@@ -76,44 +98,64 @@ pub fn eval<'src>(expr: &'src SpannedExpr, context: &mut HashMap<String, Expr>) 
                 Expr::Array(_) => {
                     match crate::builtins::array::get_fn(property) {
                         Some(value) => Ok(Flow::Continue(value)),
-                        None => Err(EvalError {
-                            message: format!("array has no method named '{}'", property),
-                            message_short: "no such property".to_string(),
-                            span: expr.span,
-                        }),
+                        None => {
+                            let names = crate::builtins::array::list_fns();
+
+                            Err(EvalError {
+                                message: format!("array has no method named '{}'", property),
+                                message_short: "no such property".to_string(),
+                                help_message: find_closest(property, names.iter()).map(|s| format!("did you mean '{}'?", s)),
+                                span: expr.span,
+                            })
+                        }
                     }
                 }
 
                 Expr::String(_) => {
                     match crate::builtins::string::get_fn(property) {
                         Some(value) => Ok(Flow::Continue(value)),
-                        None => Err(EvalError {
-                            message: format!("string has no method named '{}'", property),
-                            message_short: "no such property".to_string(),
-                            span: expr.span,
-                        }),
+                        None => {
+                            let names = crate::builtins::string::list_fns();
+
+                            Err(EvalError {
+                                message: format!("string has no method named '{}'", property),
+                                message_short: "no such property".to_string(),
+                                help_message: find_closest(property, names.iter()).map(|s| format!("did you mean '{}'?", s)),
+                                span: expr.span,
+                            })
+                        }
                     }
                 }
 
                 Expr::Int(_) => {
                     match crate::builtins::int::get_fn(property) {
                         Some(value) => Ok(Flow::Continue(value)),
-                        None => Err(EvalError {
-                            message: format!("int has no method named '{}'", property),
-                            message_short: "no such property".to_string(),
-                            span: expr.span,
-                        }),
+                        None => {
+                            let names = crate::builtins::int::list_fns();
+
+                            Err(EvalError {
+                                message: format!("int has no method named '{}'", property),
+                                message_short: "no such property".to_string(),
+                                help_message: find_closest(property, names.iter()).map(|s| format!("did you mean '{}'?", s)),
+                                span: expr.span,
+                            })
+                        }
                     }
                 }
 
                 Expr::Float(_) => {
                     match crate::builtins::float::get_fn(property) {
                         Some(value) => Ok(Flow::Continue(value)),
-                        None => Err(EvalError {
-                            message: format!("float has no method named '{}'", property),
-                            message_short: "no such property".to_string(),
-                            span: expr.span,
-                        }),
+                        None => {
+                            let names = crate::builtins::float::list_fns();
+
+                            Err(EvalError {
+                                message: format!("float has no method named '{}'", property),
+                                message_short: "no such property".to_string(),
+                                help_message: find_closest(property, names.iter()).map(|s| format!("did you mean '{}'?", s)),
+                                span: expr.span,
+                            })
+                        }
                     }
                 }
 
@@ -121,11 +163,16 @@ pub fn eval<'src>(expr: &'src SpannedExpr, context: &mut HashMap<String, Expr>) 
                 Expr::File(_) => {
                     match crate::libraries::fs::get_fn(property) {
                         Some(value) => Ok(Flow::Continue(value)),
-                        None => Err(EvalError {
-                            message: format!("file has no method named '{}'", property),
-                            message_short: "no such property".to_string(),
-                            span: expr.span,
-                        }),
+                        None => {
+                            let names = crate::libraries::fs::list_fns();
+
+                            Err(EvalError {
+                                message: format!("file has no method named '{}'", property),
+                                message_short: "no such property".to_string(),
+                                help_message: find_closest(property, names.iter()).map(|s| format!("did you mean '{}'?", s)),
+                                span: expr.span,
+                            })
+                        }
                     }
                 }
 
@@ -137,6 +184,7 @@ pub fn eval<'src>(expr: &'src SpannedExpr, context: &mut HashMap<String, Expr>) 
                 _ => Err(EvalError {
                     message: format!("cannot access property '{}' of '{}'", property, object),
                     message_short: "cannot access property".to_string(),
+                    help_message: None,
                     span: expr.span,
                 }),
             }
@@ -148,9 +196,11 @@ pub fn eval<'src>(expr: &'src SpannedExpr, context: &mut HashMap<String, Expr>) 
             match value {
                 Expr::Int(n) => Ok(Flow::Continue(Expr::Int(-n))),
                 Expr::Float(f) => Ok(Flow::Continue(Expr::Float(-f))),
+
                 _ => Err(EvalError {
                     message: format!("cannot negate value '{}'", value),
                     message_short: "cannot negate".to_string(),
+                    help_message: None,
                     span: expr.span,
                 }),
             }
@@ -170,6 +220,7 @@ pub fn eval<'src>(expr: &'src SpannedExpr, context: &mut HashMap<String, Expr>) 
                 _ => Err(EvalError {
                     message: format!("cannot add values '{}' and '{}'", left.node, right.node),
                     message_short: "cannot add".to_string(),
+                    help_message: None,
                     span: expr.span,
                 }),
             }
@@ -188,6 +239,7 @@ pub fn eval<'src>(expr: &'src SpannedExpr, context: &mut HashMap<String, Expr>) 
                 _ => Err(EvalError {
                     message: format!("cannot subtract values  '{}' and '{}'", left.node, right.node),
                     message_short: "cannot subtract".to_string(),
+                    help_message: None,
                     span: expr.span,
                 }),
             }
@@ -207,6 +259,7 @@ pub fn eval<'src>(expr: &'src SpannedExpr, context: &mut HashMap<String, Expr>) 
                 _ => Err(EvalError {
                     message: format!("cannot multiply values '{}' and '{}'", left.node, right.node),
                     message_short: "cannot multiply".to_string(),
+                    help_message: None,
                     span: expr.span,
                 }),
             }
@@ -220,6 +273,7 @@ pub fn eval<'src>(expr: &'src SpannedExpr, context: &mut HashMap<String, Expr>) 
                 return Err(EvalError {
                     message: "division by zero".to_string(),
                     message_short: "division by zero".to_string(),
+                    help_message: None,
                     span: expr.span,
                 });
             }
@@ -233,6 +287,7 @@ pub fn eval<'src>(expr: &'src SpannedExpr, context: &mut HashMap<String, Expr>) 
                 _ => Err(EvalError {
                     message: format!("cannot divide values '{}' and '{}'", left.node, right.node),
                     message_short: "cannot divide".to_string(),
+                    help_message: None,
                     span: expr.span,
                 }),
             }
@@ -251,6 +306,7 @@ pub fn eval<'src>(expr: &'src SpannedExpr, context: &mut HashMap<String, Expr>) 
                 _ => Err(EvalError {
                     message: format!("cannot exponentiate values '{}' and '{}'", left.node, right.node),
                     message_short: "cannot exponentiate".to_string(),
+                    help_message: None,
                     span: expr.span,
                 }),
             }
@@ -264,6 +320,7 @@ pub fn eval<'src>(expr: &'src SpannedExpr, context: &mut HashMap<String, Expr>) 
                 return Err(EvalError {
                     message: "modulo by zero".to_string(),
                     message_short: "modulo by zero".to_string(),
+                    help_message: None,
                     span: expr.span,
                 });
             }
@@ -277,6 +334,7 @@ pub fn eval<'src>(expr: &'src SpannedExpr, context: &mut HashMap<String, Expr>) 
                 _ => Err(EvalError {
                     message: format!("cannot modulo values '{}' and '{}'", left.node, right.node),
                     message_short: "cannot modulo".to_string(),
+                    help_message: None,
                     span: expr.span,
                 }),
             }
@@ -288,6 +346,7 @@ pub fn eval<'src>(expr: &'src SpannedExpr, context: &mut HashMap<String, Expr>) 
                 None => Err(EvalError {
                     message: format!("undefined variable '{}'", name),
                     message_short: "not defined".to_string(),
+                    help_message: find_closest(name, context.keys()).map(|s| format!("did you mean '{}'?", s)),
                     span: expr.span,
                 }),
             }
@@ -349,12 +408,14 @@ pub fn eval<'src>(expr: &'src SpannedExpr, context: &mut HashMap<String, Expr>) 
                             return Err(EvalError {
                                 message: format!("function '{}' expects {} arguments, got {}", name, args.len(), evaluated_args.len()),
                                 message_short: format!("{} arguments too many", evaluated_args.len() - args.len()),
+                                help_message: None,
                                 span: error_span,
                             });
                         } else {
                             return Err(EvalError {
                                 message: format!("function '{}' expects {} arguments, got {}", name, args.len(), evaluated_args.len()),
                                 message_short: format!("{} arguments too few", args.len() - evaluated_args.len()),
+                                help_message: None,
                                 span: error_span,
                             });
                         }
@@ -379,6 +440,7 @@ pub fn eval<'src>(expr: &'src SpannedExpr, context: &mut HashMap<String, Expr>) 
                         Err((msg, span)) => Err(EvalError {
                             message: msg.clone(),
                             message_short: msg,
+                            help_message: None,
                             span,
                         }),
                     }
@@ -398,12 +460,14 @@ pub fn eval<'src>(expr: &'src SpannedExpr, context: &mut HashMap<String, Expr>) 
                             return Err(EvalError {
                                 message: format!("function '{}' expects {} arguments, got {}", name, args.len(), evaluated_args.len()),
                                 message_short: format!("{} arguments too many", evaluated_args.len() - args.len()),
+                                help_message: None,
                                 span: error_span,
                             });
                         } else {
                             return Err(EvalError {
                                 message: format!("function '{}' expects {} arguments, got {}", name, args.len(), evaluated_args.len()),
                                 message_short: format!("{} arguments too few", args.len() - evaluated_args.len()),
+                                help_message: None,
                                 span: error_span,
                             });
                         }
@@ -421,11 +485,13 @@ pub fn eval<'src>(expr: &'src SpannedExpr, context: &mut HashMap<String, Expr>) 
                         Flow::Break => Err(EvalError {
                             message: "unexpected break statement in function".to_string(),
                             message_short: "unexpected break".to_string(),
+                            help_message: None,
                             span: expr.span,
                         }),
                         Flow::Skip => Err(EvalError {
                             message: "unexpected continue statement in function".to_string(),
                             message_short: "unexpected continue".to_string(),
+                            help_message: None,
                             span: expr.span,
                         }),
                     }
@@ -447,6 +513,7 @@ pub fn eval<'src>(expr: &'src SpannedExpr, context: &mut HashMap<String, Expr>) 
                         Err(msg) => Err(EvalError {
                             message: msg.clone(),
                             message_short: msg,
+                            help_message: None,
                             span: expr.span,
                         }),
                     }
@@ -455,6 +522,7 @@ pub fn eval<'src>(expr: &'src SpannedExpr, context: &mut HashMap<String, Expr>) 
                 v => Err(EvalError {
                     message: format!("'{}' is not a function", v),
                     message_short: "not a function".to_string(),
+                    help_message: None,
                     span: expr.span,
                 })
             }
@@ -478,6 +546,7 @@ pub fn eval<'src>(expr: &'src SpannedExpr, context: &mut HashMap<String, Expr>) 
                                 return Err(EvalError {
                                     message: format!("undefined variable '{}'", name),
                                     message_short: "undefined".to_string(),
+                                    help_message: Some(format!("did you mean 'let {} = {};'?", name, value)),
                                     span: expr.span,
                                 });
                             }
@@ -497,6 +566,7 @@ pub fn eval<'src>(expr: &'src SpannedExpr, context: &mut HashMap<String, Expr>) 
                         _ => return Err(EvalError {
                             message: "assignment target must be a variable".to_string(),
                             message_short: "invalid assignment target".to_string(),
+                            help_message: None,
                             span: expr.span,
                         }),
                     };
@@ -513,6 +583,7 @@ pub fn eval<'src>(expr: &'src SpannedExpr, context: &mut HashMap<String, Expr>) 
                                 (l, r) => return Err(EvalError {
                                     message: format!("cannot add values '{}' and '{}'", l, r),
                                     message_short: "cannot add".to_string(),
+                                    help_message: None,
                                     span: expr.span,
                                 }),
                             }
@@ -528,6 +599,7 @@ pub fn eval<'src>(expr: &'src SpannedExpr, context: &mut HashMap<String, Expr>) 
                                 (l, r) => return Err(EvalError {
                                     message: format!("cannot subtract values '{}' and '{}'", l, r),
                                     message_short: "cannot subtract".to_string(),
+                                    help_message: None,
                                     span: expr.span,
                                 }),
                             }
@@ -544,6 +616,7 @@ pub fn eval<'src>(expr: &'src SpannedExpr, context: &mut HashMap<String, Expr>) 
                                 (l, r) => return Err(EvalError {
                                     message: format!("cannot multiply values '{}' and '{}'", l, r),
                                     message_short: "cannot multiply".to_string(),
+                                    help_message: None,
                                     span: expr.span,
                                 }),
                             }
@@ -554,6 +627,7 @@ pub fn eval<'src>(expr: &'src SpannedExpr, context: &mut HashMap<String, Expr>) 
                                 return Err(EvalError {
                                     message: "division by zero".to_string(),
                                     message_short: "division by zero".to_string(),
+                                    help_message: None,
                                     span: expr.span,
                                 });
                             }
@@ -567,6 +641,7 @@ pub fn eval<'src>(expr: &'src SpannedExpr, context: &mut HashMap<String, Expr>) 
                                 (l, r) => return Err(EvalError {
                                     message: format!("cannot divide values '{}' and '{}'", l, r),
                                     message_short: "cannot divide".to_string(),
+                                    help_message: None,
                                     span: expr.span,
                                 }),
                             }
@@ -577,6 +652,7 @@ pub fn eval<'src>(expr: &'src SpannedExpr, context: &mut HashMap<String, Expr>) 
                                 return Err(EvalError {
                                     message: "modulo by zero".to_string(),
                                     message_short: "modulo by zero".to_string(),
+                                    help_message: None,
                                     span: expr.span,
                                 });
                             }
@@ -590,6 +666,7 @@ pub fn eval<'src>(expr: &'src SpannedExpr, context: &mut HashMap<String, Expr>) 
                                 (l, r) => return Err(EvalError {
                                     message: format!("cannot modulo values '{}' and '{}'", l, r),
                                     message_short: "cannot modulo".to_string(),
+                                    help_message: None,
                                     span: expr.span,
                                 }),
                             }
@@ -658,6 +735,7 @@ pub fn eval<'src>(expr: &'src SpannedExpr, context: &mut HashMap<String, Expr>) 
                             return Err(EvalError {
                                 message: format!("range start must be an integer, got '{}'", start.node),
                                 message_short: "invalid range start".to_string(),
+                                help_message: None,
                                 span: expr.span,
                             });
                         }
@@ -670,6 +748,7 @@ pub fn eval<'src>(expr: &'src SpannedExpr, context: &mut HashMap<String, Expr>) 
                             return Err(EvalError {
                                 message: format!("range end must be an integer, got '{}'", end.node),
                                 message_short: "invalid range end".to_string(),
+                                help_message: None,
                                 span: expr.span,
                             });
                         }
@@ -697,6 +776,7 @@ pub fn eval<'src>(expr: &'src SpannedExpr, context: &mut HashMap<String, Expr>) 
                             return Err(EvalError {
                                 message: format!("range start must be an integer, got '{}'", start.node),
                                 message_short: "invalid range start".to_string(),
+                                help_message: None,
                                 span: expr.span,
                             });
                         }
@@ -709,6 +789,7 @@ pub fn eval<'src>(expr: &'src SpannedExpr, context: &mut HashMap<String, Expr>) 
                             return Err(EvalError {
                                 message: format!("range end must be an integer, got '{}'", end.node),
                                 message_short: "invalid range end".to_string(),
+                                help_message: None,
                                 span: expr.span,
                             });
                         }
@@ -747,6 +828,7 @@ pub fn eval<'src>(expr: &'src SpannedExpr, context: &mut HashMap<String, Expr>) 
                 _ => Err(EvalError {
                     message: format!("cannot iterate over value '{}'", range_value),
                     message_short: "cannot iterate".to_string(),
+                    help_message: None,
                     span: expr.span,
                 }),
             }
@@ -771,6 +853,7 @@ pub fn eval<'src>(expr: &'src SpannedExpr, context: &mut HashMap<String, Expr>) 
                     _ => return Err(EvalError {
                         message: format!("while loop condition must be a boolean, got '{}'", condition_value),
                         message_short: "invalid while condition".to_string(),
+                        help_message: None,
                         span: expr.span,
                     }),
                 }
@@ -819,6 +902,7 @@ pub fn eval<'src>(expr: &'src SpannedExpr, context: &mut HashMap<String, Expr>) 
                 _ => Err(EvalError {
                     message: format!("cannot compare values '{}' and '{}'", left.node, right.node),
                     message_short: "cannot compare".to_string(),
+                    help_message: None,
                     span: expr.span,
                 }),
             }
@@ -837,6 +921,7 @@ pub fn eval<'src>(expr: &'src SpannedExpr, context: &mut HashMap<String, Expr>) 
                 _ => Err(EvalError {
                     message: format!("cannot compare values '{}' and '{}'", left.node, right.node),
                     message_short: "cannot compare".to_string(),
+                    help_message: None,
                     span: expr.span,
                 }),
             }
@@ -855,6 +940,7 @@ pub fn eval<'src>(expr: &'src SpannedExpr, context: &mut HashMap<String, Expr>) 
                 _ => Err(EvalError {
                     message: format!("cannot compare values '{}' and '{}'", left.node, right.node),
                     message_short: "cannot compare".to_string(),
+                    help_message: None,
                     span: expr.span,
                 }),
             }
@@ -873,6 +959,7 @@ pub fn eval<'src>(expr: &'src SpannedExpr, context: &mut HashMap<String, Expr>) 
                 _ => Err(EvalError {
                     message: format!("cannot compare values '{}' and '{}'", left.node, right.node),
                     message_short: "cannot compare".to_string(),
+                    help_message: None,
                     span: expr.span,
                 }),
             }
@@ -900,14 +987,16 @@ pub fn eval<'src>(expr: &'src SpannedExpr, context: &mut HashMap<String, Expr>) 
                         return Err(EvalError {
                             message: format!("left operand of 'in' must be a string when right operand is a string, got '{}'", left_value),
                             message_short: "invalid 'in' operand".to_string(),
+                            help_message: None,
                             span: expr.span,
                         });
                     }
                 }
 
                 _ => Err(EvalError {
-                    message: format!("right operand of 'in' must be an array, got '{}'", right_value),
+                    message: format!("cannot evaluate 'in {}'", right_value),
                     message_short: "invalid 'in' operand".to_string(),
+                    help_message: Some("right operand must be an array or string".to_string()),
                     span: expr.span,
                 }),
             }
@@ -935,14 +1024,16 @@ pub fn eval<'src>(expr: &'src SpannedExpr, context: &mut HashMap<String, Expr>) 
                         return Err(EvalError {
                             message: format!("left operand of 'not in' must be a string when right operand is a string, got '{}'", left_value),
                             message_short: "invalid 'not in' operand".to_string(),
+                            help_message: None,
                             span: expr.span,
                         });
                     }
                 }
 
                 _ => Err(EvalError {
-                    message: format!("right operand of 'not in' must be an array, got '{}'", right_value),
+                    message: format!("cannot evaluate 'not in {}'", right_value),
                     message_short: "invalid 'not in' operand".to_string(),
+                    help_message: Some("right operand must be an array or string".to_string()),
                     span: expr.span,
                 }),
             }
@@ -966,6 +1057,7 @@ pub fn eval<'src>(expr: &'src SpannedExpr, context: &mut HashMap<String, Expr>) 
                                 _ => return Err(EvalError {
                                     message: format!("else if condition must be a boolean, got '{}'", else_if_condition_value),
                                     message_short: "invalid else if condition".to_string(),
+                                    help_message: None,
                                     span: expr.span,
                                 }),
                             }
@@ -995,11 +1087,7 @@ pub fn eval<'src>(expr: &'src SpannedExpr, context: &mut HashMap<String, Expr>) 
                                     Expr::Bool(true) => return eval(else_if_branch, context),
                                     Expr::Bool(false) | Expr::Null => continue,
 
-                                    _ => return Err(EvalError {
-                                        message: format!("else if condition must be a boolean, got '{}'", else_if_condition_value),
-                                        message_short: "invalid else if condition".to_string(),
-                                        span: expr.span,
-                                    }),
+                                    _ => return eval(else_if_branch, context)
                                 }
                             }
 
@@ -1017,9 +1105,7 @@ pub fn eval<'src>(expr: &'src SpannedExpr, context: &mut HashMap<String, Expr>) 
                 }
 
                 // so u can do like "if var", and it will run if var is not null
-                _ => {
-                    eval(then_branch, context)
-                }
+                _ => eval(then_branch, context)
             }
         }
 
@@ -1064,6 +1150,7 @@ pub fn eval<'src>(expr: &'src SpannedExpr, context: &mut HashMap<String, Expr>) 
                     return Err(EvalError {
                         message: "cannot import .modu files in wasm".to_string(),
                         message_short: "cannot import .modu files".to_string(),
+                        help_message: None,
                         span: expr.span,
                     });
                 }
@@ -1073,6 +1160,7 @@ pub fn eval<'src>(expr: &'src SpannedExpr, context: &mut HashMap<String, Expr>) 
                 let source = std::fs::read_to_string(path.clone()).map_err(|e| EvalError {
                     message: format!("Failed to read module file {}: {}", name, e),
                     message_short: "failed to read module".to_string(),
+                    help_message: None,
                     span: expr.span,
                 })?;
 
@@ -1114,6 +1202,7 @@ pub fn eval<'src>(expr: &'src SpannedExpr, context: &mut HashMap<String, Expr>) 
                                 return Err(EvalError {
                                     message: format!("package '{}' is not a module", name),
                                     message_short: "not a module".to_string(),
+                                    help_message: None,
                                     span: expr.span,
                                 });
                             }
@@ -1133,6 +1222,7 @@ pub fn eval<'src>(expr: &'src SpannedExpr, context: &mut HashMap<String, Expr>) 
                             return Err(EvalError {
                                 message: format!("package '{}' does not exist or is not installed", name),
                                 message_short: "package not found".to_string(),
+                                help_message: None,
                                 span: expr.span,
                             });
                         }
@@ -1140,6 +1230,7 @@ pub fn eval<'src>(expr: &'src SpannedExpr, context: &mut HashMap<String, Expr>) 
                         let source = std::fs::read_to_string(path.clone()).map_err(|e| EvalError {
                             message: format!("failed to read module file for package '{}': {}", name, e),
                             message_short: "failed to read module".to_string(),
+                            help_message: None,
                             span: expr.span,
                         })?;
 
@@ -1180,6 +1271,7 @@ pub fn eval<'src>(expr: &'src SpannedExpr, context: &mut HashMap<String, Expr>) 
                         return Err(EvalError {
                             message: format!("could not find package '{}'", name),
                             message_short: "package not found".to_string(),
+                            help_message: None,
                             span: expr.span,
                         });
                     }
@@ -1235,6 +1327,7 @@ pub fn eval<'src>(expr: &'src SpannedExpr, context: &mut HashMap<String, Expr>) 
                         return Err(EvalError {
                             message: format!("index {} is out of bounds", i),
                             message_short: "index out of bounds".to_string(),
+                            help_message: None,
                             span: expr.span,
                         });
                     }
@@ -1250,6 +1343,7 @@ pub fn eval<'src>(expr: &'src SpannedExpr, context: &mut HashMap<String, Expr>) 
                             return Err(EvalError {
                                 message: format!("range start must be an integer, got '{}'", start.node),
                                 message_short: "invalid range start".to_string(),
+                                help_message: None,
                                 span: expr.span,
                             });
                         }
@@ -1262,6 +1356,7 @@ pub fn eval<'src>(expr: &'src SpannedExpr, context: &mut HashMap<String, Expr>) 
                             return Err(EvalError {
                                 message: format!("range end must be an integer, got '{}'", end.node),
                                 message_short: "invalid range end".to_string(),
+                                help_message: None,
                                 span: expr.span,
                             });
                         }
@@ -1285,6 +1380,7 @@ pub fn eval<'src>(expr: &'src SpannedExpr, context: &mut HashMap<String, Expr>) 
                         return Err(EvalError {
                             message: format!("range {}..{} is out of bounds", start, end),
                             message_short: "range out of bounds".to_string(),
+                            help_message: None,
                             span: expr.span,
                         });
                     }
@@ -1300,6 +1396,7 @@ pub fn eval<'src>(expr: &'src SpannedExpr, context: &mut HashMap<String, Expr>) 
                             return Err(EvalError {
                                 message: format!("range start must be an integer, got '{}'", start.node),
                                 message_short: "invalid range start".to_string(),
+                                help_message: None,
                                 span: expr.span,
                             });
                         }
@@ -1312,6 +1409,7 @@ pub fn eval<'src>(expr: &'src SpannedExpr, context: &mut HashMap<String, Expr>) 
                             return Err(EvalError {
                                 message: format!("range end must be an integer, got '{}'", end.node),
                                 message_short: "invalid range end".to_string(),
+                                help_message: None,
                                 span: expr.span,
                             });
                         }
@@ -1335,6 +1433,7 @@ pub fn eval<'src>(expr: &'src SpannedExpr, context: &mut HashMap<String, Expr>) 
                         return Err(EvalError {
                             message: format!("range {}..={} is out of bounds", start, end),
                             message_short: "range out of bounds".to_string(),
+                            help_message: None,
                             span: expr.span,
                         });
                     }
@@ -1348,6 +1447,7 @@ pub fn eval<'src>(expr: &'src SpannedExpr, context: &mut HashMap<String, Expr>) 
                         None => Err(EvalError {
                             message: format!("object has no property named '{}'", key),
                             message_short: "no such property".to_string(),
+                            help_message: None,
                             span: expr.span,
                         }),
                     }
@@ -1364,6 +1464,7 @@ pub fn eval<'src>(expr: &'src SpannedExpr, context: &mut HashMap<String, Expr>) 
                         return Err(EvalError {
                             message: format!("index {} is out of bounds", i),
                             message_short: "index out of bounds".to_string(),
+                            help_message: None,
                             span: expr.span,
                         });
                     }
@@ -1374,6 +1475,7 @@ pub fn eval<'src>(expr: &'src SpannedExpr, context: &mut HashMap<String, Expr>) 
                         return Err(EvalError {
                             message: format!("could not get char with index {}", i),
                             message_short: "could not get char".to_string(),
+                            help_message: None,
                             span: expr.span,
                         });
                     }
@@ -1387,6 +1489,7 @@ pub fn eval<'src>(expr: &'src SpannedExpr, context: &mut HashMap<String, Expr>) 
                             return Err(EvalError {
                                 message: format!("range start must be an integer, got '{}'", start.node),
                                 message_short: "invalid range start".to_string(),
+                                help_message: None,
                                 span: expr.span,
                             });
                         }
@@ -1399,6 +1502,7 @@ pub fn eval<'src>(expr: &'src SpannedExpr, context: &mut HashMap<String, Expr>) 
                             return Err(EvalError {
                                 message: format!("range end must be an integer, got '{}'", end.node),
                                 message_short: "invalid range end".to_string(),
+                                help_message: None,
                                 span: expr.span,
                             });
                         }
@@ -1422,6 +1526,7 @@ pub fn eval<'src>(expr: &'src SpannedExpr, context: &mut HashMap<String, Expr>) 
                         return Err(EvalError {
                             message: format!("range {}..{} is out of bounds", start, end),
                             message_short: "range out of bounds".to_string(),
+                            help_message: None,
                             span: expr.span,
                         });
                     }
@@ -1437,6 +1542,7 @@ pub fn eval<'src>(expr: &'src SpannedExpr, context: &mut HashMap<String, Expr>) 
                             return Err(EvalError {
                                 message: format!("range start must be an integer, got '{}'", start.node),
                                 message_short: "invalid range start".to_string(),
+                                help_message: None,
                                 span: expr.span,
                             });
                         }
@@ -1449,6 +1555,7 @@ pub fn eval<'src>(expr: &'src SpannedExpr, context: &mut HashMap<String, Expr>) 
                             return Err(EvalError {
                                 message: format!("range end must be an integer, got '{}'", end.node),
                                 message_short: "invalid range end".to_string(),
+                                help_message: None,
                                 span: expr.span,
                             });
                         }
@@ -1472,6 +1579,7 @@ pub fn eval<'src>(expr: &'src SpannedExpr, context: &mut HashMap<String, Expr>) 
                         return Err(EvalError {
                             message: format!("range {}..={} is out of bounds", start, end),
                             message_short: "range out of bounds".to_string(),
+                            help_message: None,
                             span: expr.span,
                         });
                     }
@@ -1482,6 +1590,7 @@ pub fn eval<'src>(expr: &'src SpannedExpr, context: &mut HashMap<String, Expr>) 
                 (_, i) => Err(EvalError {
                     message: format!("'{}' cannot be used as a index", i),
                     message_short: "invalid index".to_string(),
+                    help_message: None,
                     span: expr.span,
                 }),
             }
@@ -1491,6 +1600,7 @@ pub fn eval<'src>(expr: &'src SpannedExpr, context: &mut HashMap<String, Expr>) 
             Err(EvalError {
                 message: format!("no evaluator for '{}', please report this issue", v),
                 message_short: "couldn't evaluate".to_string(),
+                help_message: None,
                 span: expr.span,
             })
         }
@@ -1515,6 +1625,7 @@ fn eval_assign_target(target: &SpannedExpr, new_value: SpannedExpr, context: &mu
                         return Err(EvalError {
                             message: format!("index {} out of bounds (length {})", i, arr.len()),
                             message_short: "index out of bounds".to_string(),
+                            help_message: None,
                             span: span.clone(),
                         });
                     }
@@ -1529,6 +1640,7 @@ fn eval_assign_target(target: &SpannedExpr, new_value: SpannedExpr, context: &mu
                 (obj, idx) => return Err(EvalError {
                     message: format!("cannot index '{}' with '{}'", obj, idx),
                     message_short: "invalid index".to_string(),
+                    help_message: None,
                     span: span.clone(),
                 }),
             }
@@ -1548,6 +1660,7 @@ fn eval_assign_target(target: &SpannedExpr, new_value: SpannedExpr, context: &mu
                 obj => return Err(EvalError {
                     message: format!("cannot access property '{}' on '{}'", property, obj),
                     message_short: "invalid property access".to_string(),
+                    help_message: None,
                     span: span.clone(),
                 }),
             }
@@ -1559,6 +1672,7 @@ fn eval_assign_target(target: &SpannedExpr, new_value: SpannedExpr, context: &mu
         _ => Err(EvalError {
             message: "invalid assignment target".to_string(),
             message_short: "invalid assignment target".to_string(),
+            help_message: None,
             span: span.clone(),
         }),
     }
