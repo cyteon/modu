@@ -1,7 +1,6 @@
 use std::collections::HashMap;
 use ariadne::{Color, Label, Report, ReportKind, Source};
 use chumsky::prelude::*;
-use colored::Colorize;
 use crate::{ast::{Expr, SpannedExpr, AssignOp}, eval, lexer::{Span, Token, lex}};
 
 enum Postfix {
@@ -371,17 +370,10 @@ fn parser<'src>() -> impl Parser<
         
         let for_loop_stmt = select! { (Token::For, span) => span }
             .then(select! { (Token::Identifier(name), _) => name })
-            .then(
-                select! { (Token::Assign, _) => true }
-                    .or(select! { (Token::In, _) => false })
-            )
+            .then_ignore(select! { (Token::In, _) => () })
             .then(expr.clone().labelled("iterable"))
             .then(block.clone().labelled("loop body"))
-            .map(|((((start, iterator_name), is_deprecated), iterator_range), body): ((((Span, String), bool), SpannedExpr), SpannedExpr)| {
-                if is_deprecated {
-                    println!("{}", format!("Warning: using '=' in for loops is deprecated and will be removed in a future version. Use 'in' instead. ").dimmed());
-                }   
-                
+            .map(|(((start, iterator_name), iterator_range), body): (((Span, String), SpannedExpr), SpannedExpr)| {
                 SpannedExpr {
                     node: Expr::ForLoop {
                         iterator_name,
