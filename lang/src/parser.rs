@@ -300,7 +300,7 @@ fn parser<'src>() -> impl Parser<
             })
             .labelled("let statement");
         
-        let assign_stmt = select! { (Token::Identifier(name), span) => (name, span) }
+        let assign_stmt = expr.clone()
             .then(
                 choice((
                     select! { (Token::Assign, _) => None },
@@ -313,10 +313,12 @@ fn parser<'src>() -> impl Parser<
             )
             .then(expr.clone())
             .then(select! { (Token::Semicolon, span) => span }.labelled("semicolon"))
-            .map(|((((name, name_span), op), value), end): ((((String, Span), Option<AssignOp>), SpannedExpr), Span)| {
+            .map(|(((target, op), value), end): (((SpannedExpr, Option<AssignOp>), SpannedExpr), Span)| {
+                let start = target.span.start;
+
                 SpannedExpr {
-                    node: Expr::Assign { name, value: Box::new(value), operator: op },
-                    span: Span::from(name_span.start..end.end),
+                    node: Expr::Assign { target: Box::new(target), value: Box::new(value), operator: op },
+                    span: Span::from(start..end.end),
                 }
             })
             .labelled("assignment");

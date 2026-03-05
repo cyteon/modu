@@ -15,7 +15,13 @@ b %= 2.0;
 
 print(b);
 
-dosent_exist = 5;
+let e = { "test": { "key": 1 } };
+e.test.key += 1.5;
+e["test"]["key"] *= 2;
+e.test2 = 2;
+print(e);
+
+doesnt_exist = 5;
 
 // Expected Output:
 //
@@ -24,4 +30,5 @@ dosent_exist = 5;
 // true
 // true
 // 1
+// { "test": { "key": 5 } }
 // error

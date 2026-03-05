@@ -135,3 +135,5 @@ print(a);
 print({});
 print(a["key4"]["nested_key"]);
 print({ "a": 1 }["a"]);
+
+a["key5"] = { "nested_key2": "nested_value2" };
