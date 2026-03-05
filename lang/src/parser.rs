@@ -43,7 +43,7 @@ fn parser<'src>() -> impl Parser<
 
         let array = select! { (Token::LBracket, span) => span }
             .then(
-                expr.clone()
+                expr.clone().labelled("entries")
                     .separated_by(select! { (Token::Comma, _) => () })
                     .allow_trailing()
                     .collect::<Vec<_>>()
@@ -53,13 +53,13 @@ fn parser<'src>() -> impl Parser<
                 node: Expr::Array(elements),
                 span: Span::from(start.start..end.end),
             })
-            .labelled("array literal");
+            .labelled("array");
         
         let object = select! { (Token::LBrace, start) => start }
             .then(
-                select! { (Token::String(key), _) => key }
+                select! { (Token::String(key), _) => key }.labelled("key")
                 .then_ignore(select! { (Token::Colon, _) => () })
-                .then(expr.clone())
+                .then(expr.clone().labelled("value"))
                 .separated_by(select! { (Token::Comma, _) => () })
                 .allow_trailing()
                 .collect::<Vec<_>>()
@@ -135,6 +135,7 @@ fn parser<'src>() -> impl Parser<
                     },
                 },
             )
+            .labelled("postfix expression")
             .boxed();
 
         let unary = select! { (Token::Minus, span) => span }
@@ -405,18 +406,18 @@ fn parser<'src>() -> impl Parser<
             .labelled("while loop");
         
         let if_stmt = select! { (Token::If, span) => span }
-            .then(expr.clone().labelled("condition"))
-            .then(block.clone().labelled("if body"))
+            .then(expr.clone().labelled("'if' condition"))
+            .then(block.clone().labelled("body"))
             .then(
                 select! { (Token::ElseIf, span) => span }
-                    .then(expr.clone())
-                    .then(block.clone())
+                    .then(expr.clone().labelled("else if condition"))
+                    .then(block.clone().labelled("'else if' body"))
                     .repeated()
                     .collect::<Vec<_>>()
             )
             .then(
                 select! { (Token::Else, span) => span }
-                    .then(block.clone())
+                    .then(block.clone().labelled("'else' body"))
                     .or_not()
             )
             .map(|((((start, condition), then_branch), else_if_branches), else_branch): ((((Span, SpannedExpr), SpannedExpr), Vec<((Span, SpannedExpr), SpannedExpr)>), Option<(Span, SpannedExpr)>)| {
