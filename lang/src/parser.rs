@@ -300,7 +300,7 @@ fn parser<'src>() -> impl Parser<
             })
             .labelled("let statement");
         
-        let assign_stmt = select! { (Token::Identifier(name), span) => SpannedExpr { node: Expr::Identifier(name), span } }
+        let assign_stmt = expr.clone()
             .then(
                 choice((
                     select! { (Token::Assign, _) => None },

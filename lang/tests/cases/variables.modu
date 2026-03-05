@@ -1,0 +1,15 @@
+let a = 5;
+
+a = {};
+a.test = 1;
+a["test"] *= 5;
+
+a.test2 = "test";
+
+print(a);
+
+let b = [-1];
+
+b[0] += 6;
+
+print(b[0]);

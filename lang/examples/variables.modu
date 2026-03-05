@@ -18,6 +18,7 @@ print(b);
 let e = { "test": { "key": 1 } };
 e.test.key += 1.5;
 e["test"]["key"] *= 2;
+e.test2 = 2;
 print(e);
 
 dosent_exist = 5;

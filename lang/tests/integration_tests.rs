@@ -74,3 +74,8 @@ fn nesting_funcs() {
 fn type_conversion() {
     run_test("type_conversion");
 }
+
+#[test]
+fn variables() {
+    run_test("variables");
+}
