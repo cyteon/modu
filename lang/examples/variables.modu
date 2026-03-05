@@ -21,7 +21,7 @@ e["test"]["key"] *= 2;
 e.test2 = 2;
 print(e);
 
-dosent_exist = 5;
+doesnt_exist = 5;
 
 // Expected Output:
 //

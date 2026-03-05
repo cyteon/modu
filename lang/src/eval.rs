@@ -472,6 +472,20 @@ pub fn eval<'src>(expr: &'src SpannedExpr, context: &mut HashMap<String, Expr>) 
 
             let new_value = match operator {
                 None => {
+                    match &target.node {
+                        Expr::Identifier(name) => {
+                            if !context.contains_key(name) {
+                                return Err(EvalError {
+                                    message: format!("undefined variable '{}'", name),
+                                    message_short: "undefined".to_string(),
+                                    span: expr.span,
+                                });
+                            }
+                        }
+
+                        _ => {}
+                    }
+
                     value
                 },
 
