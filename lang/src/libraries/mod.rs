@@ -26,55 +26,22 @@ pub fn get_package(name: &str) -> Option<crate::ast::Expr> {
         "crypto" => Some(crypto::get_object()),
 
         #[cfg(not(target_arch = "wasm32"))]
-        "os" => {
-            let sys_args = std::env::args().collect::<Vec<String>>();
-            if sys_args.len() > 1 && sys_args[1] == "server" {
-                return None;
-            }
-
-            Some(os::get_object())
-        }
+        "os" => Some(os::get_object())
 
         #[cfg(not(target_arch = "wasm32"))]
-        "http" => {
-            let sys_args = std::env::args().collect::<Vec<String>>();
-            if sys_args.len() > 1 && sys_args[1] == "server" {
-                return None;
-            }
-
-            Some(http::get_object())
-        },
+        "http" => Some(http::get_object())
 
         #[cfg(not(target_arch = "wasm32"))]
-        "ffi" => {
-            let sys_args = std::env::args().collect::<Vec<String>>();
-            if sys_args.len() > 1 && sys_args[1] == "server" {
-                return None;
-            }
-
-            Some(ffi::get_object())
-        }
+        "ffi" => Some(ffi::get_object())
 
         #[cfg(not(target_arch = "wasm32"))]
         "file" => {
-            let sys_args = std::env::args().collect::<Vec<String>>();
-            if sys_args.len() > 1 && sys_args[1] == "server" {
-                return None;
-            }
-
             println!("{}", "warning: the 'file' package has been renamed to 'fs' to better represent it, the 'file' import will be removed in a future version".dimmed());  
             Some(fs::get_object())
         }
 
         #[cfg(not(target_arch = "wasm32"))]
-        "fs" => {
-            let sys_args = std::env::args().collect::<Vec<String>>();
-            if sys_args.len() > 1 && sys_args[1] == "server" {
-                return None;
-            }
-
-            Some(fs::get_object())
-        }
+        "fs" => Some(fs::get_object())
 
         _ => None,
     }

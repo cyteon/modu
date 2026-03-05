@@ -36,7 +36,6 @@ fn main() {
         match action.as_str() {
             "run" => cli::run::run(),
             "repl" => cli::repl::repl(),
-            "server" => cli::server::server(),
             "login" => cli::login::login(),
             "init" => cli::init::init(),
             "publish" => cli::publish::publish(),
