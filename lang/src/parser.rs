@@ -300,7 +300,7 @@ fn parser<'src>() -> impl Parser<
             })
             .labelled("let statement");
         
-        let assign_stmt = expr.clone()
+        let assign_stmt = expr.clone().labelled("target")
             .then(
                 choice((
                     select! { (Token::Assign, _) => None },
@@ -311,7 +311,7 @@ fn parser<'src>() -> impl Parser<
                     select! { (Token::ModAssign, _) => Some(AssignOp::Mod) },
                 ))
             )
-            .then(expr.clone())
+            .then(expr.clone().labelled("an expression after '='"))
             .then(select! { (Token::Semicolon, span) => span }.labelled("semicolon"))
             .map(|(((target, op), value), end): (((SpannedExpr, Option<AssignOp>), SpannedExpr), Span)| {
                 let start = target.span.start;
@@ -534,14 +534,19 @@ pub fn parse(input: &str, filename: &str, context: &mut HashMap<String, Expr>) {
                     Ok(_) => {}
 
                     Err(e) => {
-                        let report = Report::build(ReportKind::Error, (filename, e.span.into_range()))
+                        let mut report = Report::build(ReportKind::Error, (filename, e.span.into_range()))
                             .with_message(format!("Evaluation error: {}", e.message))
                             .with_label(
                                 Label::new((filename, e.span.into_range()))
                                     .with_color(Color::Red)
                                     .with_message(format!("{}", e.message_short)),
-                            )
-                            .finish();
+                            );
+                        
+                        if let Some(help_message) = e.help_message {
+                            report = report.with_help(help_message);
+                        }
+
+                        let report = report.finish();
                         
                         report_error(report, filename, input);
 

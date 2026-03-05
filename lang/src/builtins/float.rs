@@ -59,3 +59,7 @@ pub fn get_fn(name: &str) -> Option<Expr> {
         },
     })
 }
+
+pub fn list_fns() -> Vec<String> {
+    ["min", "max"].map(String::from).to_vec()
+}
