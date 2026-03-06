@@ -79,4 +79,11 @@ pub fn run() {
             .write_all(string.as_bytes())
             .unwrap();
     }
+
+    let mut vm = crate::vm::vm::VM::new();
+
+    if let Err(e) = vm.run() {
+        println!("{}: {}", "runtime error".red(), e);
+        return;
+    }
 }

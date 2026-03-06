@@ -1,5 +1,5 @@
-use crate::vm::value::Value;
-use crate::vm::instruction::Instruction;
+use super::value::Value;
+use super::instruction::Instruction;
 
 #[derive(Debug)]
 pub struct Chunk {
