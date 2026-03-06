@@ -9,6 +9,9 @@ pub mod utils;
 pub mod builtins;
 pub mod libraries;
 
+pub mod compiler;
+pub mod vm;
+
 pub const VERSION: &str = env!("CARGO_PKG_VERSION");
 
 #[cfg(not(target_arch = "wasm32"))]

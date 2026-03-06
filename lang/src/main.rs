@@ -13,6 +13,9 @@ mod utils;
 mod libraries;
 mod builtins;
 
+mod compiler;
+mod vm;
+
 fn main() {
     std::panic::set_hook(Box::new(|_| {}));
 
