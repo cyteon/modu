@@ -10,8 +10,6 @@
     import { base } from "$app/paths";
     import { AnsiUp } from "ansi_up";
 
-    import { init, eval_modu, modu_version } from "modu-wasm";
-
     let language = new Compartment, tabsize = new Compartment;
     let moduVersion = "";
 
@@ -71,11 +69,14 @@ yap("Hello, World!");
     });
 
     let view;
+    var wasm;
 
     onMount(async () => {
         if (browser) {
-            await init();
-            moduVersion = modu_version();
+            wasm = await import("modu-wasm");
+
+            await wasm.init();
+            moduVersion = wasm.modu_version();
 
             view = new EditorView({
                 state,
@@ -110,7 +111,7 @@ yap("Hello, World!");
                 return;
             }
 
-            let result = eval_modu(code);
+            let result = wasm.eval_modu(code);
             output = ansi.ansi_to_html(result);
 
             setTimeout(() => {
