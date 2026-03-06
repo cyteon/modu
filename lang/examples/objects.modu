@@ -11,8 +11,8 @@ print("obj keys: ", obj.keys());
 print("obj values: ", obj.values());
 
 print(json.new());
-print(obj.to_string());
-print(json.new().to_string());
+print(obj.stringify());
+print(json.new().stringify());
 
 let everything = json.new();
 everything.set("string", "hello");
@@ -25,7 +25,7 @@ everything.set("arr", [1, "2", false]);
 
 print();
 
-let string = everything.to_string();
+let string = everything.stringify();
 print(string);
 
 let parsed = json.parse(string);

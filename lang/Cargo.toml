@@ -41,6 +41,7 @@ chumsky = "0.12.0"
 ariadne = "0.6.0"
 colored = "3.1.1"
 strsim = "0.11.1"
+stacker = "0.1.23"
 
 [target.'cfg(target_arch = "wasm32")'.dependencies]
 wasm-bindgen = "0.2.113"

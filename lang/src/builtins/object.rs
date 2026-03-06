@@ -127,7 +127,7 @@ pub fn delete(args: Vec<Spanned<Expr>>) -> Result<InternalFunctionResponse, (Str
     })
 }
 
-pub fn to_string(args: Vec<Spanned<Expr>>) -> Result<InternalFunctionResponse, (String, Span)> {
+pub fn stringify(args: Vec<Spanned<Expr>>) -> Result<InternalFunctionResponse, (String, Span)> {
     let object = &args[0].node;
 
     let result = match object {
@@ -218,6 +218,7 @@ pub fn get_fn(name: &str) -> Option<Expr> {
             "set" => vec!["self".to_string(), "key".to_string(), "value".to_string()],
             "has" => vec!["self".to_string(), "key".to_string()],
             "delete" => vec!["self".to_string(), "key".to_string()],
+            "stringify" => vec!["self".to_string()],
             "to_string" => vec!["self".to_string()],
             "keys" => vec!["self".to_string()],
             "values" => vec!["self".to_string()],
@@ -228,7 +229,13 @@ pub fn get_fn(name: &str) -> Option<Expr> {
             "set" => set,
             "has" => has,
             "delete" => delete,
-            "to_string" => to_string,
+            "stringify" => stringify,
+            "to_string" => {
+                use colored::Colorize;
+                println!("{}", "warning: 'to_string' has been renamed to 'stringify', 'to_string' will be removed".dimmed());
+
+                stringify
+            },
             "keys" => keys,
             "values" => values,
             _ => return None,

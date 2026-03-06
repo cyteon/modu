@@ -524,7 +524,7 @@ pub fn parse(input: &str, filename: &str, context: &mut HashMap<String, Expr>) {
             }
 
             for expr in ast {
-                match eval::eval(&expr, context) {
+                match eval::eval(&expr, context, 0) {
                     Ok(_) => {}
 
                     Err(e) => {
