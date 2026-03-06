@@ -3,6 +3,7 @@ use chumsky::span::SimpleSpan;
 
 use crate::ast::{Expr, SpannedExpr, AssignOp};
 use crate::lexer::Span;
+use crate::utils::Context;
 
 #[derive(Debug)]
 pub struct EvalError {
@@ -35,6 +36,45 @@ impl std::fmt::Display for EvalError {
     }
 }
 
+fn ctx_get<'a>(context: &'a Context, name: &str) -> Option<&'a Expr> {
+    for scope in context.iter().rev() {
+        if let Some(v) = scope.get(name) {
+            return Some(v);
+        }
+    }
+
+    None
+}
+
+fn ctx_def(context: &mut Context, name: String, value: Expr) {
+    if let Some(scope) = context.last_mut() {
+        scope.insert(name, value);
+    }
+}
+
+fn ctx_set(context: &mut Context, name: &str, value: Expr) {
+    for scope in context.iter_mut().rev() {
+        if scope.contains_key(name) {
+            scope.insert(name.to_string(), value);
+            return;
+        }
+    }
+}
+
+fn ctx_contains(context: &Context, name: &str) -> bool {
+    for scope in context.iter().rev() {
+        if scope.contains_key(name) {
+            return true;
+        }
+    }
+
+    false
+}
+
+fn ctx_keys_iter(context: &Context) -> impl Iterator<Item = &String> {
+    context.iter().flat_map(|scope| scope.keys())
+}
+
 fn find_closest<'a>(name: &str, options: impl Iterator<Item = &'a String>) -> Option<String> {
     let options: Vec<&String> = options.collect();
 
@@ -56,7 +96,7 @@ fn find_closest<'a>(name: &str, options: impl Iterator<Item = &'a String>) -> Op
 
 const MAX_RECURSION_DEPTH: usize = 128;
 
-pub fn eval<'src>(expr: &'src SpannedExpr, context: &mut HashMap<String, Expr>, depth: usize) -> Result<Flow, EvalError> {
+pub fn eval<'src>(expr: &'src SpannedExpr, context: &mut Context, depth: usize) -> Result<Flow, EvalError> {
     if depth > MAX_RECURSION_DEPTH {
         return Err(EvalError {
             message: "maximum recursion depth exceeded".to_string(),
@@ -99,7 +139,11 @@ pub fn eval<'src>(expr: &'src SpannedExpr, context: &mut HashMap<String, Expr>, 
                                     None => Err(EvalError {
                                         message: format!("object has no method named '{}'", property),
                                         message_short: "no such property".to_string(),
-                                        help_message: find_closest(property, properties.keys()).map(|s| format!("did you mean '{}'?", s)),
+                                        help_message: {
+                                            let mut names = crate::builtins::object::list_fns();
+                                            names.extend(properties.keys().cloned());
+                                            find_closest(property, names.iter()).map(|s| format!("did you mean '{}'?", s))
+                                        },
                                         span: expr.span,
                                     }),
                                 }
@@ -353,12 +397,12 @@ pub fn eval<'src>(expr: &'src SpannedExpr, context: &mut HashMap<String, Expr>, 
             }
 
             Expr::Identifier(name) => {
-                match context.get(name) {
+                match ctx_get(context, name) {
                     Some(value) => Ok(Flow::Continue(value.clone())),
                     None => Err(EvalError {
                         message: format!("undefined variable '{}'", name),
                         message_short: "not defined".to_string(),
-                        help_message: find_closest(name, context.keys()).map(|s| format!("did you mean '{}'?", s)),
+                        help_message: find_closest(name, ctx_keys_iter(context)).map(|s| format!("did you mean '{}'?", s)),
                         span: expr.span,
                     }),
                 }
@@ -440,7 +484,7 @@ pub fn eval<'src>(expr: &'src SpannedExpr, context: &mut HashMap<String, Expr>, 
                                     match &callee.node {
                                         Expr::PropertyAccess { object, property: _ } => {
                                             if let Expr::Identifier(obj_name) = &object.node {
-                                                context.insert(obj_name.clone(), replace_self);
+                                                ctx_set(context, obj_name, replace_self);
                                             }
                                         }
                                         
@@ -487,10 +531,13 @@ pub fn eval<'src>(expr: &'src SpannedExpr, context: &mut HashMap<String, Expr>, 
                         }
 
                         let mut new_context = context.clone();
+                        let mut scope = HashMap::new();
 
                         for (i, arg_name) in args.iter().enumerate() {
-                            new_context.insert(arg_name.clone(), evaluated_args[i].node.clone());
+                            scope.insert(arg_name.clone(), evaluated_args[i].node.clone());
                         }
+
+                        new_context.push(scope);
 
                         match eval(&*body, &mut new_context, depth)? {
                             Flow::Continue(v) => Ok(Flow::Continue(v)),
@@ -543,7 +590,7 @@ pub fn eval<'src>(expr: &'src SpannedExpr, context: &mut HashMap<String, Expr>, 
 
             Expr::Let { name, value } => {
                 let value = eval(value, context, depth)?.unwrap();
-                context.insert(name.clone(), value);
+                ctx_def(context, name.clone(), value);
                 
                 Ok(Flow::Continue(Expr::Null))
             }
@@ -555,7 +602,7 @@ pub fn eval<'src>(expr: &'src SpannedExpr, context: &mut HashMap<String, Expr>, 
                     None => {
                         match &target.node {
                             Expr::Identifier(name) => {
-                                if !context.contains_key(name) {
+                                if !ctx_contains(context, name) {
                                     return Err(EvalError {
                                         message: format!("undefined variable '{}'", name),
                                         message_short: "undefined".to_string(),
@@ -695,7 +742,7 @@ pub fn eval<'src>(expr: &'src SpannedExpr, context: &mut HashMap<String, Expr>, 
             }
 
             Expr::Function { name, args, body } => {
-                context.insert(name.clone(), Expr::Function {
+                ctx_def(context, name.clone(), Expr::Function {
                     name: name.clone(),
                     args: args.clone(),
                     body: body.clone(),
@@ -705,7 +752,7 @@ pub fn eval<'src>(expr: &'src SpannedExpr, context: &mut HashMap<String, Expr>, 
             }
 
             Expr::Block(exprs) => {
-                let preexisting_keys = context.keys().cloned().collect::<Vec<String>>();
+                context.push(HashMap::new());
 
                 for e in exprs {
                     match eval(e, context, depth)? {
@@ -716,11 +763,7 @@ pub fn eval<'src>(expr: &'src SpannedExpr, context: &mut HashMap<String, Expr>, 
                     }
                 }
 
-                for key in context.keys().cloned().collect::<Vec<String>>() {
-                    if !preexisting_keys.contains(&key) {
-                        context.remove(&key);
-                    }
-                }
+                context.pop();
 
                 Ok(Flow::Continue(Expr::Null))
             }
@@ -768,7 +811,7 @@ pub fn eval<'src>(expr: &'src SpannedExpr, context: &mut HashMap<String, Expr>, 
                         };
 
                         for i in start..end {
-                            context.insert(iterator_name.clone(), Expr::Int(i));
+                            ctx_def(context, iterator_name.clone(), Expr::Int(i));
 
                             match eval(body, context, depth)? {
                                 Flow::Continue(_) => {},
@@ -809,7 +852,7 @@ pub fn eval<'src>(expr: &'src SpannedExpr, context: &mut HashMap<String, Expr>, 
                         };
 
                         for i in start..=end {
-                            context.insert(iterator_name.clone(), Expr::Int(i));
+                            ctx_def(context, iterator_name.clone(), Expr::Int(i));
 
                             match eval(body, context, depth)? {
                                 Flow::Continue(_) => {},
@@ -825,7 +868,7 @@ pub fn eval<'src>(expr: &'src SpannedExpr, context: &mut HashMap<String, Expr>, 
                     Expr::Array(elements) => {
                         for element in elements {
                             let value = eval(&element, context, depth)?.unwrap();
-                            context.insert(iterator_name.clone(), value);
+                            ctx_def(context, iterator_name.clone(), value);
 
                             match eval(body, context, depth)? {
                                 Flow::Continue(_) => {},
@@ -1086,16 +1129,16 @@ pub fn eval<'src>(expr: &'src SpannedExpr, context: &mut HashMap<String, Expr>, 
                         path.pop();
                     }
 
-                    if context.contains_key("CURRENTLY_PARSING_MODULE_PATH") {
-                        if let Expr::String(current_module_path) = context.get("CURRENTLY_PARSING_MODULE_PATH").unwrap() {
+                    if ctx_contains(context, "CURRENTLY_PARSING_MODULE_PATH") {
+                        if let Expr::String(current_module_path) = ctx_get(context, "CURRENTLY_PARSING_MODULE_PATH").unwrap() {
                             let mut module_path = std::path::PathBuf::from(current_module_path);
                             module_path.pop();
                             path = module_path;
                         }
                     }
 
-                    if context.contains_key("CURRENTLY_PARSING_PACKAGE_NAME") {
-                        if let Expr::String(current_package_name) = context.get("CURRENTLY_PARSING_PACKAGE_NAME").unwrap() {
+                    if ctx_contains(context, "CURRENTLY_PARSING_PACKAGE_NAME") {
+                        if let Expr::String(current_package_name) = ctx_get(context, "CURRENTLY_PARSING_PACKAGE_NAME").unwrap() {
                             path.push(".modu");
                             path.push("packages");
                             path.push(current_package_name);
@@ -1124,29 +1167,43 @@ pub fn eval<'src>(expr: &'src SpannedExpr, context: &mut HashMap<String, Expr>, 
                     })?;
 
                     let mut new_context = crate::utils::create_context();
-                    new_context.insert(
+
+                    new_context[0].insert(
                         "CURRENTLY_PARSING_MODULE_PATH".to_string(),
                         Expr::String(path.to_str().unwrap().to_string())
                     );
 
+                    new_context.push(HashMap::new());
+
                     crate::parser::parse(&source, path.to_str().unwrap(), &mut new_context);
 
                     if import_as == "*" {
-                        for (k, v) in new_context {
-                            context.insert(k, v);
+                        let base_scope = &new_context[0];
+
+                        for scope in &new_context {
+                            for (k, v) in scope {
+                                if !base_scope.contains_key(k) {
+                                    ctx_def(context, k.clone(), v.clone());
+                                }
+                            }
                         }
                     } else {
                         let mut symbols = HashMap::new();
+                        let base_scope = &new_context[0];
 
-                        for (k, v) in new_context.iter().filter(|(k, _)| !crate::utils::create_context().contains_key(*k)) {
-                            symbols.insert(k.clone(), SpannedExpr {
-                                node: v.clone(),
-                                span: expr.span,
-                            });
+                        for scope in &new_context {
+                            for (k, v) in scope {
+                                if !base_scope.contains_key(k) {
+                                    symbols.insert(k.clone(), SpannedExpr {
+                                        node: v.clone(),
+                                        span: expr.span,
+                                    });
+                                }
+                            }
                         }
 
-                        context.insert(import_as.clone().replace(".modu", ""), Expr::Module {
-                            symbols,
+                        ctx_def(context, import_as.clone().replace(".modu", ""), Expr::Module {
+                            symbols
                         });
                     }
                 } else {
@@ -1155,7 +1212,7 @@ pub fn eval<'src>(expr: &'src SpannedExpr, context: &mut HashMap<String, Expr>, 
                             if import_as == "*" {
                                 if let Expr::Module { symbols } = module {
                                     for (k, v) in symbols {
-                                        context.insert(k, v.node);
+                                        ctx_def(context, k.clone(), v.node.clone());
                                     }
                                 } else {
                                     return Err(EvalError {
@@ -1166,7 +1223,7 @@ pub fn eval<'src>(expr: &'src SpannedExpr, context: &mut HashMap<String, Expr>, 
                                     });
                                 }
                             } else {
-                                context.insert(import_as.clone(), module);
+                                ctx_def(context, import_as.clone(), module);
                             }
                         }
 
@@ -1194,32 +1251,47 @@ pub fn eval<'src>(expr: &'src SpannedExpr, context: &mut HashMap<String, Expr>, 
                             })?;
 
                             let mut new_context = crate::utils::create_context();
-                            new_context.insert(
+                            let mut pkg_scope = HashMap::new();
+
+                            pkg_scope.insert(
                                 "CURRENTLY_PARSING_PACKAGE_PATH".to_string(),
                                 Expr::String(path.to_str().unwrap().to_string())
                             );
-                            new_context.insert(
+                            pkg_scope.insert(
                                 "CURRENTLY_PARSING_PACKAGE_NAME".to_string(),
                                 Expr::String(name.clone()),
                             );
 
+                            new_context.push(pkg_scope);
+
                             crate::parser::parse(&source, path.to_str().unwrap(), &mut new_context);
 
                             if import_as == "*" {
-                                for (k, v) in new_context {
-                                    context.insert(k, v);
+                                let base_scope = &new_context[0];
+
+                                for scope in &new_context {
+                                    for (k, v) in scope {
+                                        if !base_scope.contains_key(k) {
+                                            ctx_def(context, k.clone(), v.clone());
+                                        }
+                                    }
                                 }
                             } else {
                                 let mut symbols = HashMap::new();
+                                let base_scope = &new_context[0];
 
-                                for (k, v) in new_context.iter().filter(|(k, _)| !crate::utils::create_context().contains_key(*k)) {
-                                    symbols.insert(k.clone(), SpannedExpr {
-                                        node: v.clone(),
-                                        span: expr.span,
-                                    });
+                                for scope in &new_context {
+                                    for (k, v) in scope {
+                                        if !base_scope.contains_key(k) {
+                                            symbols.insert(k.clone(), SpannedExpr {
+                                                node: v.clone(),
+                                                span: expr.span,
+                                            });
+                                        }
+                                    }
                                 }
 
-                                context.insert(import_as.clone().replace(".modu", ""), Expr::Module {
+                                ctx_def(context, import_as.clone().replace(".modu", ""), Expr::Module {
                                     symbols,
                                 });
                             }
@@ -1567,10 +1639,11 @@ pub fn eval<'src>(expr: &'src SpannedExpr, context: &mut HashMap<String, Expr>, 
     })
 }
 
-fn eval_assign_target(target: &SpannedExpr, new_value: SpannedExpr, context: &mut HashMap<String, Expr>, span: &Span) -> Result<(), EvalError> {
+fn eval_assign_target(target: &SpannedExpr, new_value: SpannedExpr, context: &mut Context, span: &Span) -> Result<(), EvalError> {
     match &target.node {
         Expr::Identifier(name) => {
-            context.insert(name.clone(), new_value.node);
+            ctx_set(context, &name, new_value.node);
+            
             Ok(())
         }
 
