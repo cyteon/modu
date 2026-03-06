@@ -15,4 +15,8 @@ impl Compiler {
             current_chunk: 0,
         }
     }
+
+    pub fn compile_program(&mut self, ast: Vec<crate::ast::SpannedExpr>) -> Result<(), String> {
+        Ok(())
+    }
 }

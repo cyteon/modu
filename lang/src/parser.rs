@@ -492,7 +492,7 @@ fn parser<'src>() -> impl Parser<
     stmt.repeated().collect::<Vec<_>>().then_ignore(end()).labelled("program")
 }
 
-pub fn parse(input: &str, filename: &str, context: &mut Vec<HashMap<String, Expr>>) {
+pub fn parse(input: &str, filename: &str) -> Result<Vec<SpannedExpr>, ()> {
     let tokens = match lex(input) {
         Ok(toks) => toks,
         Err(e) => {
@@ -507,46 +507,16 @@ pub fn parse(input: &str, filename: &str, context: &mut Vec<HashMap<String, Expr
             
             report_error(report, filename, input);
 
-            return;
+            return Err(());
         }
     };
 
     match parser().parse(&tokens).into_result() {
         Ok(ast) => {
-            let sys_args = std::env::args().collect::<Vec<String>>();
-
-            if sys_args.contains(&"--debug".to_string()) {
-                println!("AST: {:#?}", ast);
-            }
-
             if let Err(()) = crate::validator::validate_ast(&ast, filename, input) {
-                return;
-            }
-
-            for expr in ast {
-                match eval::eval(&expr, context, 0) {
-                    Ok(_) => {}
-
-                    Err(e) => {
-                        let mut report = Report::build(ReportKind::Error, (filename, e.span.into_range()))
-                            .with_message(format!("Evaluation error: {}", e.message))
-                            .with_label(
-                                Label::new((filename, e.span.into_range()))
-                                    .with_color(Color::Red)
-                                    .with_message(format!("{}", e.message_short)),
-                            );
-                        
-                        if let Some(help_message) = e.help_message {
-                            report = report.with_help(help_message);
-                        }
-
-                        let report = report.finish();
-                        
-                        report_error(report, filename, input);
-
-                        return;
-                    }
-                }
+                return Err(());
+            } else {
+                return Ok(ast);
             }
         }
 
@@ -596,6 +566,8 @@ pub fn parse(input: &str, filename: &str, context: &mut Vec<HashMap<String, Expr
                     }
                } 
             }
+
+            return Err(());
         }
     }
 }

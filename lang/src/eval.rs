@@ -1175,7 +1175,7 @@ pub fn eval<'src>(expr: &'src SpannedExpr, context: &mut Context, depth: usize) 
 
                     new_context.push(HashMap::new());
 
-                    crate::parser::parse(&source, path.to_str().unwrap(), &mut new_context);
+                    //crate::parser::parse(&source, path.to_str().unwrap(), &mut new_context);
 
                     if import_as == "*" {
                         let base_scope = &new_context[0];
@@ -1264,7 +1264,7 @@ pub fn eval<'src>(expr: &'src SpannedExpr, context: &mut Context, depth: usize) 
 
                             new_context.push(pkg_scope);
 
-                            crate::parser::parse(&source, path.to_str().unwrap(), &mut new_context);
+                            //crate::parser::parse(&source, path.to_str().unwrap(), &mut new_context);
 
                             if import_as == "*" {
                                 let base_scope = &new_context[0];

@@ -105,7 +105,7 @@ pub fn repl() {
                 buffer.push('\n');
 
                 if open_functions == 0 {
-                    parse(&buffer, "<repl>", context);
+                    //parse(&buffer, "<repl>", context);
                     buffer.clear();
                 }
             }

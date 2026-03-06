@@ -34,6 +34,49 @@ pub fn run() {
         file_path = path.to_str().unwrap().to_string();
     }
 
-    let context = &mut crate::utils::create_context();
-    parse(&file, &file_path, context);
+    let ast = parse(&file, &file_path);
+
+    if ast.is_err() {
+        println!("{}: failed to parse file", "error".red());
+        return;
+    }
+
+    let mut compiler = crate::compiler::compiler::Compiler::new();
+
+    if let Err(e) = compiler.compile_program(ast.clone().unwrap()) {
+        println!("{}: {}", "compilation error".red(), e);
+        return;
+    }
+
+    if args.contains(&"--dump".to_string()) {
+        use std::io::Write;
+
+        let mut ast_file = std::fs::File::create("dump.ast").unwrap();
+        ast_file
+            .write_all(format!("{:#?}", ast).as_bytes())
+            .unwrap();
+
+        let mut bytecode_file = std::fs::File::create("dump.bytecode").unwrap();
+        let mut string = String::new();
+
+        for (i, chunk) in compiler.chunks.iter().enumerate() {
+            string.push_str(&format!("=== chunk[{}] \"{}\" ({} locals) ===\n", i, chunk.name, chunk.locals_count));
+
+            for (j, instruction) in chunk.instructions.iter().enumerate() {
+                string.push_str(&format!("\t{:04}: {:?}\n", j, instruction));
+            }
+
+            if !chunk.constants.is_empty() {
+                string.push_str("\n\tconstants:\n");
+
+                for (j, constant) in chunk.constants.iter().enumerate() {
+                    string.push_str(&format!("\t\t{:04}: {:?}\n", j, constant));
+                }
+            }
+        }
+
+        bytecode_file
+            .write_all(string.as_bytes())
+            .unwrap();
+    }
 }

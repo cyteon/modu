@@ -1,4 +1,5 @@
 #[repr(u8)]
+#[derive(Debug)]
 pub enum Instruction {
     Push(usize),
     Pop,
