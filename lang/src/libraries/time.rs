@@ -15,6 +15,18 @@ pub fn now_unix(_: Vec<Spanned<Expr>>) -> Result<InternalFunctionResponse, (Stri
     })
 }
 
+pub fn now_unix_ms(_: Vec<Spanned<Expr>>) -> Result<InternalFunctionResponse, (String, Span)> {
+    let now = std::time::SystemTime::now()
+        .duration_since(std::time::UNIX_EPOCH)
+        .map_err(|e| (format!("system time error: {}", e), Span::default()))?
+        .as_millis() as i64;
+
+    Ok(InternalFunctionResponse {
+        return_value: Expr::Int(now),
+        replace_self: None,
+    })
+}
+
 pub fn now_utc(_: Vec<Spanned<Expr>>) -> Result<InternalFunctionResponse, (String, Span)> {
     let now = time::SystemTime::now();
     let datetime: DateTime<chrono::Utc> = now.into();
@@ -105,6 +117,19 @@ pub fn get_object() -> Expr {
                 name: "now_unix".to_string(),
                 args: vec![],
                 func: now_unix,
+            },
+
+            span: Span::default(),
+        },
+    );
+
+    symbols.insert(
+        "now_unix_ms".to_string(),
+        SpannedExpr {
+            node: Expr::InternalFunction {
+                name: "now_unix_ms".to_string(),
+                args: vec![],
+                func: now_unix_ms,
             },
 
             span: Span::default(),
