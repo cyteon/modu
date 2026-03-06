@@ -1,9 +1,10 @@
+#[repr(u8)]
 pub enum Instruction {
     Push(usize),
     Pop,
     Add, Sub, Mul, Div, Mod, Pow, Neg,
     Eq, Neq, Gt, Lt, Gte, Lte,
-    And, Or, Not,
+    Not,
     LoadLocal(usize),
     StoreLocal(usize),
     LoadGlobal(String),

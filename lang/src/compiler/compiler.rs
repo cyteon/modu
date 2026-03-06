@@ -1,13 +1,18 @@
 use crate::vm::chunk::Chunk;
-use crate::compiler::scope::ScopeStack;
+use super::scope::{ScopeStack, Variable};
 
 pub struct Compiler {
-    chunks: Vec<Chunk>,
-    scope_stack: Vec<ScopeStack>,
+    pub chunks: Vec<Chunk>,
+    scope: ScopeStack,
     current_chunk: usize,
 }
 
-
 impl Compiler {
-    
+    pub fn new() -> Self {
+        Self {
+            chunks: vec![Chunk::new("main")],
+            scope: ScopeStack::new(),
+            current_chunk: 0,
+        }
+    }
 }

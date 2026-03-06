@@ -9,5 +9,12 @@ pub struct Chunk {
 }
 
 impl Chunk {
-
+    pub fn new(name: &str) -> Self {
+        Self {
+            name: name.to_string(),
+            instructions: Vec::new(),
+            constants: Vec::new(),
+            locals_count: 0,
+        }
+    }
 }

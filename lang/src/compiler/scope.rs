@@ -14,7 +14,14 @@ pub struct ScopeStack {
 
 
 impl ScopeStack {
-
+    pub fn new() -> Self {
+        Self {
+            scopes: Vec::new(),
+            next_slot: 0,
+            globals: HashMap::new(),
+            next_global: 0,
+        }
+    }
 }
 
 pub enum Variable {
