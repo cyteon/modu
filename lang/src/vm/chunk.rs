@@ -18,4 +18,22 @@ impl Chunk {
             locals_count: 0,
         }
     }
+
+    pub fn emit(&mut self, instruction: Instruction) -> usize {
+        let index = self.instructions.len();
+        self.instructions.push(instruction);
+        index
+    }
+
+    pub fn add_constant(&mut self, value: Value) -> usize {
+        for (i, c) in self.constants.iter().enumerate() {
+            if c == &value {
+                return i;
+            }
+        }
+
+        let index = self.constants.len();
+        self.constants.push(value);
+        index
+    }
 }
