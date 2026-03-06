@@ -3,6 +3,7 @@ use chumsky::span::SimpleSpan;
 
 use crate::ast::{Expr, SpannedExpr, AssignOp};
 use crate::lexer::Span;
+use crate::utils::Context;
 
 #[derive(Debug)]
 pub struct EvalError {
@@ -56,7 +57,7 @@ fn find_closest<'a>(name: &str, options: impl Iterator<Item = &'a String>) -> Op
 
 const MAX_RECURSION_DEPTH: usize = 128;
 
-pub fn eval<'src>(expr: &'src SpannedExpr, context: &mut HashMap<String, Expr>, depth: usize) -> Result<Flow, EvalError> {
+pub fn eval<'src>(expr: &'src SpannedExpr, context: &mut Context, depth: usize) -> Result<Flow, EvalError> {
     if depth > MAX_RECURSION_DEPTH {
         return Err(EvalError {
             message: "maximum recursion depth exceeded".to_string(),
@@ -1567,7 +1568,7 @@ pub fn eval<'src>(expr: &'src SpannedExpr, context: &mut HashMap<String, Expr>, 
     })
 }
 
-fn eval_assign_target(target: &SpannedExpr, new_value: SpannedExpr, context: &mut HashMap<String, Expr>, span: &Span) -> Result<(), EvalError> {
+fn eval_assign_target(target: &SpannedExpr, new_value: SpannedExpr, context: &mut Context, span: &Span) -> Result<(), EvalError> {
     match &target.node {
         Expr::Identifier(name) => {
             context.insert(name.clone(), new_value.node);

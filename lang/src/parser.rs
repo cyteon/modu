@@ -492,7 +492,7 @@ fn parser<'src>() -> impl Parser<
     stmt.repeated().collect::<Vec<_>>().then_ignore(end()).labelled("program")
 }
 
-pub fn parse(input: &str, filename: &str, context: &mut HashMap<String, Expr>) {
+pub fn parse(input: &str, filename: &str, context: &mut Vec<HashMap<String, Expr>>) {
     let tokens = match lex(input) {
         Ok(toks) => toks,
         Err(e) => {

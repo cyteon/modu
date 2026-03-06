@@ -34,7 +34,6 @@ pub fn run() {
         file_path = path.to_str().unwrap().to_string();
     }
 
-    let context: &mut std::collections::HashMap<String, crate::ast::Expr> = &mut crate::utils::create_context();
-
+    let context = &mut crate::utils::create_context();
     parse(&file, &file_path, context);
 }
