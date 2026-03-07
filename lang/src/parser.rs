@@ -1,7 +1,7 @@
 use std::collections::HashMap;
 use ariadne::{Color, Label, Report, ReportKind, Source};
 use chumsky::prelude::*;
-use crate::{ast::{Expr, SpannedExpr, AssignOp}, eval, lexer::{Span, Token, lex}};
+use crate::{ast::{Expr, SpannedExpr, AssignOp}, lexer::{Span, Token, lex}};
 
 enum Postfix {
     Property(String, Span),

@@ -2,7 +2,6 @@ use std::panic::{catch_unwind, AssertUnwindSafe};
 use colored::Colorize;
 
 mod ast;
-mod eval;
 mod lexer;
 mod parser;
 mod functions;

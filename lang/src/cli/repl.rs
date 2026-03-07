@@ -86,7 +86,7 @@ pub fn repl() {
 
     let mut globals: HashMap<String, crate::vm::value::Value> = HashMap::new();
     for func in crate::functions::get_functions() {
-        globals.insert(func.name.clone(), crate::vm::value::Value::NativeFn(func));
+        globals.insert(func.name.clone(), crate::vm::value::Value::BuiltinFn(func));
     }
 
     loop {

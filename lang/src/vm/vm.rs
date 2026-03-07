@@ -30,7 +30,7 @@ impl VM {
         };
 
         for func in crate::functions::get_functions() {
-            vm.globals.insert(func.name.clone(), Value::NativeFn(func));
+            vm.globals.insert(func.name.clone(), Value::BuiltinFn(func));
         }
 
         vm
@@ -163,7 +163,7 @@ impl VM {
                     let callee = self.stack[self.stack.len() - 1 - argc].clone();
 
                     match callee {
-                        Value::NativeFn(func) => {
+                        Value::BuiltinFn(func) => {
                             let args: Vec<Value> = self.stack.drain(self.stack.len() - argc..).collect();
                             self.stack.pop();
 
@@ -171,7 +171,23 @@ impl VM {
                                 Ok(result) => self.stack.push(result),
                                 Err(e) => return Err(format!("error calling {}(): {}", func.name, e)),
                             }
+                        }
+
+                        Value::NativeFn(func) => {
+                            let args: Vec<Value> = self.stack.drain(self.stack.len() - argc..).collect();
+                            self.stack.pop();
+                            let obj = self.stack.pop().unwrap_or(Value::Null);
                             
+                            match (func.func)(obj, args) {
+                                Ok(result) => {
+                                    self.stack.push(result.0);
+
+                                    if let Some(replace_self) = result.1 {
+                                        
+                                    }
+                                }
+                                Err(e) => return Err(format!("error calling {}(): {}", func.name, e)),
+                            }
                         }
 
                         Value::Function { chunk_id, arity } => {
@@ -283,7 +299,7 @@ impl VM {
                 }
 
                 Instruction::GetProperty(name) => {
-                    let target = self.stack.pop().unwrap_or(Value::Null);
+                    let target = self.stack.last().unwrap_or(&Value::Null).clone();
 
                     match target {
                         Value::Object(properties) => {
@@ -296,7 +312,12 @@ impl VM {
                         }
 
                         Value::String(s) => {
-                            
+                            let method = match crate::builtins::string::get_fn(name.to_string()) {
+                                Some(m) => m,
+                                None => return Err(format!("undefined property '{}' on string", name)),
+                            };
+
+                            self.stack.push(Value::NativeFn(method));
                         }
 
                         _ => return Err(format!("cannot get property '{}' on {}", name, target.type_name())),

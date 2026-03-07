@@ -13,6 +13,7 @@ pub enum Value {
 
     Function { chunk_id: usize, arity: usize },
     NativeFn(NativeFn),
+    BuiltinFn(BuiltinFn),
 
     Range {
         start: i64,
@@ -22,15 +23,15 @@ pub enum Value {
 }
 
 #[derive(Clone)]
-pub struct NativeFn {
+pub struct BuiltinFn {
     pub name: String,
     pub func: fn(Vec<Value>) -> Result<Value, String>,
 }
 
 #[derive(Clone)]
-pub struct BuiltinFn {
+pub struct NativeFn {
     pub name: String,
-    pub func: fn(Vec<Value>) -> Result<(Value, Value), String>, // (return value, value to replace self with)
+    pub func: fn(Value, Vec<Value>) -> Result<(Value, Option<Value>), String>, // (return value, value to replace self with)
 }
 
 impl std::fmt::Debug for NativeFn {
@@ -154,7 +155,7 @@ impl Value {
             Value::Null => "null",
             Value::Array(_) => "array",
             Value::Object { .. } => "object",
-            Value::Function { .. } | Value::NativeFn(_) => "function",
+            Value::Function { .. } | Value::NativeFn(_) | Value::BuiltinFn(_) => "function",
             Value::Range { .. } => "range",
         }
     }
