@@ -113,16 +113,6 @@ impl VM {
                     self.stack.push(a.r#mod(&b)?);
                 }
 
-                Instruction::StoreGlobal(name) => {
-                    let v = self.stack.pop().unwrap_or(Value::Null);
-                    self.globals.insert(name.clone(), v);
-                }
-
-                Instruction::LoadGlobal(name) => {
-                    let v = self.globals.get(name).cloned().unwrap_or(Value::Null);
-                    self.stack.push(v);
-                }
-
                 Instruction::Call(argc) => {
                     let callee = self.stack[self.stack.len() - 1 - argc].clone();
 
@@ -134,10 +124,69 @@ impl VM {
                             let result = (func.func)(args);
                         }
 
+                        Value::Function { chunk_id, arity } => {
+                            if arity != *argc {
+                                return Err(format!("expected {} arguments but got {}", arity, argc));
+                            }
+
+                            if self.frames.len() >= FRAMES_MAX {
+                                return Err("stack overflow".to_string());
+                            }
+
+                            let base = self.stack.len() - argc;
+
+                            let extra_locals = self.chunks[chunk_id].locals_count.saturating_sub(*argc);
+                            for _ in 0..extra_locals {
+                                self.stack.push(Value::Null);
+                            }
+                            
+                            self.frames.push(CallFrame {
+                                chunk_id,
+                                ip: 0,
+                                base,
+                            });
+                        }
+
                         _ => {
-                            dbg!(callee);
+                            return Err(format!("{} is not a function", callee.type_name()));
                         }
                     }
+                }
+
+                Instruction::Return => {
+                    let result = self.stack.pop().unwrap_or(Value::Null);
+                    let frame = self.frames.pop().unwrap();
+
+                    if frame.base > 0 {
+                        self.stack.truncate(frame.base - 1);
+                    }
+                    
+
+                    self.stack.push(result);
+                }
+
+                Instruction::Pop => {
+                    self.stack.pop();
+                }
+
+                Instruction::StoreGlobal(name) => {
+                    let v = self.stack.pop().unwrap_or(Value::Null);
+                    self.globals.insert(name.clone(), v);
+                }
+
+                Instruction::StoreLocal(slot) => {
+                    let v = self.stack.pop().unwrap_or(Value::Null);
+                    self.stack[frame.base + slot] = v;
+                }
+
+                Instruction::LoadGlobal(name) => {
+                    let v = self.globals.get(name).cloned().unwrap_or(Value::Null);
+                    self.stack.push(v);
+                }
+
+                Instruction::LoadLocal(slot) => {
+                    let v = self.stack[frame.base + slot].clone();
+                    self.stack.push(v);
                 }
 
                 _ => {

@@ -8,7 +8,7 @@ pub struct Scope {
 pub struct ScopeStack {
     scopes: Vec<Scope>,
     next_slot: usize,
-    max_slot: usize,
+    pub max_slot: usize,
     function_depth: usize,
 }
 
@@ -29,6 +29,32 @@ impl ScopeStack {
 
     pub fn in_function(&self) -> bool {
         self.function_depth > 0
+    }
+
+    pub fn enter_function(&mut self) -> (usize, usize) {
+        self.function_depth += 1;
+
+        let saved_next = self.next_slot;
+        let saved_max = self.max_slot;
+
+        self.next_slot = 0;
+        self.max_slot = 0;
+
+        self.push_scope();
+
+        (saved_next, saved_max)
+    }
+
+    pub fn exit_function(&mut self, saved: (usize, usize)) -> usize {
+        let locals_count = self.max_slot;
+
+        self.function_depth -= 1;
+        
+        self.pop_scope();
+        self.next_slot = saved.0;
+        self.max_slot = saved.1;
+
+        locals_count
     }
 
     pub fn resolve(&self, name: &str) -> Variable {
@@ -54,5 +80,16 @@ impl ScopeStack {
         }
 
         slot
+    }
+
+    pub fn push_scope(&mut self) {
+        self.scopes.push(Scope {
+            locals: HashMap::new(),
+            depth: self.scopes.len(),
+        });
+    }
+
+    pub fn pop_scope(&mut self) {
+        self.scopes.pop();
     }
 }

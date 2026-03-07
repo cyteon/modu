@@ -1,26 +1,7 @@
-let a = 1;
-let b = 1.5;
+fn test(a, b) {
+    print(a, " + ", b);
+    return a + b;
+}
 
-print("a = ", a);
-
-a += 1;
-
-print("a += 1;  a = ", a);
-
-a *= 2;
-
-print("a *= 2;  a = ", a);
-
-a /= 2;
-
-print("a /= 2;  a = ", a);
-
-a -= -3;
-
-print("a -= -3; a = ", a);
-
-a %= 2;
-
-print("a %= 2;  a = ", a);
-
-print((1 + (2 * 3) - 4) / 5); // = 0.6
+print(test(1, 2));
+print(int("test"));

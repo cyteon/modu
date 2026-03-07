@@ -20,6 +20,15 @@ impl Compiler {
         }
     }
 
+    fn is_void(expr: &Expr) -> bool {
+        matches!(
+            expr,
+            Expr::Let { .. }
+            | Expr::Assign { .. }
+            | Expr::Function { .. }
+        )
+    }
+
     // chunk shit
 
     fn emit(&mut self, instruction: Instruction) {
@@ -53,8 +62,14 @@ impl Compiler {
 
     pub fn compile_program(&mut self, ast: Vec<SpannedExpr>) -> Result<(), String> {
         for expr in ast {
-            self.compile_expr(expr)?;
+            self.compile_expr(expr.clone())?;
+
+            if !Self::is_void(&expr.node) {
+                self.emit(Instruction::Pop);
+            }
         }
+
+        self.chunks[self.current_chunk].locals_count = self.scope.max_slot;
 
         Ok(())
     }
@@ -195,6 +210,48 @@ impl Compiler {
                 self.compile_expr(*a.clone())?;
                 self.compile_expr(*b.clone())?;
                 self.emit(Instruction::Mod);
+            }
+
+            Expr::Function { name, args, body } => {
+                let chunk_id = self.chunks.len();
+                self.chunks.push(Chunk::new(name));
+
+                let saved_chunk = self.current_chunk;
+                self.current_chunk = chunk_id;
+
+                let saved = self.scope.enter_function();
+                for arg in args {
+                    self.scope.define_local(arg);
+                }
+
+                self.compile_expr(*body.clone())?;
+                self.emit(Instruction::Return);
+
+                let locals_count = self.scope.exit_function(saved);
+                self.chunks[chunk_id].locals_count = locals_count;
+
+                self.current_chunk = saved_chunk;
+
+                let fn_value = Value::Function { chunk_id, arity: args.len() };
+                let index = self.add_constant(fn_value);
+
+                self.emit(Instruction::Push(index));
+                self.store_variable(name);
+            },
+
+            Expr::Block(exprs) => {
+                self.scope.push_scope();
+
+                for expr in exprs {
+                    self.compile_expr(expr.clone())?;
+                }
+
+                self.scope.pop_scope();
+            }
+
+            Expr::Return(v) => {
+                self.compile_expr(*v.clone())?;
+                self.emit(Instruction::Return);
             }
 
             v => {
