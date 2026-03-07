@@ -80,7 +80,7 @@ pub fn run() {
             .unwrap();
     }
 
-    let mut vm = crate::vm::vm::VM::new();
+    let mut vm = crate::vm::vm::VM::new(compiler.chunks);
 
     if let Err(e) = vm.run() {
         println!("{}: {}", "runtime error".red(), e);
