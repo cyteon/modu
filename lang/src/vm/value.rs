@@ -47,12 +47,27 @@ impl PartialEq for Value {
     }
 }
 
+impl PartialOrd for Value {
+    fn partial_cmp(&self, other: &Self) -> Option<std::cmp::Ordering> {
+        match (self, other) {
+            (Value::Int(a), Value::Int(b)) => a.partial_cmp(b),
+            (Value::Float(a), Value::Float(b)) => a.partial_cmp(b),
+            (Value::String(a), Value::String(b)) => a.partial_cmp(b),
+            (Value::Bool(a), Value::Bool(b)) => a.partial_cmp(b),
+            _ => None,
+        }
+    }
+}
+
 impl std::fmt::Display for Value {
     fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
         match self {
             Value::Int(n) => write!(f, "{}", n),
             Value::Float(n) => write!(f, "{}", n),
-            Value::String(s) => write!(f, "{}", s),
+            Value::String(s) => {
+                let text = Self::process_escape_sequences(s);
+                write!(f, "{}", text)
+            }
             Value::Bool(b) => write!(f, "{}", b),
             Value::Null => write!(f, "null"),
             _ => write!(f, "{:?}", self),
@@ -61,6 +76,44 @@ impl std::fmt::Display for Value {
 }
 
 impl Value {
+    fn process_escape_sequences(s: &str) -> String {
+        let mut result = String::new();
+        let mut chars = s.chars();
+        
+        while let Some(ch) = chars.next() {
+            if ch == '\\' {
+                if let Some(next) = chars.next() {
+                    match next {
+                        'n' => result.push('\n'),
+                        't' => result.push('\t'),
+                        '"' => result.push('"'),
+                        '\\' => result.push('\\'),
+                        'x' => {
+                            let hex: String = chars.by_ref().take(2).collect();
+                            if let Ok(byte) = u8::from_str_radix(&hex, 16) {
+                                result.push(byte as char);
+                            } else {
+                                result.push('\\');
+                                result.push('x');
+                                result.push_str(&hex);
+                            }
+                        }
+                        _ => {
+                            result.push('\\');
+                            result.push(next);
+                        }
+                    }
+                } else {
+                    result.push('\\');
+                }
+            } else {
+                result.push(ch);
+            }
+        }
+        
+        result
+    }
+
     pub fn truthy(&self) -> bool {
         match self {
             Value::Int(n) => *n != 0,

@@ -25,6 +25,20 @@ impl Chunk {
         index
     }
 
+    pub fn patch_jump(&mut self, jump: usize) {
+        let target = self.instructions.len();
+
+        match &mut self.instructions[jump] {
+            Instruction::Jump(offset)
+            | Instruction::JumpIfFalse(offset)
+            | Instruction::JumpIfTrue(offset) => {
+                *offset = target;
+            }
+
+            _ => panic!("can only patch jump instructions"),
+        }
+    }
+
     pub fn add_constant(&mut self, value: Value) -> usize {
         for (i, c) in self.constants.iter().enumerate() {
             if c == &value {

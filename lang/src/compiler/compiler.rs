@@ -35,8 +35,16 @@ impl Compiler {
         self.chunks[self.current_chunk].emit(instruction);
     }
 
+    fn emit_jump(&mut self, instruction: Instruction) -> usize {
+        self.chunks[self.current_chunk].emit(instruction)
+    }
+
     fn add_constant(&mut self, value: Value) -> usize {
         self.chunks[self.current_chunk].add_constant(value)
+    }
+
+    fn patch_jump(&mut self, jump: usize) {
+        self.chunks[self.current_chunk].patch_jump(jump);
     }
 
     // scope shit
@@ -212,6 +220,42 @@ impl Compiler {
                 self.emit(Instruction::Mod);
             }
 
+            Expr::Equal(a, b) => {
+                self.compile_expr(*a.clone())?;
+                self.compile_expr(*b.clone())?;
+                self.emit(Instruction::Eq);
+            }
+
+            Expr::NotEqual(a, b) => {
+                self.compile_expr(*a.clone())?;
+                self.compile_expr(*b.clone())?;
+                self.emit(Instruction::Neq);
+            }
+
+            Expr::LessThan(a, b) => {
+                self.compile_expr(*a.clone())?;
+                self.compile_expr(*b.clone())?;
+                self.emit(Instruction::Lt);
+            }
+
+            Expr::LessThanOrEqual(a, b) => {
+                self.compile_expr(*a.clone())?;
+                self.compile_expr(*b.clone())?;
+                self.emit(Instruction::Lte);
+            }
+
+            Expr::GreaterThan(a, b) => {
+                self.compile_expr(*a.clone())?;
+                self.compile_expr(*b.clone())?;
+                self.emit(Instruction::Gt);
+            }
+
+            Expr::GreaterThanOrEqual(a, b) => {
+                self.compile_expr(*a.clone())?;
+                self.compile_expr(*b.clone())?;
+                self.emit(Instruction::Gte);
+            }
+
             Expr::Function { name, args, body } => {
                 let chunk_id = self.chunks.len();
                 self.chunks.push(Chunk::new(name));
@@ -242,8 +286,13 @@ impl Compiler {
             Expr::Block(exprs) => {
                 self.scope.push_scope();
 
-                for expr in exprs {
+                let last = exprs.len().saturating_sub(1);
+                for (i, expr) in exprs.iter().enumerate() {
                     self.compile_expr(expr.clone())?;
+
+                    if i != last && !Self::is_void(&expr.node) {
+                        self.emit(Instruction::Pop);
+                    }
                 }
 
                 self.scope.pop_scope();
@@ -252,6 +301,33 @@ impl Compiler {
             Expr::Return(v) => {
                 self.compile_expr(*v.clone())?;
                 self.emit(Instruction::Return);
+            }
+
+            Expr::If(branches) => {
+                let mut end_jumps = Vec::new();
+                let mut has_else = false;
+
+                for (condition, body) in branches {
+                    match condition {
+                        Some(cond) => {
+                            self.compile_expr(cond.clone())?;
+                            let skip = self.emit_jump(Instruction::JumpIfFalse(0));
+                            self.compile_expr(body.clone())?;
+                            let end = self.emit_jump(Instruction::Jump(0));
+                            self.patch_jump(skip);
+                            end_jumps.push(end);
+                        }
+
+                        None => {
+                            has_else = true;
+                            self.compile_expr(body.clone())?;
+                        }
+                    }
+                }
+
+                for jump in end_jumps {
+                    self.patch_jump(jump);
+                }
             }
 
             v => {

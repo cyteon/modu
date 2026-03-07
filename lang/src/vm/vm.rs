@@ -113,6 +113,48 @@ impl VM {
                     self.stack.push(a.r#mod(&b)?);
                 }
 
+                Instruction::Eq => {
+                    let b = self.stack.pop().unwrap_or(Value::Null);
+                    let a = self.stack.pop().unwrap_or(Value::Null);
+
+                    self.stack.push(Value::Bool(a == b));
+                }
+
+                Instruction::Neq => {
+                    let b = self.stack.pop().unwrap_or(Value::Null);
+                    let a = self.stack.pop().unwrap_or(Value::Null);
+
+                    self.stack.push(Value::Bool(a != b));
+                }
+
+                Instruction::Lt => {
+                    let b = self.stack.pop().unwrap_or(Value::Null);
+                    let a = self.stack.pop().unwrap_or(Value::Null);
+
+                    self.stack.push(Value::Bool(a < b));
+                }
+
+                Instruction::Lte => {
+                    let b = self.stack.pop().unwrap_or(Value::Null);
+                    let a = self.stack.pop().unwrap_or(Value::Null);
+
+                    self.stack.push(Value::Bool(a <= b));
+                }
+
+                Instruction::Gt => {
+                    let b = self.stack.pop().unwrap_or(Value::Null);
+                    let a = self.stack.pop().unwrap_or(Value::Null);
+
+                    self.stack.push(Value::Bool(a > b));
+                }
+
+                Instruction::Gte => {
+                    let b = self.stack.pop().unwrap_or(Value::Null);
+                    let a = self.stack.pop().unwrap_or(Value::Null);
+
+                    self.stack.push(Value::Bool(a >= b));
+                }
+
                 Instruction::Call(argc) => {
                     let callee = self.stack[self.stack.len() - 1 - argc].clone();
 
@@ -195,6 +237,26 @@ impl VM {
                 Instruction::LoadLocal(slot) => {
                     let v = self.stack[frame.base + slot].clone();
                     self.stack.push(v);
+                }
+
+                Instruction::JumpIfFalse(offset) => {
+                    let condition = self.stack.pop().unwrap_or(Value::Null);
+
+                    if !condition.truthy() {
+                        frame.ip = *offset;
+                    }
+                }
+
+                Instruction::JumpIfTrue(offset) => {
+                    let condition = self.stack.pop().unwrap_or(Value::Null);
+
+                    if condition.truthy() {
+                        frame.ip = *offset;
+                    }
+                }
+
+                Instruction::Jump(offset) => {
+                    frame.ip = *offset;
                 }
 
                 _ => {
