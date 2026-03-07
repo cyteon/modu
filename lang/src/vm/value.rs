@@ -125,7 +125,7 @@ impl Value {
                 if *b == 0 {
                     Err("division by zero".to_string())
                 } else {
-                    Ok(Value::Int(a / b))
+                    Ok(Value::Float((*a as f64) / (*b as f64)))
                 }
             }
             (Value::Float(a), Value::Float(b)) => {

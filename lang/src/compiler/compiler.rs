@@ -117,7 +117,7 @@ impl Compiler {
                             }
                         }
                     }
-                    
+
                     Expr::IndexAccess { object, index } => todo!(),
 
                     Expr::PropertyAccess { object, property } => todo!(),
@@ -165,6 +165,36 @@ impl Compiler {
             Expr::Neg(v) => {
                 self.compile_expr(*v.clone())?;
                 self.emit(Instruction::Neg);
+            }
+
+            Expr::Add(a, b) => {
+                self.compile_expr(*a.clone())?;
+                self.compile_expr(*b.clone())?;
+                self.emit(Instruction::Add);
+            }
+
+            Expr::Sub(a, b) => {
+                self.compile_expr(*a.clone())?;
+                self.compile_expr(*b.clone())?;
+                self.emit(Instruction::Sub);
+            }
+
+            Expr::Mul(a, b) => {
+                self.compile_expr(*a.clone())?;
+                self.compile_expr(*b.clone())?;
+                self.emit(Instruction::Mul);
+            }
+
+            Expr::Div(a, b) => {
+                self.compile_expr(*a.clone())?;
+                self.compile_expr(*b.clone())?;
+                self.emit(Instruction::Div);
+            }
+
+            Expr::Mod(a, b) => {
+                self.compile_expr(*a.clone())?;
+                self.compile_expr(*b.clone())?;
+                self.emit(Instruction::Mod);
             }
 
             v => {
