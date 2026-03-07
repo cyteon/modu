@@ -1,3 +1,6 @@
+/*print("test".len());
+print("i like potatoes".split(" "));*/
+
 
 if 1 == 1 {
     print("1 == 1");
@@ -62,7 +65,9 @@ for n in 0..10 {
 print("\narrays:");
 
 let arr = [10, 20, 30];
+arr[0] = 100;
 print(arr);
+print(arr[0]);
 
 for v in arr {
     print("v: ", v);

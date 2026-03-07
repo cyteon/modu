@@ -227,6 +227,61 @@ impl VM {
                     self.stack.push(Value::Array(elements));
                 }
 
+                Instruction::IndexGet => {
+                    let index = self.stack.pop().unwrap_or(Value::Null);
+                    let target = self.stack.pop().unwrap_or(Value::Null);
+
+                    match target {
+                        Value::Array(elements) => {
+                            let index = match index {
+                                Value::Int(i) => i,
+                                _ => return Err(format!("expected int index for array but got {}", index.type_name())),
+                            };
+
+                            if index < 0 || (index as usize) >= elements.len() {
+                                self.stack.push(Value::Null);
+                            } else {
+                                self.stack.push(elements[index as usize].clone());
+                            }
+                        }
+
+                        Value::String(s) => todo!(),
+
+                        _ => return Err(format!("{} is not indexable", target.type_name())),
+                    }
+                }
+
+                Instruction::IndexSet => {
+                    let op = self.stack.pop().unwrap_or(Value::Null);
+                    let value = self.stack.pop().unwrap_or(Value::Null);
+                    let index = self.stack.pop().unwrap_or(Value::Null);
+                    let target = self.stack.pop().unwrap_or(Value::Null);
+
+                    let result = match op {
+                        Value::Null => {
+                            match (target, index) {
+                                (Value::Array(mut elements), Value::Int(i)) => {
+                                    if i < 0 || (i as usize) >= elements.len() {
+                                        return Err(format!("index out of bounds: {}", i));
+                                    }
+
+                                    elements[i as usize] = value;
+                                    Value::Array(elements)
+                                }
+
+                                (t, i) => return Err(format!("cannot index {} with {}", t.type_name(), i.type_name())),
+                            }
+                        }
+
+                        _ => {
+                            dbg!(op);
+                            todo!()
+                        }
+                    };
+
+                    self.stack.push(result);
+                }
+
                 Instruction::MakeRange { inclusive } => {
                     let end = self.stack.pop().unwrap_or(Value::Null);
                     let start = self.stack.pop().unwrap_or(Value::Null);

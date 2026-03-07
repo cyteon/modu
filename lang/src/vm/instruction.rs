@@ -24,6 +24,7 @@ pub enum Instruction {
     MakeArray(usize),
     MakeRange { inclusive: bool },
 
+    GetProperty(String),
     IndexGet,
     IndexSet,
 

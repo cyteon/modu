@@ -145,7 +145,43 @@ impl Compiler {
                         }
                     }
 
-                    Expr::IndexAccess { object, index } => todo!(),
+                    Expr::IndexAccess { object, index } => {
+                        self.compile_expr(*object.clone())?;
+                        self.compile_expr(*index.clone())?;
+                        self.compile_expr(*value.clone())?;
+
+                        if let Some(op) = operator {
+                            self.emit(Instruction::IndexGet);
+
+                            match op {
+                                AssignOp::Add => { self.emit(Instruction::Add); }
+                                AssignOp::Sub => { self.emit(Instruction::Sub); }
+                                AssignOp::Mul => { self.emit(Instruction::Mul); }
+                                AssignOp::Div => { self.emit(Instruction::Div); }
+                                AssignOp::Mod => { self.emit(Instruction::Mod); }
+                            }  
+                        } else {
+                            self.emit(Instruction::PushNull);
+                        }
+
+                        self.emit(Instruction::IndexSet);
+
+                        match &object.node {
+                            Expr::Identifier(name) => {
+                                match self.scope.resolve(name) {
+                                    Variable::Local(index) => {
+                                        self.emit(Instruction::StoreLocal(index));
+                                    }
+
+                                    Variable::Global(_) => {
+                                        self.emit(Instruction::StoreGlobal(name.to_string()));
+                                    }
+                                }
+                            }
+
+                            _ => return Err("todo: support compex index assignment targets".to_string()),
+                        }
+                    }
 
                     Expr::PropertyAccess { object, property } => todo!(),
 
@@ -162,6 +198,18 @@ impl Compiler {
                 }
 
                 self.emit(Instruction::Call(argc));
+            }
+
+            Expr::PropertyAccess { object, property } => {
+                self.compile_expr(*object.clone())?;
+                self.emit(Instruction::GetProperty(property.clone()));
+            }
+
+
+            Expr::IndexAccess { object, index } => {
+                self.compile_expr(*object.clone())?;
+                self.compile_expr(*index.clone())?;
+                self.emit(Instruction::IndexGet);
             }
 
             Expr::Int(i) => {
