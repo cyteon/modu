@@ -9,6 +9,7 @@ pub struct Compiler {
     pub chunks: Vec<Chunk>,
     scope: ScopeStack,
     current_chunk: usize,
+    break_patches: Vec<Vec<usize>>,
 }
 
 impl Compiler {
@@ -17,6 +18,7 @@ impl Compiler {
             chunks: vec![Chunk::new("main")],
             scope: ScopeStack::new(),
             current_chunk: 0,
+            break_patches: Vec::new(),
         }
     }
 
@@ -181,8 +183,7 @@ impl Compiler {
             }
 
             Expr::Null => {
-                let index = self.add_constant(Value::Null);
-                self.emit(Instruction::Push(index));
+                self.emit(Instruction::PushNull);
             }
 
             Expr::Neg(v) => {
@@ -283,6 +284,21 @@ impl Compiler {
                 self.store_variable(name);
             },
 
+            Expr::InfiniteLoop { body } => {
+                let start = self.chunks[self.current_chunk].instructions.len();
+                self.break_patches.push(Vec::new());
+
+                self.compile_expr(*body.clone())?;
+                self.emit(Instruction::Jump(start));
+
+                let breaks = self.break_patches.pop().unwrap();
+                for b in breaks {
+                    self.patch_jump(b);
+                }
+
+                self.emit(Instruction::PushNull);
+            }
+
             Expr::Block(exprs) => {
                 self.scope.push_scope();
 
@@ -301,6 +317,18 @@ impl Compiler {
             Expr::Return(v) => {
                 self.compile_expr(*v.clone())?;
                 self.emit(Instruction::Return);
+            }
+
+            Expr::Break => {
+                let jump = self.emit_jump(Instruction::Jump(0));
+
+                if let Some(breaks) = self.break_patches.last_mut() {
+                    breaks.push(jump);
+                } else {
+                    return Err("break outside of loop".to_string()); // this shouldnt happen because of the validator
+                }
+
+                self.emit(Instruction::PushNull);
             }
 
             Expr::If(branches) => {

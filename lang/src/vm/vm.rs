@@ -73,6 +73,10 @@ impl VM {
                     self.stack.push(v);
                 }
 
+                Instruction::PushNull => {
+                    self.stack.push(Value::Null);
+                }
+
                 Instruction::Neg => {
                     let a = self.stack.pop().unwrap_or(Value::Null);
                     self.stack.push(a.neg()?);

@@ -16,9 +16,20 @@ if false {
 }
 
 if false {
-
+    print("should not print");
 } else if false {
     print("should not print");
 } else {
     print("both conditions are false");
+}
+
+let i = 0;
+
+loop {
+    print("i: ", i);
+    i += 1;
+
+    if i == 5 {
+        break;
+    }
 }
