@@ -12,7 +12,7 @@ pub enum Value {
     Object(HashMap<String, Value>),
 
     Function { chunk_id: usize, arity: usize },
-    InternalFn(InternalFn),
+    NativeFn(NativeFn),
 
     Range {
         start: i64,
@@ -22,14 +22,26 @@ pub enum Value {
 }
 
 #[derive(Clone)]
-pub struct InternalFn {
+pub struct NativeFn {
     pub name: String,
     pub func: fn(Vec<Value>) -> Result<Value, String>,
 }
 
-impl std::fmt::Debug for InternalFn {
+#[derive(Clone)]
+pub struct BuiltinFn {
+    pub name: String,
+    pub func: fn(Vec<Value>) -> Result<(Value, Value), String>, // (return value, value to replace self with)
+}
+
+impl std::fmt::Debug for NativeFn {
     fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
         write!(f, "<internal fn {}>", self.name)
+    }
+}
+
+impl std::fmt::Debug for BuiltinFn {
+    fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
+        write!(f, "<builtin fn {}>", self.name)
     }
 }
 
@@ -142,7 +154,7 @@ impl Value {
             Value::Null => "null",
             Value::Array(_) => "array",
             Value::Object { .. } => "object",
-            Value::Function { .. } | Value::InternalFn(_) => "function",
+            Value::Function { .. } | Value::NativeFn(_) => "function",
             Value::Range { .. } => "range",
         }
     }

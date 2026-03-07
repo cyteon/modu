@@ -1,4 +1,4 @@
-use crate::vm::value::{InternalFn, Value};
+use crate::vm::value::{NativeFn, Value};
 
 #[cfg(target_arch = "wasm32")]
 unsafe extern "C" {
@@ -10,11 +10,11 @@ unsafe extern "C" {
     fn _modu_input(ptr: *const u8, len: usize, out_len: *mut usize) -> *mut u8;
 }
 
-fn native(name: &str, func: fn(Vec<Value>) -> Result<Value, String>) -> InternalFn {
-    InternalFn { name: name.to_string(), func }
+fn native(name: &str, func: fn(Vec<Value>) -> Result<Value, String>) -> NativeFn {
+    NativeFn { name: name.to_string(), func }
 }
 
-pub fn get_functions() -> Vec<InternalFn> {
+pub fn get_functions() -> Vec<NativeFn> {
     vec![
         native("print", print),
         native("int", int),

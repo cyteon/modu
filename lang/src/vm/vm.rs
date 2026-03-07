@@ -30,7 +30,7 @@ impl VM {
         };
 
         for func in crate::functions::get_functions() {
-            vm.globals.insert(func.name.clone(), Value::InternalFn(func));
+            vm.globals.insert(func.name.clone(), Value::NativeFn(func));
         }
 
         vm
@@ -163,7 +163,7 @@ impl VM {
                     let callee = self.stack[self.stack.len() - 1 - argc].clone();
 
                     match callee {
-                        Value::InternalFn(func) => {
+                        Value::NativeFn(func) => {
                             let args: Vec<Value> = self.stack.drain(self.stack.len() - argc..).collect();
                             self.stack.pop();
 
@@ -280,6 +280,27 @@ impl VM {
                     };
 
                     self.stack.push(result);
+                }
+
+                Instruction::GetProperty(name) => {
+                    let target = self.stack.pop().unwrap_or(Value::Null);
+
+                    match target {
+                        Value::Object(properties) => {
+                            let value = match properties.get(name) {
+                                Some(v) => v.clone(),
+                                None => return Err(format!("undefined property '{}'", name)),
+                            };
+
+                            self.stack.push(value);
+                        }
+
+                        Value::String(s) => {
+                            
+                        }
+
+                        _ => return Err(format!("cannot get property '{}' on {}", name, target.type_name())),
+                    }
                 }
 
                 Instruction::MakeRange { inclusive } => {
