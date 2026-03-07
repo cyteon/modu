@@ -20,8 +20,16 @@ pub enum Instruction {
 
     Call(usize),
     Return,
-    
+
     MakeArray(usize),
+    MakeRange { inclusive: bool },
+
     IndexGet,
     IndexSet,
+
+    IterNext {
+        slot_iter: usize,
+        slot_index: usize,
+        slot_var: usize,
+    }
 }

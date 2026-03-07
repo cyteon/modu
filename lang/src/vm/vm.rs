@@ -215,6 +215,53 @@ impl VM {
                     self.stack.push(result);
                 }
 
+                Instruction::MakeRange { inclusive } => {
+                    let end = self.stack.pop().unwrap_or(Value::Null);
+                    let start = self.stack.pop().unwrap_or(Value::Null);
+
+                    match (start, end) {
+                        (Value::Int(a), Value::Int(b)) => {
+                            if *inclusive {
+                                self.stack.push(Value::Range { start: a, end: b + 1, inclusive: true });
+                            } else {
+                                self.stack.push(Value::Range { start: a, end: b, inclusive: false });
+                            }
+                        }
+
+                        _ => return Err("range bounds must be ints".to_string()),
+                    }
+                }
+
+                Instruction::IterNext { slot_iter, slot_index, slot_var } => {
+                    let iter = self.stack[frame.base + slot_iter].clone();
+                    let index = match self.stack[frame.base + slot_index].clone() {
+                        Value::Null => Value::Int(0),
+                        v => v,
+                    };
+
+                    match iter {
+                        Value::Range { start, end, inclusive } => {
+                            let index = match index {
+                                Value::Int(i) => i,
+                                _ => return Err(format!("expected int index for range but got {}", index.type_name())),
+                            };
+
+                            let next = start + index;
+
+                            if (inclusive && next > end) || (!inclusive && next >= end) {
+                                self.stack.push(Value::Bool(false));
+                            } else {
+                                let frame = self.frames.last_mut().unwrap();
+                                self.stack[frame.base + slot_index] = Value::Int(index + 1);
+                                self.stack[frame.base + slot_var] = Value::Int(next);
+                                self.stack.push(Value::Bool(true));
+                            }
+                        }
+                        Value::Array(elements) => todo!(),
+                        _ => return Err(format!("{} is not iterable", iter.type_name())),
+                    }
+                }
+
                 Instruction::Pop => {
                     self.stack.pop();
                 }

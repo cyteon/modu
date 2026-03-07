@@ -299,6 +299,80 @@ impl Compiler {
                 self.emit(Instruction::PushNull);
             }
 
+            Expr::WhileLoop { condition, body } => {
+                let start = self.chunks[self.current_chunk].instructions.len();
+                self.break_patches.push(Vec::new());
+
+                self.compile_expr(*condition.clone())?;
+                let exit = self.emit_jump(Instruction::JumpIfFalse(0));
+
+                self.compile_expr(*body.clone())?;
+                self.emit(Instruction::Jump(start));
+
+                let breaks = self.break_patches.pop().unwrap();
+                for b in breaks {
+                    self.patch_jump(b);
+                }
+
+                self.patch_jump(exit);
+                self.emit(Instruction::PushNull);
+            }
+
+            Expr::Range { start, end } => {
+                self.compile_expr(*start.clone())?;
+                self.compile_expr(*end.clone())?;
+;
+                self.emit(Instruction::MakeRange { inclusive: false });
+            }
+
+            Expr::InclusiveRange { start, end } => {
+                self.compile_expr(*start.clone())?;
+                self.compile_expr(*end.clone())?;
+                self.emit(Instruction::MakeRange { inclusive: true });
+            }
+
+            Expr::ForLoop { iterator_name, iterator_range, body } => {
+                self.scope.push_scope();
+
+                self.compile_expr(*iterator_range.clone())?;
+                let slot_iter = self.scope.define_local("__iter__");
+                self.emit(Instruction::StoreLocal(slot_iter));
+
+                let zero = self.add_constant(Value::Int(0));
+                self.emit(Instruction::Push(zero));
+                let slot_index = self.scope.define_local("__index__");
+                self.emit(Instruction::StoreLocal(slot_index));
+
+                self.emit(Instruction::PushNull);
+                let var = self.scope.define_local(iterator_name);
+                self.emit(Instruction::StoreLocal(var));
+
+                // loop header
+                let start = self.chunks[self.current_chunk].instructions.len();
+                self.break_patches.push(Vec::new());
+
+                self.emit(Instruction::IterNext {
+                    slot_iter,
+                    slot_index,
+                    slot_var: var,
+                });
+
+                let exit = self.emit_jump(Instruction::JumpIfFalse(0));
+                
+                // body
+                self.compile_expr(*body.clone())?;
+                self.emit(Instruction::Jump(start));
+
+                self.patch_jump(exit);
+                let breaks = self.break_patches.pop().unwrap();
+                for b in breaks {
+                    self.patch_jump(b);
+                }
+
+                self.scope.pop_scope();
+                self.emit(Instruction::PushNull);
+            }
+
             Expr::Block(exprs) => {
                 self.scope.push_scope();
 

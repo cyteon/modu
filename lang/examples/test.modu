@@ -23,6 +23,8 @@ if false {
     print("both conditions are false");
 }
 
+print("\nloop:");
+
 let i = 0;
 
 loop {
@@ -32,4 +34,27 @@ loop {
     if i == 5 {
         break;
     }
+}
+
+print("\nwhile loop:");
+
+i = 0;
+
+while i < 5 {
+    print("i: ", i);
+    i += 1;
+}
+
+print("\nfor loop:");
+
+for n in 0..10 {
+    print("n: ", n);
+
+    if n == 5 {
+        break;
+    } else {
+        continue;
+    }
+
+    print("uh oh");
 }
