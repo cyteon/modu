@@ -47,6 +47,19 @@ impl PartialEq for Value {
     }
 }
 
+impl std::fmt::Display for Value {
+    fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
+        match self {
+            Value::Int(n) => write!(f, "{}", n),
+            Value::Float(n) => write!(f, "{}", n),
+            Value::String(s) => write!(f, "{}", s),
+            Value::Bool(b) => write!(f, "{}", b),
+            Value::Null => write!(f, "null"),
+            _ => write!(f, "{:?}", self),
+        }
+    }
+}
+
 impl Value {
     fn truthy(&self) -> bool {
         match self {

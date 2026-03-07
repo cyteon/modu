@@ -22,12 +22,18 @@ const FRAMES_MAX: usize = 256;
 
 impl VM {
     pub fn new(chunks: Vec<Chunk>) -> Self {
-        Self {
+        let mut vm = Self {
             chunks,
             stack: Vec::with_capacity(STACK_MAX),
             frames: Vec::with_capacity(FRAMES_MAX),
             globals: HashMap::new(),
+        };
+
+        for func in crate::functions::get_functions() {
+            vm.globals.insert(func.name.clone(), Value::InternalFn(func));
         }
+
+        vm
     }
 
     pub fn run(&mut self) -> Result<(), String> {
@@ -51,6 +57,10 @@ impl VM {
             let frame = self.frames.last_mut().unwrap();
 
             if frame.ip >= self.chunks[frame.chunk_id].instructions.len() {
+                if self.frames.len() == 1 {
+                    return Ok(());
+                }
+
                 continue;
             }
 
@@ -61,6 +71,33 @@ impl VM {
                 Instruction::Push(i) => {
                     let v = self.chunks[frame.chunk_id].constants[*i].clone();
                     self.stack.push(v);
+                }
+
+                Instruction::StoreGlobal(name) => {
+                    let v = self.stack.pop().unwrap();
+                    self.globals.insert(name.clone(), v);
+                }
+
+                Instruction::LoadGlobal(name) => {
+                    let v = self.globals.get(name).cloned().unwrap_or(Value::Null);
+                    self.stack.push(v);
+                }
+
+                Instruction::Call(argc) => {
+                    let callee = self.stack[self.stack.len() - 1 - argc].clone();
+
+                    match callee {
+                        Value::InternalFn(func) => {
+                            let args: Vec<Value> = self.stack.drain(self.stack.len() - argc..).collect();
+                            self.stack.pop();
+
+                            let result = (func.func)(args);
+                        }
+
+                        _ => {
+                            dbg!(callee);
+                        }
+                    }
                 }
 
                 _ => todo!(),
