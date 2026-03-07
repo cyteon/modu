@@ -215,6 +215,18 @@ impl VM {
                     self.stack.push(result);
                 }
 
+                Instruction::MakeArray(len) => {
+                    let mut elements = Vec::with_capacity(*len);
+
+                    for _ in 0..*len {
+                        let element = self.stack.pop().unwrap_or(Value::Null);
+                        elements.push(element);
+                    }
+
+                    elements.reverse();
+                    self.stack.push(Value::Array(elements));
+                }
+
                 Instruction::MakeRange { inclusive } => {
                     let end = self.stack.pop().unwrap_or(Value::Null);
                     let start = self.stack.pop().unwrap_or(Value::Null);
@@ -257,7 +269,23 @@ impl VM {
                                 self.stack.push(Value::Bool(true));
                             }
                         }
-                        Value::Array(elements) => todo!(),
+
+                        Value::Array(elements) => {
+                            let index = match index {
+                                Value::Int(i) => i,
+                                _ => return Err(format!("expected int index for array but got {}", index.type_name())),
+                            };
+
+                            if index < 0 || (index as usize) >= elements.len() {
+                                self.stack.push(Value::Bool(false));
+                            } else {
+                                let frame = self.frames.last_mut().unwrap();
+                                self.stack[frame.base + slot_index] = Value::Int(index + 1);
+                                self.stack[frame.base + slot_var] = elements[index as usize].clone();
+                                self.stack.push(Value::Bool(true));
+                            }
+                        }
+
                         _ => return Err(format!("{} is not iterable", iter.type_name())),
                     }
                 }

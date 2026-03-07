@@ -184,6 +184,14 @@ impl Compiler {
                 self.emit(Instruction::Push(index));
             }
 
+            Expr::Array(elements) => {
+                for element in elements {
+                    self.compile_expr(element.clone())?;
+                }
+
+                self.emit(Instruction::MakeArray(elements.len()));
+            }
+            
             Expr::Null => {
                 self.emit(Instruction::PushNull);
             }

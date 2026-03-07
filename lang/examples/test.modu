@@ -58,3 +58,12 @@ for n in 0..10 {
 
     print("uh oh");
 }
+
+print("\narrays:");
+
+let arr = [10, 20, 30];
+print(arr);
+
+for v in arr {
+    print("v: ", v);
+}

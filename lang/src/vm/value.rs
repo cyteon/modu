@@ -70,6 +70,12 @@ impl std::fmt::Display for Value {
             }
             Value::Bool(b) => write!(f, "{}", b),
             Value::Null => write!(f, "null"),
+
+            Value::Array(arr) => {
+                let elements: Vec<String> = arr.iter().map(|v| format!("{}", v)).collect();
+                write!(f, "[{}]", elements.join(", "))
+            }
+
             _ => write!(f, "{:?}", self),
         }
     }
