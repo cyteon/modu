@@ -222,7 +222,7 @@ impl VM {
                     match (start, end) {
                         (Value::Int(a), Value::Int(b)) => {
                             if *inclusive {
-                                self.stack.push(Value::Range { start: a, end: b + 1, inclusive: true });
+                                self.stack.push(Value::Range { start: a, end: b, inclusive: true });
                             } else {
                                 self.stack.push(Value::Range { start: a, end: b, inclusive: false });
                             }

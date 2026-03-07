@@ -10,6 +10,7 @@ pub struct Compiler {
     scope: ScopeStack,
     current_chunk: usize,
     break_patches: Vec<Vec<usize>>,
+    continue_targets: Vec<usize>,
 }
 
 impl Compiler {
@@ -19,6 +20,7 @@ impl Compiler {
             scope: ScopeStack::new(),
             current_chunk: 0,
             break_patches: Vec::new(),
+            continue_targets: Vec::new(),
         }
     }
 
@@ -287,6 +289,7 @@ impl Compiler {
             Expr::InfiniteLoop { body } => {
                 let start = self.chunks[self.current_chunk].instructions.len();
                 self.break_patches.push(Vec::new());
+                self.continue_targets.push(start);
 
                 self.compile_expr(*body.clone())?;
                 self.emit(Instruction::Jump(start));
@@ -302,6 +305,7 @@ impl Compiler {
             Expr::WhileLoop { condition, body } => {
                 let start = self.chunks[self.current_chunk].instructions.len();
                 self.break_patches.push(Vec::new());
+                self.continue_targets.push(start);
 
                 self.compile_expr(*condition.clone())?;
                 let exit = self.emit_jump(Instruction::JumpIfFalse(0));
@@ -350,6 +354,7 @@ impl Compiler {
                 // loop header
                 let start = self.chunks[self.current_chunk].instructions.len();
                 self.break_patches.push(Vec::new());
+                self.continue_targets.push(start);
 
                 self.emit(Instruction::IterNext {
                     slot_iter,
@@ -400,6 +405,18 @@ impl Compiler {
                     breaks.push(jump);
                 } else {
                     return Err("break outside of loop".to_string()); // this shouldnt happen because of the validator
+                }
+
+                self.emit(Instruction::PushNull);
+            }
+
+            Expr::Continue => {
+                match self.continue_targets.last() {
+                    Some(target) => {
+                        let jump = self.emit_jump(Instruction::Jump(*target));
+                    }
+
+                    None => return Err("continue outside of loop".to_string()),
                 }
 
                 self.emit(Instruction::PushNull);
