@@ -4,4 +4,4 @@ fn test(a, b) {
 }
 
 print(test(1, 2));
-print(int("test"));
+print(int("5"));

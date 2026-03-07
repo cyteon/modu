@@ -112,9 +112,9 @@ pub fn repl() {
 
                 if open_functions == 0 {
                     let ast = parse(&buffer, "<repl>");
-
+                    buffer.clear();
+        
                     if let Err(err) = ast {
-                        buffer.clear();
                         continue;
                     }
 

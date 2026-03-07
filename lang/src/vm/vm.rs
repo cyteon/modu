@@ -121,7 +121,11 @@ impl VM {
                             let args: Vec<Value> = self.stack.drain(self.stack.len() - argc..).collect();
                             self.stack.pop();
 
-                            let result = (func.func)(args);
+                            match (func.func)(args) {
+                                Ok(result) => self.stack.push(result),
+                                Err(e) => return Err(format!("error calling {}(): {}", func.name, e)),
+                            }
+                            
                         }
 
                         Value::Function { chunk_id, arity } => {
@@ -184,7 +188,7 @@ impl VM {
                         Some(v) => v.clone(),
                         None => return Err(format!("undefined variable '{}'", name)),
                     };
-                    
+
                     self.stack.push(v);
                 }
 

@@ -61,7 +61,7 @@ impl std::fmt::Display for Value {
 }
 
 impl Value {
-    fn truthy(&self) -> bool {
+    pub fn truthy(&self) -> bool {
         match self {
             Value::Int(n) => *n != 0,
             Value::Float(f) => *f != 0.0,
