@@ -73,8 +73,48 @@ impl VM {
                     self.stack.push(v);
                 }
 
+                Instruction::Neg => {
+                    let a = self.stack.pop().unwrap_or(Value::Null);
+                    self.stack.push(a.neg()?);
+                }
+
+                Instruction::Add => {
+                    let b = self.stack.pop().unwrap_or(Value::Null);
+                    let a = self.stack.pop().unwrap_or(Value::Null);
+
+                    self.stack.push(a.add(&b)?);
+                }
+
+                Instruction::Sub => {
+                    let b = self.stack.pop().unwrap_or(Value::Null);
+                    let a = self.stack.pop().unwrap_or(Value::Null);
+
+                    self.stack.push(a.sub(&b)?);
+                }
+
+                Instruction::Mul => {
+                    let b = self.stack.pop().unwrap_or(Value::Null);
+                    let a = self.stack.pop().unwrap_or(Value::Null);
+
+                    self.stack.push(a.mul(&b)?);
+                }
+
+                Instruction::Div => {
+                    let b = self.stack.pop().unwrap_or(Value::Null);
+                    let a = self.stack.pop().unwrap_or(Value::Null);
+
+                    self.stack.push(a.div(&b)?);
+                }
+
+                Instruction::Mod => {
+                    let b = self.stack.pop().unwrap_or(Value::Null);
+                    let a = self.stack.pop().unwrap_or(Value::Null);
+
+                    self.stack.push(a.r#mod(&b)?);
+                }
+
                 Instruction::StoreGlobal(name) => {
-                    let v = self.stack.pop().unwrap();
+                    let v = self.stack.pop().unwrap_or(Value::Null);
                     self.globals.insert(name.clone(), v);
                 }
 
@@ -100,7 +140,10 @@ impl VM {
                     }
                 }
 
-                _ => todo!(),
+                _ => {
+                    dbg!(instruction);
+                    todo!();
+                }
             }
         }
     }

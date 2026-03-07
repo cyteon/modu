@@ -1,7 +1,7 @@
 use crate::vm::chunk::Chunk;
 use crate::vm::instruction::Instruction;
 use crate::vm::value::Value;
-use crate::ast::{SpannedExpr, Expr};
+use crate::ast::{SpannedExpr, Expr, AssignOp};
 
 use super::scope::{ScopeStack, Variable};
 
@@ -78,6 +78,54 @@ impl Compiler {
                 }
             }
 
+            Expr::Assign { target, value, operator } => {
+                match &target.node {
+                    Expr::Identifier(name) => {
+                        let var = self.scope.resolve(name);
+
+                        if let Some(op) = operator {
+                            match var {
+                                Variable::Local(index) => {
+                                    self.emit(Instruction::LoadLocal(index));
+                                }
+
+                                Variable::Global(_) => {
+                                    self.emit(Instruction::LoadGlobal(name.to_string()));
+                                }
+                            }
+
+                            self.compile_expr(*value.clone())?;
+
+                            match op {
+                                AssignOp::Add => { self.emit(Instruction::Add); }
+                                AssignOp::Sub => { self.emit(Instruction::Sub); }
+                                AssignOp::Mul => { self.emit(Instruction::Mul); }
+                                AssignOp::Div => { self.emit(Instruction::Div); }
+                                AssignOp::Mod => { self.emit(Instruction::Mod); }
+                            }  
+                        } else {
+                            self.compile_expr(*value.clone())?;
+                        }
+
+                        match var {
+                            Variable::Local(index) => {
+                                self.emit(Instruction::StoreLocal(index));
+                            }
+
+                            Variable::Global(_) => {
+                                self.emit(Instruction::StoreGlobal(name.to_string()));
+                            }
+                        }
+                    }
+                    
+                    Expr::IndexAccess { object, index } => todo!(),
+
+                    Expr::PropertyAccess { object, property } => todo!(),
+
+                    _ => return Err("invalid assignment target".to_string()),
+                }
+            }
+
             Expr::Call { callee, args } => {
                 self.compile_expr(*callee.clone())?;
 
@@ -114,7 +162,15 @@ impl Compiler {
                 self.emit(Instruction::Push(index));
             }
 
-            _ => todo!(),
+            Expr::Neg(v) => {
+                self.compile_expr(*v.clone())?;
+                self.emit(Instruction::Neg);
+            }
+
+            v => {
+                dbg!(v);
+                todo!();
+            }
         }
 
         Ok(())
