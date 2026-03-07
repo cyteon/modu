@@ -180,7 +180,11 @@ impl VM {
                 }
 
                 Instruction::LoadGlobal(name) => {
-                    let v = self.globals.get(name).cloned().unwrap_or(Value::Null);
+                    let v = match self.globals.get(name) {
+                        Some(v) => v.clone(),
+                        None => return Err(format!("undefined variable '{}'", name)),
+                    };
+                    
                     self.stack.push(v);
                 }
 

@@ -4,6 +4,7 @@ use rustyline::error::ReadlineError;
 use rustyline::{Editor, history::DefaultHistory, Helper, Completer, Hinter, Validator};
 use regex::Regex;
 use colored::Colorize;
+use std::collections::HashMap;
 use crate::parser::parse;
 
 #[derive(Completer, Helper, Hinter, Validator)]
@@ -83,6 +84,11 @@ pub fn repl() {
     let mut open_functions = 0;
     let mut buffer = String::new();
 
+    let mut globals: HashMap<String, crate::vm::value::Value> = HashMap::new();
+    for func in crate::functions::get_functions() {
+        globals.insert(func.name.clone(), crate::vm::value::Value::InternalFn(func));
+    }
+
     loop {
         let prompt = if open_functions > 0 {
             format!("|{}", " ".repeat(open_functions * 4))
@@ -105,7 +111,29 @@ pub fn repl() {
                 buffer.push('\n');
 
                 if open_functions == 0 {
-                    //parse(&buffer, "<repl>", context);
+                    let ast = parse(&buffer, "<repl>");
+
+                    if let Err(err) = ast {
+                        buffer.clear();
+                        continue;
+                    }
+
+                    let mut compiler = crate::compiler::compiler::Compiler::new();
+                    
+                    if let Err(e) = compiler.compile_program(ast.clone().unwrap()) {
+                        println!("{}: {}", "Compilation error".red(), e);
+                        continue;
+                    }
+
+                    let mut vm = crate::vm::vm::VM::new(compiler.chunks);
+                    vm.globals = globals.clone();
+
+                    if let Err(e) = vm.run() {
+                        println!("{}: {}", "Runtime error".red(), e);
+                        continue;
+                    }
+
+                    globals = vm.globals.clone();
                     buffer.clear();
                 }
             }

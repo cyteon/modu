@@ -44,7 +44,7 @@ pub fn run() {
     let mut compiler = crate::compiler::compiler::Compiler::new();
 
     if let Err(e) = compiler.compile_program(ast.clone().unwrap()) {
-        println!("{}: {}", "compilation error".red(), e);
+        println!("{}: {}", "Compilation error".red(), e);
         return;
     }
 
@@ -73,6 +73,10 @@ pub fn run() {
                     string.push_str(&format!("\t\t{:04}: {:?}\n", j, constant));
                 }
             }
+
+            if i != compiler.chunks.len() - 1 {
+                string.push_str("\n");
+            }
         }
 
         bytecode_file
@@ -83,7 +87,7 @@ pub fn run() {
     let mut vm = crate::vm::vm::VM::new(compiler.chunks);
 
     if let Err(e) = vm.run() {
-        println!("{}: {}", "runtime error".red(), e);
+        println!("{}: {}", "Runtime error".red(), e);
         return;
     }
 }
