@@ -1,6 +1,12 @@
 print("test".len());
 print("i like potatoes".split(" "));
-
+print("hello world".replace("world", "modu"));
+print("   scammer get trimmed   ".trim());
+print("shout".to_upper());
+print("WHISPER".to_lower());
+print("hello world".starts_with("hello"));
+print("hello world".ends_with("world"));
+print("chars: ", "abc".chars());
 
 if 1 == 1 {
     print("1 == 1");
