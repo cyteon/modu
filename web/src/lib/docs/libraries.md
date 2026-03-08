@@ -50,8 +50,3 @@ $ modu login
 ```bash
 $ modu publish
 ```
-
-## Package repos
-https://mpm.cyteon.dev - owner: [cyteon](https://github.com/cyteon) - offical
-
-Want to list yours? Make a PR to modify [this file](https://github.com/cyteon/modu/blob/main/web/src/lib/docs/libraries.md)
