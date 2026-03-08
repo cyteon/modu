@@ -106,7 +106,7 @@ pub enum Expr {
     // or import "module"; // will import as the module name
     Import {
         name: String,
-        import_as: Option<String>,
+        alias: Option<String>,
     },
 
     Module {

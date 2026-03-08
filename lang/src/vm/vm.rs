@@ -513,14 +513,6 @@ impl VM {
                     }
                 }
 
-                Instruction::JumpIfTrue(offset) => {
-                    let condition = self.stack.pop().unwrap_or(Value::Null);
-
-                    if condition.truthy() {
-                        frame.ip = *offset;
-                    }
-                }
-
                 Instruction::Jump(offset) => {
                     frame.ip = *offset;
                 }

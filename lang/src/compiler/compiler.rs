@@ -184,6 +184,7 @@ impl Compiler {
                     }
 
                     Expr::PropertyAccess { object, property } => todo!(),
+                    Expr::IndexAccess { object, index } => todo!(),
 
                     _ => return Err("invalid assignment target".to_string()),
                 }
@@ -419,7 +420,6 @@ impl Compiler {
             Expr::Range { start, end } => {
                 self.compile_expr(*start.clone())?;
                 self.compile_expr(*end.clone())?;
-;
                 self.emit(Instruction::MakeRange { inclusive: false });
             }
 
@@ -541,6 +541,10 @@ impl Compiler {
                 for jump in end_jumps {
                     self.patch_jump(jump);
                 }
+            }
+
+            Expr::Import { name, alias } => {
+                self.emit(Instruction::Import { path: name.clone(), alias: alias.clone() });
             }
 
             v => {

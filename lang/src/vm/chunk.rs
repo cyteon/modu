@@ -30,8 +30,7 @@ impl Chunk {
 
         match &mut self.instructions[jump] {
             Instruction::Jump(offset)
-            | Instruction::JumpIfFalse(offset)
-            | Instruction::JumpIfTrue(offset) => {
+            | Instruction::JumpIfFalse(offset)  => {
                 *offset = target;
             }
 

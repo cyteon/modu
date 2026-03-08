@@ -16,7 +16,6 @@ pub enum Instruction {
 
     Jump(usize),
     JumpIfFalse(usize),
-    JumpIfTrue(usize),
 
     Call(usize),
     CallMethod { argc: usize, target_local: Option<usize>, target_global: Option<String> },
@@ -34,5 +33,10 @@ pub enum Instruction {
         slot_iter: usize,
         slot_index: usize,
         slot_var: usize,
+    },
+
+    Import {
+        path: String,
+        alias: Option<String>,
     }
 }

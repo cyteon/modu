@@ -458,7 +458,7 @@ fn parser<'src>() -> impl Parser<
                     .labelled("optional 'as' clause")
             )
             .then(select! { (Token::Semicolon, span) => span }.labelled("semicolon"))
-            .map(|(((start, name_expr), import_as), end): (((Span, SpannedExpr), Option<(Span, String)>), Span)| {
+            .map(|(((start, name_expr), alias), end): (((Span, SpannedExpr), Option<(Span, String)>), Span)| {
                 let import_name = match name_expr.node {
                     Expr::String(s) => s,
                     _ => "".to_string(),
@@ -467,7 +467,7 @@ fn parser<'src>() -> impl Parser<
                 SpannedExpr {
                     node: Expr::Import {
                         name: import_name,
-                        import_as: import_as.map(|(_, n)| n),
+                        alias: alias.map(|(_, n)| n),
                     },
                     span: Span::from(start.start..end.end),
                 }

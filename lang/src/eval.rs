@@ -1111,8 +1111,8 @@ pub fn eval<'src>(expr: &'src SpannedExpr, context: &mut Context, depth: usize) 
                 Ok(Flow::Continue(Expr::Null))
             }
 
-            Expr::Import { name, import_as } => {
-                let import_as = match import_as {
+            Expr::Import { name, alias } => {
+                let alias = match alias {
                     Some(as_name) => as_name.clone(),
                     None => name.clone(),
                 };
@@ -1177,7 +1177,7 @@ pub fn eval<'src>(expr: &'src SpannedExpr, context: &mut Context, depth: usize) 
 
                     //crate::parser::parse(&source, path.to_str().unwrap(), &mut new_context);
 
-                    if import_as == "*" {
+                    if alias == "*" {
                         let base_scope = &new_context[0];
 
                         for scope in &new_context {
@@ -1202,14 +1202,14 @@ pub fn eval<'src>(expr: &'src SpannedExpr, context: &mut Context, depth: usize) 
                             }
                         }
 
-                        ctx_def(context, import_as.clone().replace(".modu", ""), Expr::Module {
+                        ctx_def(context, alias.clone().replace(".modu", ""), Expr::Module {
                             symbols
                         });
                     }
                 } else {
                     match crate::libraries::get_package(name) {
                         Some(module) => {
-                            if import_as == "*" {
+                            if alias == "*" {
                                 if let Expr::Module { symbols } = module {
                                     for (k, v) in symbols {
                                         ctx_def(context, k.clone(), v.node.clone());
@@ -1223,7 +1223,7 @@ pub fn eval<'src>(expr: &'src SpannedExpr, context: &mut Context, depth: usize) 
                                     });
                                 }
                             } else {
-                                ctx_def(context, import_as.clone(), module);
+                                ctx_def(context, alias.clone(), module);
                             }
                         }
 
@@ -1266,7 +1266,7 @@ pub fn eval<'src>(expr: &'src SpannedExpr, context: &mut Context, depth: usize) 
 
                             //crate::parser::parse(&source, path.to_str().unwrap(), &mut new_context);
 
-                            if import_as == "*" {
+                            if alias == "*" {
                                 let base_scope = &new_context[0];
 
                                 for scope in &new_context {
@@ -1291,7 +1291,7 @@ pub fn eval<'src>(expr: &'src SpannedExpr, context: &mut Context, depth: usize) 
                                     }
                                 }
 
-                                ctx_def(context, import_as.clone().replace(".modu", ""), Expr::Module {
+                                ctx_def(context, alias.clone().replace(".modu", ""), Expr::Module {
                                     symbols,
                                 });
                             }

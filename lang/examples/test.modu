@@ -85,3 +85,7 @@ print(smth);
 print(smth.get("test"));
 print(smth.nested);
 print(smth.nested["key"]);
+
+if "test" in "test" {
+    print("ye");
+}
