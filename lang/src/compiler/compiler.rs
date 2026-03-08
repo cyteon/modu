@@ -341,6 +341,18 @@ impl Compiler {
                 self.emit(Instruction::Gte);
             }
 
+            Expr::In(a, b) => {
+                self.compile_expr(*a.clone())?;
+                self.compile_expr(*b.clone())?;
+                self.emit(Instruction::In);
+            }
+
+            Expr::NotIn(a, b) => {
+                self.compile_expr(*a.clone())?;
+                self.compile_expr(*b.clone())?;
+                self.emit(Instruction::NotIn);
+            }
+
             Expr::Function { name, args, body } => {
                 let chunk_id = self.chunks.len();
                 self.chunks.push(Chunk::new(name));

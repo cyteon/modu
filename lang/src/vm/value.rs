@@ -61,6 +61,7 @@ impl PartialEq for Value {
             (Value::Bool(a), Value::Bool(b)) => a == b,
             (Value::Null, Value::Null) => true,
             (Value::Array(a), Value::Array(b)) => a == b,
+            (Value::Object(a), Value::Object(b)) => a == b,
             _ => false,
         }
     }
@@ -297,6 +298,14 @@ impl Value {
             Value::Int(n) => Ok(Value::Int(-n)),
             Value::Float(f) => Ok(Value::Float(-f)),
             _ => Err(format!("cannot negate {}", self.type_name())),
+        }
+    }
+
+    pub fn contains(&self, item: &Value) -> Result<bool, String> {
+        match (self, item){
+            (Value::String(s), Value::String(sub)) => Ok(s.contains(sub)),
+            (Value::Array(arr), item) => Ok(arr.contains(item)),
+            _ => Err(format!("cannot check if {} contains {}", self.type_name(), item.type_name())),
         }
     }
 }

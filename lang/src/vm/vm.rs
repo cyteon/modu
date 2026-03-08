@@ -159,6 +159,20 @@ impl VM {
                     self.stack.push(Value::Bool(a >= b));
                 }
 
+                Instruction::In => {
+                    let b = self.stack.pop().unwrap_or(Value::Null);
+                    let a = self.stack.pop().unwrap_or(Value::Null);
+
+                    self.stack.push(Value::Bool(b.contains(&a)?));
+                }
+
+                Instruction::NotIn => {
+                    let b = self.stack.pop().unwrap_or(Value::Null);
+                    let a = self.stack.pop().unwrap_or(Value::Null);
+
+                    self.stack.push(Value::Bool(!b.contains(&a)?));
+                }
+
                 Instruction::Call(argc) => {
                     let callee = self.stack[self.stack.len() - 1 - argc].clone();
 
