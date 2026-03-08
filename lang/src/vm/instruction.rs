@@ -23,6 +23,7 @@ pub enum Instruction {
     Return,
 
     MakeArray(usize),
+    MakeObject(usize),
     MakeRange { inclusive: bool },
 
     GetProperty(String),

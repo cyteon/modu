@@ -254,6 +254,17 @@ impl Compiler {
 
                 self.emit(Instruction::MakeArray(elements.len()));
             }
+
+            Expr::Object { properties } => {
+                for (key, value) in properties {
+                    self.compile_expr(value.clone())?;
+
+                    let key_index = self.add_constant(Value::String(key.clone()));
+                    self.emit(Instruction::Push(key_index));
+                }
+
+                self.emit(Instruction::MakeObject(properties.len()));
+            }
             
             Expr::Null => {
                 self.emit(Instruction::PushNull);

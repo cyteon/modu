@@ -78,3 +78,10 @@ print(arr[0]);
 for v in arr {
     print("v: ", v);
 }
+
+print("\nobjects:");
+let smth = { "test": 5, "hello": "world", "nested": { "key": "value" } };
+print(smth);
+print(smth.get("test"));
+print(smth.nested);
+print(smth.nested["key"]);

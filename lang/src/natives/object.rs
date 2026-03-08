@@ -1,248 +1,127 @@
-use crate::{ast::{Expr, InternalFunctionResponse, Spanned}, lexer::Span};
+use crate::vm::value::{NativeFn, Value};
 
-pub fn get(args: Vec<Spanned<Expr>>) -> Result<InternalFunctionResponse, (String, Span)> {
-    let object = match &args[0].node {
-        Expr::Object { properties } => properties,
-        _ => {
-            return Err((
-                "get expects an object as the first argument".to_string(),
-                args[0].span,
-            ))
-        }
-    };
-
-    let key = match &args[1].node {
-        Expr::String(s) => s,
-        _ => {
-            return Err((
-                "get expects a string as the second argument".to_string(),
-                args[1].span,
-            ))
-        }
-    };
-
-    match object.get(key) {
-        Some(value) => Ok(InternalFunctionResponse {
-            return_value: value.node.clone(),
-            replace_self: None,
-        }),
-
-        None => Err((
-            format!("Key '{}' not found in object", key),
-            args[1].span,
-        )),
+pub fn get_fn(name: String) -> Option<NativeFn> {
+    match name.as_str() {
+        "get" => Some(NativeFn::new("get", get)),
+        "set" => Some(NativeFn::new("set", set)),
+        "has" => Some(NativeFn::new("has", has)),
+        "delete" => Some(NativeFn::new("delete", delete)),
+        "stringify" => Some(NativeFn::new("stringify", stringify)),
+        "keys" => Some(NativeFn::new("keys", keys)),
+        "values" => Some(NativeFn::new("values", values)),
+        _ => None,
     }
 }
 
-pub fn set(args: Vec<Spanned<Expr>>) -> Result<InternalFunctionResponse, (String, Span)> {
-    let object = match &args[0].node {
-        Expr::Object { properties } => properties.clone(),
-        _ => {
-            return Err((
-                "set expects an object as the first argument".to_string(),
-                args[0].span,
-            ))
-        }
+pub fn get(this: Value, args: Vec<Value>) -> Result<(Value, Option<Value>), String> {
+    if args.len() != 1 {
+        return Err(format!("<object>.get() takes exactly one argument ({} given)", args.len()));
+    }
+
+    let key = match &args[0] {
+        Value::String(s) => s,
+        _ => return Err(format!("<object>.get() key must be a string, got {}", args[0].type_name())),
     };
 
-    let key = match &args[1].node {
-        Expr::String(s) => s.clone(),
-        _ => {
-            return Err((
-                "set expects a string as the second argument".to_string(),
-                args[1].span,
-            ))
-        }
-    };
-
-    let mut new_properties = object;
-    new_properties.insert(key, args[2].clone());
-
-    Ok(InternalFunctionResponse {
-        return_value: Expr::Null,
-        replace_self: Some(Expr::Object {
-            properties: new_properties,
-        }),
-    })
+    match this {
+        Value::Object(obj) => Ok((obj.get(key).cloned().unwrap_or(Value::Null), None)),
+        _ => unreachable!(),
+    }
 }
 
-pub fn has(args: Vec<Spanned<Expr>>) -> Result<InternalFunctionResponse, (String, Span)> {
-    let object = match &args[0].node {
-        Expr::Object { properties } => properties,
-        _ => {
-            return Err((
-                "has expects an object as the first argument".to_string(),
-                args[0].span,
-            ))
-        }
+pub fn set(this: Value, args: Vec<Value>) -> Result<(Value, Option<Value>), String> {
+    if args.len() != 2 {
+        return Err(format!("<object>.set() takes exactly two arguments ({} given)", args.len()));
+    }
+
+    let key = match &args[0] {
+        Value::String(s) => s,
+        _ => return Err(format!("<object>.set() key must be a string, got {}", args[0].type_name())),
     };
 
-    let key = match &args[1].node {
-        Expr::String(s) => s,
-        _ => {
-            return Err((
-                "has expects a string as the second argument".to_string(),
-                args[1].span,
-            ))
+    match this {
+        Value::Object(mut obj) => {
+            obj.insert(key.clone(), args[1].clone());
+            Ok((Value::Null, Some(Value::Object(obj))))
         }
-    };
 
-    let exists = object.contains_key(key);
-
-    Ok(InternalFunctionResponse {
-        return_value: Expr::Bool(exists),
-        replace_self: None,
-    })
+        _ => unreachable!(),
+    }
 }
 
-pub fn delete(args: Vec<Spanned<Expr>>) -> Result<InternalFunctionResponse, (String, Span)> {
-    let object = match &args[0].node {
-        Expr::Object { properties } => properties.clone(),
-        _ => {
-            return Err((
-                "delete expects an object as the first argument".to_string(),
-                args[0].span,
-            ))
-        }
+pub fn has(this: Value, args: Vec<Value>) -> Result<(Value, Option<Value>), String> {
+    if args.len() != 1 {
+        return Err(format!("<object>.has() takes exactly one argument ({} given)", args.len()));
+    }
+
+    let key = match &args[0] {
+        Value::String(s) => s,
+        _ => return Err(format!("<object>.has() key must be a string, got {}", args[0].type_name())),
     };
 
-    let key = match &args[1].node {
-        Expr::String(s) => s.clone(),
-        _ => {
-            return Err((
-                "delete expects a string as the second argument".to_string(),
-                args[1].span,
-            ))
-        }
+    match this {
+        Value::Object(obj) => Ok((Value::Bool(obj.contains_key(key)), None)),
+        _ => unreachable!(),
+    }
+}
+
+pub fn delete(this: Value, args: Vec<Value>) -> Result<(Value, Option<Value>), String> {
+    if args.len() != 1 {
+        return Err(format!("<object>.delete() takes exactly one argument ({} given)", args.len()));
+    }
+
+    let key = match &args[0] {
+        Value::String(s) => s,
+        _ => return Err(format!("<object>.delete() key must be a string, got {}", args[0].type_name())),
     };
 
-    let mut new_properties = object;
-    new_properties.remove(&key);
+    match this {
+        Value::Object(mut obj) => {
+            let removed = obj.remove(key).is_some();
+            Ok((Value::Bool(removed), Some(Value::Object(obj))))
+        }
 
-    Ok(InternalFunctionResponse {
-        return_value: Expr::Null,
-        replace_self: Some(Expr::Object {
-            properties: new_properties,
-        }),
-    })
+        _ => unreachable!(),
+    }
 }
 
-pub fn stringify(args: Vec<Spanned<Expr>>) -> Result<InternalFunctionResponse, (String, Span)> {
-    let object = &args[0].node;
+pub fn stringify(this: Value, args: Vec<Value>) -> Result<(Value, Option<Value>), String> {
+    if !args.is_empty() {
+        return Err(format!("<object>.stringify() takes no arguments ({} given)", args.len()));
+    }
 
-    let result = match object {
-        Expr::Object { properties } => {
-            let mut parts = vec![];
-            for (key, value) in properties {
-                let value_str = match &value.node {
-                    Expr::String(s) => format!("\"{}\"", s),
-                    Expr::Int(n) => n.to_string(),
-                    Expr::Float(f) => f.to_string(),
-                    Expr::Bool(b) => b.to_string(),
-                    Expr::Array(_) => format!("{}", value.node),
-                    Expr::Null => "null".to_string(),
-                    _ => "\"<complex value>\"".to_string(),
-                };
-                parts.push(format!("\"{}\": {}", key, value_str));
-            }
-            format!("{{{}}}", parts.join(", "))
-        }
-        _ => {
-            return Err((
-                "to_string expects an object as the first argument".to_string(),
-                args[0].span,
-            ))
-        }
-    };
-
-    Ok(InternalFunctionResponse {
-        return_value: Expr::String(result),
-        replace_self: None,
-    })
+    match this {
+        Value::Object(obj) => Ok((Value::String(format!("{:?}", obj)), None)),
+        _ => unreachable!(),
+    }
 }
 
-pub fn keys(args: Vec<Spanned<Expr>>) -> Result<InternalFunctionResponse, (String, Span)> {
-    let object = &args[0].node;
+pub fn keys(this: Value, args: Vec<Value>) -> Result<(Value, Option<Value>), String> {
+    if !args.is_empty() {
+        return Err(format!("<object>.keys() takes no arguments ({} given)", args.len()));
+    }
 
-    let result = match object {
-        Expr::Object { properties } => {
-            let keys: Vec<Spanned<Expr>> = properties.keys().cloned().map(|k| Spanned {
-                node: Expr::String(k),
-                span: args[0].span.clone(),
-            }).collect();
-
-            Expr::Array(keys)
+    match this {
+        Value::Object(obj) => {
+            let keys: Vec<Value> = obj.keys().cloned().map(Value::String).collect();
+            Ok((Value::Array(keys), None))
         }
-        _ => {
-            return Err((
-                "keys expects an object as the first argument".to_string(),
-                args[0].span,
-            ))
-        }
-    };
 
-    Ok(InternalFunctionResponse {
-        return_value: result,
-        replace_self: None,
-    })
+        _ => unreachable!(),
+    }
 }
 
-pub fn values(args: Vec<Spanned<Expr>>) -> Result<InternalFunctionResponse, (String, Span)> {
-    let object = &args[0].node;
+pub fn values(this: Value, args: Vec<Value>) -> Result<(Value, Option<Value>), String> {
+    if !args.is_empty() {
+        return Err(format!("<object>.values() takes no arguments ({} given)", args.len()));
+    }
 
-    let result = match object {
-        Expr::Object { properties } => {
-            let values: Vec<Spanned<Expr>> = properties.values().cloned().map(|v| v.clone()).collect();
-
-            Expr::Array(values)
+    match this {
+        Value::Object(obj) => {
+            let values: Vec<Value> = obj.values().cloned().collect();
+            Ok((Value::Array(values), None))
         }
-        _ => {
-            return Err((
-                "values expects an object as the first argument".to_string(),
-                args[0].span,
-            ))
-        }
-    };
 
-    Ok(InternalFunctionResponse {
-        return_value: result,
-        replace_self: None,
-    })
-}
-
-pub fn get_fn(name: &str) -> Option<Expr> {
-    Some(Expr::InternalFunction {
-        name: name.to_string(),
-        args: match name {
-            "get" => vec!["self".to_string(), "key".to_string()],
-            "set" => vec!["self".to_string(), "key".to_string(), "value".to_string()],
-            "has" => vec!["self".to_string(), "key".to_string()],
-            "delete" => vec!["self".to_string(), "key".to_string()],
-            "stringify" => vec!["self".to_string()],
-            "to_string" => vec!["self".to_string()],
-            "keys" => vec!["self".to_string()],
-            "values" => vec!["self".to_string()],
-            _ => vec![],
-        },
-        func: match name {
-            "get" => get,
-            "set" => set,
-            "has" => has,
-            "delete" => delete,
-            "stringify" => stringify,
-            "to_string" => {
-                use colored::Colorize;
-                println!("{}", "warning: 'to_string' has been renamed to 'stringify', 'to_string' will be removed".dimmed());
-
-                stringify
-            },
-            "keys" => keys,
-            "values" => values,
-            _ => return None,
-        },
-    })
-}
-
-pub fn list_fns() -> Vec<String> {
-    ["get", "set", "has", "delete", "to_string", "keys", "values"].map(String::from).to_vec()
+        _ => unreachable!(),
+    }
 }

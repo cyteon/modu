@@ -256,6 +256,24 @@ impl VM {
                     self.stack.push(Value::Array(elements));
                 }
 
+                Instruction::MakeObject(len) => {
+                    let mut properties = HashMap::with_capacity(*len);
+
+                    for _ in 0..*len {
+                        let key = self.stack.pop().unwrap_or(Value::Null);
+                        let value = self.stack.pop().unwrap_or(Value::Null);
+
+                        let key = match key {
+                            Value::String(s) => s,
+                            _ => return Err(format!("object property keys must be strings, got {}", key.type_name())),
+                        };
+
+                        properties.insert(key, value);
+                    }
+
+                    self.stack.push(Value::Object(properties));
+                }
+
                 Instruction::IndexGet => {
                     let index = self.stack.pop().unwrap_or(Value::Null);
                     let target = self.stack.pop().unwrap_or(Value::Null);
@@ -272,6 +290,16 @@ impl VM {
                             } else {
                                 self.stack.push(elements[index as usize].clone());
                             }
+                        }
+
+                        Value::Object(properties) => {
+                            let key = match index {
+                                Value::String(s) => s,
+                                _ => return Err(format!("object property keys must be strings, got {}", index.type_name())),
+                            };
+
+                            let value = properties.get(&key).cloned().unwrap_or(Value::Null);
+                            self.stack.push(value);
                         }
 
                         Value::String(s) => todo!(),
@@ -317,11 +345,19 @@ impl VM {
                     match target {
                         Value::Object(properties) => {
                             let value = match properties.get(name) {
-                                Some(v) => v.clone(),
-                                None => return Err(format!("undefined property '{}'", name)),
-                            };
+                                Some(v) => {
+                                    self.stack.pop();
+                                    self.stack.push(v.clone());
+                                }
+                                None => {
+                                    let method = match crate::natives::object::get_fn(name.to_string()) {
+                                        Some(m) => m,
+                                        None => return Err(format!("undefined property '{}' on object", name)),
+                                    };
 
-                            self.stack.push(value);
+                                    self.stack.push(Value::NativeFn(method));
+                                }
+                            };
                         }
 
                         Value::String(_) => {
