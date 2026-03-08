@@ -2,7 +2,6 @@ use std::collections::HashMap;
 
 pub struct Scope {
     locals: HashMap<String, usize>,
-    depth: usize,
 }
 
 pub struct ScopeStack {
@@ -85,7 +84,6 @@ impl ScopeStack {
     pub fn push_scope(&mut self) {
         self.scopes.push(Scope {
             locals: HashMap::new(),
-            depth: self.scopes.len(),
         });
     }
 

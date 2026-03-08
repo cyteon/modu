@@ -184,7 +184,6 @@ impl Compiler {
                     }
 
                     Expr::PropertyAccess { object, property } => todo!(),
-                    Expr::IndexAccess { object, index } => todo!(),
 
                     _ => return Err("invalid assignment target".to_string()),
                 }
@@ -198,7 +197,7 @@ impl Compiler {
                     self.compile_expr(arg.clone())?;
                 }
 
-                if let Expr::PropertyAccess { object, property } = &callee.node {
+                if let Expr::PropertyAccess { object, property: _ } = &callee.node {
                     let (target_local, target_global) = match &object.node {
                         Expr::Identifier(name) => {
                             match self.scope.resolve(name) {
@@ -513,7 +512,7 @@ impl Compiler {
             Expr::Continue => {
                 match self.continue_targets.last() {
                     Some(target) => {
-                        let jump = self.emit_jump(Instruction::Jump(*target));
+                        self.emit_jump(Instruction::Jump(*target));
                     }
 
                     None => return Err("continue outside of loop".to_string()),
@@ -524,7 +523,6 @@ impl Compiler {
 
             Expr::If(branches) => {
                 let mut end_jumps = Vec::new();
-                let mut has_else = false;
 
                 for (condition, body) in branches {
                     match condition {
@@ -538,7 +536,6 @@ impl Compiler {
                         }
 
                         None => {
-                            has_else = true;
                             self.compile_expr(body.clone())?;
                         }
                     }

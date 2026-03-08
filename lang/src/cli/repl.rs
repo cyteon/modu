@@ -77,7 +77,6 @@ impl Highlighter for Syntax {
 pub fn repl() {
     println!("Modu REPL");
 
-    let context = &mut crate::utils::create_context();
     let mut rl: Editor<Syntax, DefaultHistory> = Editor::new().unwrap();
     rl.set_helper(Some(Syntax::new()));
 
@@ -114,7 +113,7 @@ pub fn repl() {
                     let ast = parse(&buffer, "<repl>");
                     buffer.clear();
         
-                    if let Err(err) = ast {
+                    if let Err(_) = ast {
                         continue;
                     }
 

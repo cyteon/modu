@@ -8,7 +8,6 @@ mod functions;
 mod validator;
 
 mod cli;
-mod utils;
 mod stdlib;
 mod natives;
 
@@ -16,7 +15,7 @@ mod compiler;
 mod vm;
 
 fn main() {
-    //std::panic::set_hook(Box::new(|_| {}));
+    std::panic::set_hook(Box::new(|_| {}));
 
     let args = std::env::args().collect::<Vec<String>>();
 

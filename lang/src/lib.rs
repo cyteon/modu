@@ -4,7 +4,6 @@ pub mod parser;
 pub mod functions;
 pub mod validator;
 
-pub mod utils;
 pub mod natives;
 pub mod stdlib;
 

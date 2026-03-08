@@ -4,7 +4,7 @@ use super::chunk::Chunk;
 use super::value::Value;
 use super::instruction::Instruction;
 
-struct CallFrame {
+pub struct CallFrame {
     chunk_id: usize,
     ip: usize,
     base: usize, // so we can do like base + 0 etc for local vars
@@ -334,7 +334,7 @@ impl VM {
                             self.stack.push(value);
                         }
 
-                        Value::String(s) => todo!(),
+                        Value::String(_) => todo!(),
 
                         _ => return Err(format!("{} is not indexable", target.type_name())),
                     }
@@ -376,7 +376,7 @@ impl VM {
 
                     match target {
                         Value::Object(properties) => {
-                            let value = match properties.get(name) {
+                            match properties.get(name) {
                                 Some(v) => {
                                     self.stack.pop();
                                     self.stack.push(v.clone());
@@ -563,6 +563,7 @@ impl VM {
                     frame.ip = *offset;
                 }
 
+                // ik nothing can reach it, but if i add new stuff i want it to compile but with todo!
                 _ => {
                     dbg!(instruction);
                     todo!();
