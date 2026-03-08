@@ -173,23 +173,6 @@ impl VM {
                             }
                         }
 
-                        Value::NativeFn(func) => {
-                            let args: Vec<Value> = self.stack.drain(self.stack.len() - argc..).collect();
-                            self.stack.pop();
-                            let obj = self.stack.pop().unwrap_or(Value::Null);
-                            
-                            match (func.func)(obj, args) {
-                                Ok(result) => {
-                                    self.stack.push(result.0);
-
-                                    if let Some(replace_self) = result.1 {
-                                        
-                                    }
-                                }
-                                Err(e) => return Err(format!("error calling {}(): {}", func.name, e)),
-                            }
-                        }
-
                         Value::Function { chunk_id, arity } => {
                             if arity != *argc {
                                 return Err(format!("expected {} arguments but got {}", arity, argc));
@@ -216,6 +199,36 @@ impl VM {
                         _ => {
                             return Err(format!("{} is not a function", callee.type_name()));
                         }
+                    }
+                }
+
+                Instruction::CallMethod { argc, target_local, target_global } => {
+                    let callee = self.stack[self.stack.len() - 1 - argc].clone();
+
+                    match callee {
+                        Value::NativeFn(func) => {
+                            let args = self.stack.drain(self.stack.len() - argc..).collect();
+                            self.stack.pop();
+                            let obj = self.stack.pop().unwrap_or(Value::Null);
+
+                            match (func.func)(obj, args) {
+                                Ok(result) => {
+                                    if let Some(replace_self) = result.1 {
+                                        if let Some(target) = target_local {
+                                            let frame = self.frames.last_mut().unwrap();
+                                            self.stack[frame.base + target] = replace_self;
+                                        } else if let Some(target) = target_global {
+                                            self.globals.insert(target.clone(), replace_self);
+                                        }
+                                    }
+
+                                    self.stack.push(result.0);
+                                }
+                                Err(e) => return Err(format!("error calling {}(): {}", func.name, e)),
+                            }
+                        }
+
+                        _ => return Err(format!("{} is not a method", callee.type_name())),
                     }
                 }
 

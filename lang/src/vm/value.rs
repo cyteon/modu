@@ -42,7 +42,7 @@ impl NativeFn {
 
 impl std::fmt::Debug for NativeFn {
     fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
-        write!(f, "<internal fn {}>", self.name)
+        write!(f, "<native fn {}>", self.name)
     }
 }
 
@@ -91,7 +91,11 @@ impl std::fmt::Display for Value {
             Value::Null => write!(f, "null"),
 
             Value::Array(arr) => {
-                let elements: Vec<String> = arr.iter().map(|v| format!("{}", v)).collect();
+                let elements: Vec<String> = arr.iter().map(|v| match v {
+                    Value::String(s) => format!("\"{}\"", s),
+                    _ => format!("{}", v),
+                }).collect();
+                
                 write!(f, "[{}]", elements.join(", "))
             }
 

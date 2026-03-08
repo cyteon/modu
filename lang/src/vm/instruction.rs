@@ -19,6 +19,7 @@ pub enum Instruction {
     JumpIfTrue(usize),
 
     Call(usize),
+    CallMethod { argc: usize, target_local: Option<usize>, target_global: Option<String> },
     Return,
 
     MakeArray(usize),

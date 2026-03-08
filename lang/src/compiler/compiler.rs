@@ -190,14 +190,29 @@ impl Compiler {
             }
 
             Expr::Call { callee, args } => {
-                self.compile_expr(*callee.clone())?;
-
                 let argc = args.len();
+
+                self.compile_expr(*callee.clone())?;
                 for arg in args {
                     self.compile_expr(arg.clone())?;
                 }
 
-                self.emit(Instruction::Call(argc));
+                if let Expr::PropertyAccess { object, property } = &callee.node {
+                    let (target_local, target_global) = match &object.node {
+                        Expr::Identifier(name) => {
+                            match self.scope.resolve(name) {
+                                Variable::Local(index) => (Some(index), None),
+                                Variable::Global(_) => (None, Some(name.to_string())),
+                            }
+                        }
+
+                        _ => (None, None),
+                    };
+
+                    self.emit(Instruction::CallMethod { argc, target_local, target_global, });
+                } else {
+                    self.emit(Instruction::Call(argc));
+                }
             }
 
             Expr::PropertyAccess { object, property } => {
