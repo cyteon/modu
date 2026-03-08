@@ -1,4 +1,4 @@
-import "time" as time;
+import "std/time" as time;
 
 let unix = time.now_unix();
 let now_utc = time.now_utc();

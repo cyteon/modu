@@ -1,4 +1,4 @@
-import "fs";
+import "std/fs";
 
 let path = input("file path: ");
 let file = fs.open(path);

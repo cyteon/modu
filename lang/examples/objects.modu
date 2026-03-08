@@ -1,3 +1,5 @@
+import "std/json";
+
 let obj = {};
 
 obj.set("name", "test");
