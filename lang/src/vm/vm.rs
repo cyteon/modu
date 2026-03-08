@@ -242,6 +242,17 @@ impl VM {
                             }
                         }
 
+                        // if you import a package, then like uuid.v7()
+                        Value::BuiltinFn(func) => {
+                            let args = self.stack.drain(self.stack.len() - argc..).collect();
+                            self.stack.pop();
+
+                            match (func.func)(args) {
+                                Ok(result) => self.stack.push(result),
+                                Err(e) => return Err(format!("error calling {}(): {}", func.name, e)),
+                            }
+                        }
+
                         _ => return Err(format!("{} is not a method", callee.type_name())),
                     }
                 }
@@ -474,6 +485,34 @@ impl VM {
                         }
 
                         _ => return Err(format!("{} is not iterable", iter.type_name())),
+                    }
+                }
+
+                Instruction::Import { path, alias } => {
+                    if path.starts_with("std/") {
+                        let path = path.strip_prefix("std/").unwrap().to_string();
+
+                        if let Some(module) = crate::stdlib::get(&path) {
+                            if let Some(alias) = alias {
+                                if alias == "*" {
+                                    if let Value::Object(properties) = module {
+                                        for (key, value) in properties {
+                                            self.globals.insert(key, value);
+                                        }
+                                    } else {
+                                        unreachable!();
+                                    }
+                                } else {
+                                    self.globals.insert(alias.clone(), module);
+                                }
+                            } else {
+                                self.globals.insert(path.clone(), module);
+                            }
+                        } else {
+                            return Err(format!("unknown stdlib module '{}'", path));
+                        }
+                    } else {
+                        todo!();
                     }
                 }
 

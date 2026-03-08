@@ -9,7 +9,7 @@ mod validator;
 
 mod cli;
 mod utils;
-mod libraries;
+mod stdlib;
 mod natives;
 
 mod compiler;

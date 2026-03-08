@@ -28,6 +28,12 @@ pub struct BuiltinFn {
     pub func: fn(Vec<Value>) -> Result<Value, String>,
 }
 
+impl BuiltinFn {
+    pub fn new(name: &str, func: fn(Vec<Value>) -> Result<Value, String>) -> Self {
+        Self { name: name.to_string(), func }
+    }
+}
+
 #[derive(Clone)]
 pub struct NativeFn {
     pub name: String,
