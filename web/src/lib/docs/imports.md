@@ -41,7 +41,7 @@ print(abc);
 
 ## Internal packages
 
-Internal and installed packages are imported without **.modu** like:
+Internal packages are imported with the `std/` prefix, but the prefix is stripped from the imported name
 ```rust
 import "std/math" as math;
 import "std/file" as file;

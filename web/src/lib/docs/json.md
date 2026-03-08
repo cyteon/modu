@@ -7,7 +7,7 @@ json.new() creates a new empty json object, and json.parse(string) parses a json
 let object = { "a": 1 };
 let string = object.stringify();
 
-import "json" as json;
+import "std/json" as json;
 let parsed_object = json.parse(string);
 ```
 
