@@ -71,6 +71,11 @@ fn nesting_funcs() {
 }
 
 #[test]
+fn strings() {
+    run_test("strings");
+}
+
+#[test]
 fn type_conversion() {
     run_test("type_conversion");
 }

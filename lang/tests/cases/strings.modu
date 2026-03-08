@@ -1,0 +1,10 @@
+let a = "i like potatoes";
+a = a.replace("potatoes", "modu");
+print(a.split(" "));
+print(a.split(" ")[1].to_upper());
+print("HELLO".to_lower());
+print("test".chars());
+print("  h e l l o  ".trim());
+print("test".starts_with("te"));
+print("test".ends_with("st"));
+print("test".starts_with("st"));
