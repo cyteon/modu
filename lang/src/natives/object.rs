@@ -91,7 +91,17 @@ pub fn stringify(this: Value, args: Vec<Value>) -> Result<(Value, Option<Value>)
     }
 
     match this {
-        Value::Object(obj) => Ok((Value::String(format!("{:?}", obj)), None)),
+        Value::Object(obj) => {
+            let mut parts = Vec::new();
+            for (k, v) in obj.iter() {
+                match v {
+                    Value::String(s) => parts.push(format!("\"{}\": \"{}\"", k, s)),
+                    _ => parts.push(format!("\"{}\": {}", k, v)),
+                }
+            }
+            
+            Ok((Value::String(format!("{{ {} }}", parts.join(", "))), None))
+        }
         _ => unreachable!(),
     }
 }

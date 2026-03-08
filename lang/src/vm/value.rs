@@ -112,7 +112,7 @@ impl std::fmt::Display for Value {
                         Value::String(s) => format!("\"{}\"", s),
                         _ => format!("{}", v),
                     };
-                    format!("{}: {}", k, value_str)
+                    format!("\"{}\": {}", k, value_str)
                 }).collect();
 
                 write!(f, "{{ {} }}", properties.join(", "))
