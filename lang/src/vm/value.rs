@@ -34,6 +34,12 @@ pub struct NativeFn {
     pub func: fn(Value, Vec<Value>) -> Result<(Value, Option<Value>), String>, // (return value, value to replace self with)
 }
 
+impl NativeFn {
+    pub fn new(name: &str, func: fn(Value, Vec<Value>) -> Result<(Value, Option<Value>), String>) -> Self {
+        Self { name: name.to_string(), func }
+    }
+}
+
 impl std::fmt::Debug for NativeFn {
     fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
         write!(f, "<internal fn {}>", self.name)

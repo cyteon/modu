@@ -311,10 +311,37 @@ impl VM {
                             self.stack.push(value);
                         }
 
-                        Value::String(s) => {
+                        Value::String(_) => {
                             let method = match crate::builtins::string::get_fn(name.to_string()) {
                                 Some(m) => m,
                                 None => return Err(format!("undefined property '{}' on string", name)),
+                            };
+
+                            self.stack.push(Value::NativeFn(method));
+                        }
+
+                        Value::Int(_) => {
+                            let method = match crate::builtins::int::get_fn(name.to_string()) {
+                                Some(m) => m,
+                                None => return Err(format!("undefined property '{}' on {}", name, target.type_name())),
+                            };
+
+                            self.stack.push(Value::NativeFn(method));
+                        }
+
+                        Value::Float(_) => {
+                            let method = match crate::builtins::float::get_fn(name.to_string()) {
+                                Some(m) => m,
+                                None => return Err(format!("undefined property '{}' on float", name)),
+                            };
+
+                            self.stack.push(Value::NativeFn(method));
+                        }
+
+                        Value::Array(_) => {
+                            let method = match crate::builtins::array::get_fn(name.to_string()) {
+                                Some(m) => m,
+                                None => return Err(format!("undefined property '{}' on array", name)),
                             };
 
                             self.stack.push(Value::NativeFn(method));

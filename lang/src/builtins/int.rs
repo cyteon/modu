@@ -1,65 +1,31 @@
-use crate::{ast::{Expr, InternalFunctionResponse, Spanned}, lexer::Span};
+use crate::vm::value::{NativeFn, Value};
 
-pub fn min(args: Vec<Spanned<Expr>>) -> Result<InternalFunctionResponse, (String, Span)> {
-    let a = match &args[0].node {
-        Expr::Int(v) => v,
-        _ => unreachable!(),
-    };
-
-    let b = match &args[1].node {
-        Expr::Int(v) => v,
-        _ => {
-            return Err((
-                "can only compare two integers".to_string(),
-                args[1].span.clone(),
-            ));
-        }
-    };
-    
-    Ok(InternalFunctionResponse {
-        return_value: Expr::Int(*a.min(b)),
-        replace_self: None,
-    })
+pub fn get_fn(name: String) -> Option<NativeFn> {
+    match name.as_str() {
+        "min" => Some(NativeFn::new("min", min)),
+        "max" => Some(NativeFn::new("max", max)),
+        _ => None,
+    }
 }
 
-pub fn max(args: Vec<Spanned<Expr>>) -> Result<InternalFunctionResponse, (String, Span)> {
-    let a = match &args[0].node {
-        Expr::Int(v) => v,
-        _ => unreachable!(),
-    };
+pub fn min(this: Value, args: Vec<Value>) -> Result<(Value, Option<Value>), String> {
+    if args.len() != 1 {
+        return Err(format!("<int>.min() takes exactly one argument ({} given)", args.len()));
+    }
 
-    let b = match &args[1].node {
-        Expr::Int(v) => v,
-        _ => {
-            return Err((
-                "can only compare two integers".to_string(),
-                args[1].span.clone(),
-            ));
-        }
-    };
-    
-    Ok(InternalFunctionResponse {
-        return_value: Expr::Int(*a.max(b)),
-        replace_self: None,
-    })
+    match (&this, &args[0]) {
+        (Value::Int(a), Value::Int(b)) => Ok((Value::Int((*a).min(*b)), None)),
+        _ => Err(format!("<int>.min() is not supported for types {} and {}", this.type_name(), args[0].type_name())),
+    }
 }
 
-pub fn get_fn(name: &str) -> Option<Expr> {
-    Some(Expr::InternalFunction {
-        name: name.to_string(),
-        args: match name {
-            "min" => vec!["self".to_string(), "b".to_string()],
-            "max" => vec!["self".to_string(), "b".to_string()],
-            _ => vec![],
-        },
-        func: match name {
-            "min" => min,
-            "max" => max,
-            _ => return None,
-        },
-    })
-}
+pub fn max(this: Value, args: Vec<Value>) -> Result<(Value, Option<Value>), String> {
+    if args.len() != 1 {
+        return Err(format!("<int>.max() takes exactly one argument ({} given)", args.len()));
+    }
 
-pub fn list_fns() -> Vec<String> {
-    ["min", "max"].map(String::from).to_vec()
+    match (&this, &args[0]) {
+        (Value::Int(a), Value::Int(b)) => Ok((Value::Int((*a).max(*b)), None)),
+        _ => Err(format!("<int>.max() is not supported for types {} and {}", this.type_name(), args[0].type_name())),
+    }
 }
