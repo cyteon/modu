@@ -8,6 +8,9 @@ mod uuid;
 #[cfg(not(target_arch = "wasm32"))]
 mod os;
 
+#[cfg(not(target_arch = "wasm32"))]
+mod http;
+
 pub fn get(name: &str) -> Option<crate::vm::value::Value> {
     match name {
         "crypto" => Some(crypto::object()),
@@ -19,6 +22,10 @@ pub fn get(name: &str) -> Option<crate::vm::value::Value> {
 
         #[cfg(not(target_arch = "wasm32"))]
         "os" => Some(os::object()),
+
+        #[cfg(not(target_arch = "wasm32"))]
+        "http" => Some(http::object()),
+
         _ => None,
     }
 }
