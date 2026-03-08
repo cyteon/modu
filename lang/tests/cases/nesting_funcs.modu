@@ -1,6 +1,6 @@
-import "time" as time;
-import "math" as *;
-import "math" as math;
+import "std/time" as time;
+import "std/math" as *;
+import "std/math" as math;
 
 print( div( div( math.mul(5, 2), 2 ), 1 ) );
 print( div( div( math.div(1, 2), div(1, 2) ), div(1, 2) ) );
