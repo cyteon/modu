@@ -17,6 +17,7 @@ fn builtin(name: &str, func: fn(Vec<Value>) -> Result<Value, String>) -> Builtin
 pub fn get_functions() -> Vec<BuiltinFn> {
     vec![
         builtin("print", print),
+        builtin("input", input),
         builtin("int", int),
         builtin("float", float),
         builtin("str", str),
@@ -37,6 +38,43 @@ fn print(args: Vec<Value>) -> Result<Value, String> {
     println!("{}", output);
 
     Ok(Value::Null)
+}
+
+fn input(args: Vec<Value>) -> Result<Value, String> {
+    for arg in args.clone() {
+        print!("{}", arg);
+    }
+
+    #[cfg(not(target_arch = "wasm32"))]
+    {
+        use std::io::{self, Write};
+        io::stdout().flush().unwrap();
+
+        let mut input = String::new();
+        io::stdin().read_line(&mut input).unwrap();
+
+        Ok(Value::String(input.trim_end().to_string()))
+    }
+
+    #[cfg(target_arch = "wasm32")]
+    {
+        let prompt = args.iter().map(|v| format!("{}", v)).collect::<String>();
+        let input;
+
+        unsafe {
+            let mut out_len: usize = 0;
+            let ptr = _modu_input(prompt.as_ptr(), prompt.len(), &mut out_len);
+
+            if ptr.is_null() {
+                return Err("input failed".to_string());
+            }
+
+            let bytes = std::slice::from_raw_parts(ptr, out_len);
+            input = String::from_utf8_lossy(bytes).to_string();
+        }
+
+        Ok(Value::String(input.trim_end().to_string()))
+    }
 }
 
 fn int(args: Vec<Value>) -> Result<Value, String> {

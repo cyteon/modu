@@ -45,15 +45,3 @@ print(hashed);
 let valid = crypto.argon2_verify("password", hashed);
 print(valid); // outputs: true
 ```
-
-## Scrypt
-This is slow asf, makes it more secure ig.
-```rust
-import "crypto" as crypto;
-
-let hashed = crypto.scrypt_hash("password");
-print(hashed);
-
-let valid = crypto.scrypt_verify("password", hashed);
-print(valid); // outputs: true
-```
