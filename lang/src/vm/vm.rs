@@ -260,6 +260,16 @@ impl VM {
                             }
                         }
 
+                        Value::FFIFunc(lib_idx, func_name) => {
+                            let args = self.stack.drain(self.stack.len() - argc..).collect();
+                            self.stack.pop();
+
+                            match crate::stdlib::ffi::call_ffi(lib_idx, &func_name, args) {
+                                Ok(result) => self.stack.push(result),
+                                Err(e) => return Err(format!("error calling {} from ffi: {}", func_name, e)),
+                            }
+                        }
+
                         _ => return Err(format!("{} is not a method", callee.type_name())),
                     }
                 }
@@ -421,6 +431,11 @@ impl VM {
                             };
 
                             self.stack.push(Value::NativeFn(method));
+                        }
+
+                        Value::FFILib(idx) => {
+                            self.stack.pop();
+                            self.stack.push(Value::FFIFunc(idx, name.clone()));
                         }
 
                         _ => return Err(format!("cannot get property '{}' on {}", name, target.type_name())),

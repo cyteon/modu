@@ -1,5 +1,5 @@
-import "ffi" as ffi;
-import "os" as os;
+import "std/ffi" as ffi;
+import "std/os" as os;
 
 let path = "./libffi_test";
 
@@ -20,6 +20,11 @@ if os.name == "windows" {
 }
 
 let lib = ffi.load(path);
+ffi.define(lib, "hello_world", [],             null);
+ffi.define(lib, "one",         [],             "i64");
+ffi.define(lib, "add",         ["i64", "i64"], "i64");
+ffi.define(lib, "string",      [],             "string");
+ffi.define(lib, "print",       ["string"],      null);
 
 lib.hello_world();
 print(lib.one());

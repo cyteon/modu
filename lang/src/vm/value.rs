@@ -15,6 +15,9 @@ pub enum Value {
     NativeFn(NativeFn),
     BuiltinFn(BuiltinFn),
 
+    FFILib(usize),
+    FFIFunc(usize, String), // (lib, fn name)
+
     Range {
         start: i64,
         end: i64,
@@ -68,6 +71,8 @@ impl PartialEq for Value {
             (Value::Null, Value::Null) => true,
             (Value::Array(a), Value::Array(b)) => a == b,
             (Value::Object(a), Value::Object(b)) => a == b,
+            (Value::FFILib(a), Value::FFILib(b)) => a == b,
+            (Value::FFIFunc(lib_a, name_a), Value::FFIFunc(lib_b, name_b)) => lib_a == lib_b && name_a == name_b,
             _ => false,
         }
     }
@@ -186,6 +191,8 @@ impl Value {
             Value::Object { .. } => "object",
             Value::Function { .. } | Value::NativeFn(_) | Value::BuiltinFn(_) => "function",
             Value::Range { .. } => "range",
+            Value::FFILib(_) => "ffi_lib",
+            Value::FFIFunc(_, _) => "ffi_function",
         }
     }
 

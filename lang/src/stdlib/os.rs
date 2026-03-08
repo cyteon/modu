@@ -1,6 +1,9 @@
 use std::collections::HashMap;
 use crate::vm::value::{BuiltinFn, Value};
 
+#[cfg(windows)]
+use std::os::windows::process::CommandExt;
+
 pub fn object() -> Value {
     let mut methods = HashMap::new();
 
