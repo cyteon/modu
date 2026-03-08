@@ -341,33 +341,28 @@ impl VM {
                 }
 
                 Instruction::IndexSet => {
-                    let op = self.stack.pop().unwrap_or(Value::Null);
                     let value = self.stack.pop().unwrap_or(Value::Null);
                     let index = self.stack.pop().unwrap_or(Value::Null);
                     let target = self.stack.pop().unwrap_or(Value::Null);
 
-                    let result = match op {
-                        Value::Null => {
-                            match (target, index) {
-                                (Value::Array(mut elements), Value::Int(i)) => {
-                                    if i < 0 || (i as usize) >= elements.len() {
-                                        return Err(format!("index out of bounds: {}", i));
-                                    }
-
-                                    elements[i as usize] = value;
-                                    Value::Array(elements)
-                                }
-
-                                (t, i) => return Err(format!("cannot index {} with {}", t.type_name(), i.type_name())),
+                    let result = match (target, index) {
+                        (Value::Array(mut elements), Value::Int(i)) => {
+                            if i < 0 || (i as usize) >= elements.len() {
+                                return Err(format!("index out of bounds: {}", i));
                             }
+
+                            elements[i as usize] = value;
+                            Value::Array(elements)
                         }
 
-                        _ => {
-                            dbg!(op);
-                            todo!()
+                        (Value::Object(mut properties), Value::String(s)) => {
+                            properties.insert(s, value);
+                            Value::Object(properties)
                         }
+
+                        (t, i) => return Err(format!("cannot index {} with {}", t.type_name(), i.type_name())),
                     };
-
+                    
                     self.stack.push(result);
                 }
 
@@ -430,6 +425,22 @@ impl VM {
 
                         _ => return Err(format!("cannot get property '{}' on {}", name, target.type_name())),
                     }
+                }
+
+                Instruction::SetProperty(name) => {
+                    let value = self.stack.pop().unwrap_or(Value::Null);
+                    let target = self.stack.pop().unwrap_or(Value::Null);
+
+                    let result = match target {
+                        Value::Object(mut properties) => {
+                            properties.insert(name.clone(), value);
+                            Value::Object(properties)
+                        }
+
+                        t => return Err(format!("cannot set property on {}", t.type_name())),
+                    };
+
+                    self.stack.push(result);
                 }
 
                 Instruction::MakeRange { inclusive } => {

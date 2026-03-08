@@ -13,7 +13,7 @@ pub struct ScopeStack {
 
 pub enum Variable {
     Local(usize),
-    Global(String),
+    Global,
 }
 
 impl ScopeStack {
@@ -63,7 +63,7 @@ impl ScopeStack {
             }
         }
 
-        Variable::Global(name.to_string())
+        Variable::Global
     }
 
     pub fn define_local(&mut self, name: &str) -> usize {

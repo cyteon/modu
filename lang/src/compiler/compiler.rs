@@ -60,7 +60,7 @@ impl Compiler {
                     self.emit(Instruction::StoreLocal(index));
                 }
 
-                Variable::Global(_) => {
+                Variable::Global => {
                     let slot = self.scope.define_local(name);
                     self.emit(Instruction::StoreLocal(slot));
                 }
@@ -99,7 +99,7 @@ impl Compiler {
                         self.emit(Instruction::LoadLocal(index));
                     }
 
-                    Variable::Global(_) => {
+                    Variable::Global => {
                         self.emit(Instruction::LoadGlobal(name.to_string()));
                     }
                 }
@@ -116,7 +116,7 @@ impl Compiler {
                                     self.emit(Instruction::LoadLocal(index));
                                 }
 
-                                Variable::Global(_) => {
+                                Variable::Global => {
                                     self.emit(Instruction::LoadGlobal(name.to_string()));
                                 }
                             }
@@ -139,19 +139,21 @@ impl Compiler {
                                 self.emit(Instruction::StoreLocal(index));
                             }
 
-                            Variable::Global(_) => {
+                            Variable::Global => {
                                 self.emit(Instruction::StoreGlobal(name.to_string()));
                             }
                         }
                     }
 
                     Expr::IndexAccess { object, index } => {
-                        self.compile_expr(*object.clone())?;
-                        self.compile_expr(*index.clone())?;
-                        self.compile_expr(*value.clone())?;
-
                         if let Some(op) = operator {
+                            self.compile_expr(*object.clone())?;
+                            self.compile_expr(*index.clone())?;
+                            self.compile_expr(*object.clone())?;
+                            self.compile_expr(*index.clone())?;
+
                             self.emit(Instruction::IndexGet);
+                            self.compile_expr(*value.clone())?;
 
                             match op {
                                 AssignOp::Add => { self.emit(Instruction::Add); }
@@ -159,9 +161,11 @@ impl Compiler {
                                 AssignOp::Mul => { self.emit(Instruction::Mul); }
                                 AssignOp::Div => { self.emit(Instruction::Div); }
                                 AssignOp::Mod => { self.emit(Instruction::Mod); }
-                            }  
+                            }
                         } else {
-                            self.emit(Instruction::PushNull);
+                            self.compile_expr(*object.clone())?;
+                            self.compile_expr(*index.clone())?;
+                            self.compile_expr(*value.clone())?;
                         }
 
                         self.emit(Instruction::IndexSet);
@@ -173,17 +177,50 @@ impl Compiler {
                                         self.emit(Instruction::StoreLocal(index));
                                     }
 
-                                    Variable::Global(_) => {
+                                    Variable::Global => {
                                         self.emit(Instruction::StoreGlobal(name.to_string()));
                                     }
                                 }
                             }
 
-                            _ => return Err("todo: support compex index assignment targets".to_string()),
+                            _ => return Err("cant assign on complex index access targets".to_string()),
                         }
                     }
 
-                    Expr::PropertyAccess { object, property } => todo!(),
+                    Expr::PropertyAccess { object, property } => {
+                        self.compile_expr(*object.clone())?;
+                        self.compile_expr(*value.clone())?;
+
+                        if let Some(op) = operator {
+                            self.emit(Instruction::GetProperty(property.clone()));
+
+                            match op {
+                                AssignOp::Add => { self.emit(Instruction::Add); }
+                                AssignOp::Sub => { self.emit(Instruction::Sub); }
+                                AssignOp::Mul => { self.emit(Instruction::Mul); }
+                                AssignOp::Div => { self.emit(Instruction::Div); }
+                                AssignOp::Mod => { self.emit(Instruction::Mod); }
+                            }  
+                        }
+
+                        self.emit(Instruction::SetProperty(property.clone()));
+
+                        match &object.node {
+                            Expr::Identifier(name) => {
+                                match self.scope.resolve(name) {
+                                    Variable::Local(index) => {
+                                        self.emit(Instruction::StoreLocal(index));
+                                    }
+
+                                    Variable::Global => {
+                                        self.emit(Instruction::StoreGlobal(name.to_string()));
+                                    }
+                                }
+                            }
+
+                            _ => return Err("cant assign on complex property access targets".to_string()),
+                        }
+                    }
 
                     _ => return Err("invalid assignment target".to_string()),
                 }
@@ -202,7 +239,7 @@ impl Compiler {
                         Expr::Identifier(name) => {
                             match self.scope.resolve(name) {
                                 Variable::Local(index) => (Some(index), None),
-                                Variable::Global(_) => (None, Some(name.to_string())),
+                                Variable::Global => (None, Some(name.to_string())),
                             }
                         }
 

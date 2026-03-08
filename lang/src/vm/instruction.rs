@@ -26,6 +26,7 @@ pub enum Instruction {
     MakeRange { inclusive: bool },
 
     GetProperty(String),
+    SetProperty(String),
     IndexGet,
     IndexSet,
 
