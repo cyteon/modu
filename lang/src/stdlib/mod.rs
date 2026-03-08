@@ -11,6 +11,9 @@ mod os;
 #[cfg(not(target_arch = "wasm32"))]
 mod http;
 
+#[cfg(not(target_arch = "wasm32"))]
+mod fs;
+
 pub fn get(name: &str) -> Option<crate::vm::value::Value> {
     match name {
         "crypto" => Some(crypto::object()),
@@ -25,6 +28,9 @@ pub fn get(name: &str) -> Option<crate::vm::value::Value> {
 
         #[cfg(not(target_arch = "wasm32"))]
         "http" => Some(http::object()),
+
+        #[cfg(not(target_arch = "wasm32"))]
+        "fs" => Some(fs::object()),
 
         _ => None,
     }
