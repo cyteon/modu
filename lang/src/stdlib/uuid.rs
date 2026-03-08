@@ -10,7 +10,7 @@ pub fn object() -> Value {
     Value::Object(methods)
 }
 
-pub fn v4(args: Vec<Value>) -> Result<Value, String> {
+fn v4(args: Vec<Value>) -> Result<Value, String> {
     if !args.is_empty() {
         return Err(format!("uuid.v4() takes no arguments ({} given)", args.len()));
     }
@@ -20,7 +20,7 @@ pub fn v4(args: Vec<Value>) -> Result<Value, String> {
     Ok(Value::String(uuid.to_string()))
 }
 
-pub fn v7(args: Vec<Value>) -> Result<Value, String> {
+fn v7(args: Vec<Value>) -> Result<Value, String> {
     if !args.is_empty() {
         return Err(format!("uuid.v7() takes no arguments ({} given)", args.len()));
     }

@@ -110,6 +110,13 @@ impl VM {
                     self.stack.push(a.div(&b)?);
                 }
 
+                Instruction::Pow => {
+                    let b = self.stack.pop().unwrap_or(Value::Null);
+                    let a = self.stack.pop().unwrap_or(Value::Null);
+
+                    self.stack.push(a.pow(&b)?);
+                }
+
                 Instruction::Mod => {
                     let b = self.stack.pop().unwrap_or(Value::Null);
                     let a = self.stack.pop().unwrap_or(Value::Null);

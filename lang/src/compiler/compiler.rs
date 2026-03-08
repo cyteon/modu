@@ -306,6 +306,12 @@ impl Compiler {
                 self.emit(Instruction::Mod);
             }
 
+            Expr::Pow(a, b) => {
+                self.compile_expr(*a.clone())?;
+                self.compile_expr(*b.clone())?;
+                self.emit(Instruction::Pow);
+            }
+
             Expr::Equal(a, b) => {
                 self.compile_expr(*a.clone())?;
                 self.compile_expr(*b.clone())?;

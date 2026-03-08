@@ -17,7 +17,7 @@ pub fn object() -> Value {
     Value::Object(methods)
 }
 
-pub fn now_unix(args: Vec<Value>) -> Result<Value, String> {
+fn now_unix(args: Vec<Value>) -> Result<Value, String> {
     if !args.is_empty() {
         return Err(format!("time.now_unix() takes no arguments ({} given)", args.len()));
     }
@@ -27,7 +27,7 @@ pub fn now_unix(args: Vec<Value>) -> Result<Value, String> {
     Ok(Value::Int(unix_time))
 }
 
-pub fn now_unix_ms(args: Vec<Value>) -> Result<Value, String> {
+fn now_unix_ms(args: Vec<Value>) -> Result<Value, String> {
     if !args.is_empty() {
         return Err(format!("time.now_unix_ms() takes no arguments ({} given)", args.len()));
     }
@@ -37,7 +37,7 @@ pub fn now_unix_ms(args: Vec<Value>) -> Result<Value, String> {
     Ok(Value::Int(unix_time_ms))
 }
 
-pub fn now_utc(args: Vec<Value>) -> Result<Value, String> {
+fn now_utc(args: Vec<Value>) -> Result<Value, String> {
     if !args.is_empty() {
         return Err(format!("time.now_utc() takes no arguments ({} given)", args.len()));
     }
@@ -47,7 +47,7 @@ pub fn now_utc(args: Vec<Value>) -> Result<Value, String> {
     Ok(Value::String(utc_time.to_rfc3339()))
 }
 
-pub fn now_local(args: Vec<Value>) -> Result<Value, String> {
+fn now_local(args: Vec<Value>) -> Result<Value, String> {
     if !args.is_empty() {
         return Err(format!("time.now_local() takes no arguments ({} given)", args.len()));
     }
@@ -57,7 +57,7 @@ pub fn now_local(args: Vec<Value>) -> Result<Value, String> {
     Ok(Value::String(local_time.to_rfc3339()))
 }
 
-pub fn to_iso_8601(args: Vec<Value>) -> Result<Value, String> {
+fn to_iso_8601(args: Vec<Value>) -> Result<Value, String> {
     if args.len() != 1 {
         return Err(format!("time.to_iso_8601() takes exactly one argument ({} given)", args.len()));
     }
@@ -72,7 +72,7 @@ pub fn to_iso_8601(args: Vec<Value>) -> Result<Value, String> {
     Ok(Value::String(dt.to_rfc3339()))
 }
 
-pub fn to_rfc_2822(args: Vec<Value>) -> Result<Value, String> {
+fn to_rfc_2822(args: Vec<Value>) -> Result<Value, String> {
     if args.len() != 1 {
         return Err(format!("time.to_rfc_2822() takes exactly one argument ({} given)", args.len()));
     }
@@ -87,7 +87,7 @@ pub fn to_rfc_2822(args: Vec<Value>) -> Result<Value, String> {
     Ok(Value::String(dt.to_rfc2822()))
 }
 
-pub fn to_local_date_time(args: Vec<Value>) -> Result<Value, String> {
+fn to_local_date_time(args: Vec<Value>) -> Result<Value, String> {
     if args.len() != 1 {
         return Err(format!("time.to_local_date_time() takes exactly one argument ({} given)", args.len()));
     }
@@ -102,7 +102,7 @@ pub fn to_local_date_time(args: Vec<Value>) -> Result<Value, String> {
     Ok(Value::String(dt.to_string()))
 }
 
-pub fn to_utc_date_time(args: Vec<Value>) -> Result<Value, String> {
+fn to_utc_date_time(args: Vec<Value>) -> Result<Value, String> {
     if args.len() != 1 {
         return Err(format!("time.to_utc_date_time() takes exactly one argument ({} given)", args.len()));
     }

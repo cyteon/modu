@@ -9,21 +9,27 @@ print(3 ** 2); // 9
 print(10 % 3); // 1
 print(10 % 5); // 0
 
+print("\nmath pkg:");
 import "std/math";
-
-// mul, div and pow can also be used as a function in math
-print(math.mul(2, 3)); // 6
-print(math.div(5, 2)); // 2.5
-print(math.pow(3, 2)); // 9
-
-print();
 
 print(math.PI);
 print(math.E);
-print(math.abs(-5));
-print(math.ceil(math.PI));
-print(math.floor(math.E));
-print(math.round(1.4));
-print(math.round(1.6));
-print(math.sqrt(16));
 print(math.rand());
+print(math.randi());
+print(math.sin(math.PI / 2));
+print(math.cos(0));
+print(math.tan(math.PI / 4));
+
+print("\nnative methods:");
+print(1.max(5));
+print(1.min(5));
+print((-5).abs());
+print(16.sqrt());
+
+print(2.5.max(1.5));
+print(2.5.min(1.5));
+print((-2.5).abs());
+print(2.25.sqrt());
+print(2.5.round());
+print(2.5.ceil());
+print(2.5.floor());
