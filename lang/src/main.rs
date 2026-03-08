@@ -10,7 +10,7 @@ mod validator;
 mod cli;
 mod utils;
 mod libraries;
-mod builtins;
+mod natives;
 
 mod compiler;
 mod vm;

@@ -134,13 +134,13 @@ pub fn eval<'src>(expr: &'src SpannedExpr, context: &mut Context, depth: usize) 
                         match properties.get(property) {
                             Some(value) => Ok(Flow::Continue(value.node.clone())),
                             None => {
-                                match crate::builtins::object::get_fn(property) {
+                                match crate::natives::object::get_fn(property) {
                                     Some(value) => Ok(Flow::Continue(value)),
                                     None => Err(EvalError {
                                         message: format!("object has no method named '{}'", property),
                                         message_short: "no such property".to_string(),
                                         help_message: {
-                                            let mut names = crate::builtins::object::list_fns();
+                                            let mut names = crate::natives::object::list_fns();
                                             names.extend(properties.keys().cloned());
                                             find_closest(property, names.iter()).map(|s| format!("did you mean '{}'?", s))
                                         },
@@ -152,10 +152,10 @@ pub fn eval<'src>(expr: &'src SpannedExpr, context: &mut Context, depth: usize) 
                     }
 
                     Expr::Array(_) => {
-                        match crate::builtins::array::get_fn(property) {
+                        match crate::natives::array::get_fn(property) {
                             Some(value) => Ok(Flow::Continue(value)),
                             None => {
-                                let names = crate::builtins::array::list_fns();
+                                let names = crate::natives::array::list_fns();
 
                                 Err(EvalError {
                                     message: format!("array has no method named '{}'", property),
@@ -168,10 +168,10 @@ pub fn eval<'src>(expr: &'src SpannedExpr, context: &mut Context, depth: usize) 
                     }
 
                     Expr::String(_) => {
-                        match crate::builtins::string::get_fn(property) {
+                        match crate::natives::string::get_fn(property) {
                             Some(value) => Ok(Flow::Continue(value)),
                             None => {
-                                let names = crate::builtins::string::list_fns();
+                                let names = crate::natives::string::list_fns();
 
                                 Err(EvalError {
                                     message: format!("string has no method named '{}'", property),
@@ -184,10 +184,10 @@ pub fn eval<'src>(expr: &'src SpannedExpr, context: &mut Context, depth: usize) 
                     }
 
                     Expr::Int(_) => {
-                        match crate::builtins::int::get_fn(property) {
+                        match crate::natives::int::get_fn(property) {
                             Some(value) => Ok(Flow::Continue(value)),
                             None => {
-                                let names = crate::builtins::int::list_fns();
+                                let names = crate::natives::int::list_fns();
 
                                 Err(EvalError {
                                     message: format!("int has no method named '{}'", property),
@@ -200,10 +200,10 @@ pub fn eval<'src>(expr: &'src SpannedExpr, context: &mut Context, depth: usize) 
                     }
 
                     Expr::Float(_) => {
-                        match crate::builtins::float::get_fn(property) {
+                        match crate::natives::float::get_fn(property) {
                             Some(value) => Ok(Flow::Continue(value)),
                             None => {
-                                let names = crate::builtins::float::list_fns();
+                                let names = crate::natives::float::list_fns();
 
                                 Err(EvalError {
                                     message: format!("float has no method named '{}'", property),

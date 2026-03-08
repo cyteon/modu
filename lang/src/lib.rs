@@ -5,7 +5,7 @@ pub mod functions;
 pub mod validator;
 
 pub mod utils;
-pub mod builtins;
+pub mod natives;
 pub mod libraries;
 
 pub mod compiler;

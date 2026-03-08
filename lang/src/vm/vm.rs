@@ -312,7 +312,7 @@ impl VM {
                         }
 
                         Value::String(_) => {
-                            let method = match crate::builtins::string::get_fn(name.to_string()) {
+                            let method = match crate::natives::string::get_fn(name.to_string()) {
                                 Some(m) => m,
                                 None => return Err(format!("undefined property '{}' on string", name)),
                             };
@@ -321,7 +321,7 @@ impl VM {
                         }
 
                         Value::Int(_) => {
-                            let method = match crate::builtins::int::get_fn(name.to_string()) {
+                            let method = match crate::natives::int::get_fn(name.to_string()) {
                                 Some(m) => m,
                                 None => return Err(format!("undefined property '{}' on {}", name, target.type_name())),
                             };
@@ -330,7 +330,7 @@ impl VM {
                         }
 
                         Value::Float(_) => {
-                            let method = match crate::builtins::float::get_fn(name.to_string()) {
+                            let method = match crate::natives::float::get_fn(name.to_string()) {
                                 Some(m) => m,
                                 None => return Err(format!("undefined property '{}' on float", name)),
                             };
@@ -339,7 +339,7 @@ impl VM {
                         }
 
                         Value::Array(_) => {
-                            let method = match crate::builtins::array::get_fn(name.to_string()) {
+                            let method = match crate::natives::array::get_fn(name.to_string()) {
                                 Some(m) => m,
                                 None => return Err(format!("undefined property '{}' on array", name)),
                             };
