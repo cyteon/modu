@@ -1,5 +1,0 @@
-language = "C"
-pragma_once = true
-
-[export]
-include = ["FFIValue", "FFIType"]
