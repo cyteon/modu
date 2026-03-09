@@ -15,6 +15,7 @@ pub struct VM {
     pub stack: Vec<Value>,
     pub frames: Vec<CallFrame>,
     pub globals: HashMap<String, Value>,
+    pub source_path: std::path::PathBuf,
 }
 
 const STACK_MAX: usize = 2048;
@@ -22,11 +23,16 @@ const FRAMES_MAX: usize = 256;
 
 impl VM {
     pub fn new(chunks: Vec<Chunk>) -> Self {
+        Self::new_with_source(chunks, std::path::PathBuf::from("."))
+    }
+
+     pub fn new_with_source(chunks: Vec<Chunk>, source_path: std::path::PathBuf) -> Self {
         let mut vm = Self {
             chunks,
             stack: Vec::with_capacity(STACK_MAX),
             frames: Vec::with_capacity(FRAMES_MAX),
             globals: HashMap::new(),
+            source_path,
         };
 
         for func in crate::functions::get_functions() {
@@ -64,10 +70,10 @@ impl VM {
                 continue;
             }
 
-            let instruction = &self.chunks[frame.chunk_id].instructions[frame.ip];
+            let instruction = &self.chunks[frame.chunk_id].instructions[frame.ip].clone();
             frame.ip += 1;
 
-            match instruction {
+            match instruction { 
                 Instruction::Push(i) => {
                     let v = self.chunks[frame.chunk_id].constants[*i].clone();
                     self.stack.push(v);
@@ -227,6 +233,29 @@ impl VM {
                     let callee = self.stack[self.stack.len() - 1 - argc].clone();
 
                     match callee {
+                        Value::Function { chunk_id, arity } => {
+                            if arity != *argc {
+                                return Err(format!("expected {} arguments but got {}", arity, argc));
+                            }
+
+                            if self.frames.len() >= FRAMES_MAX {
+                                return Err("stack overflow".to_string());
+                            }
+
+                            let base = self.stack.len() - argc;
+
+                            let extra_locals = self.chunks[chunk_id].locals_count.saturating_sub(*argc);
+                            for _ in 0..extra_locals {
+                                self.stack.push(Value::Null);
+                            }
+                            
+                            self.frames.push(CallFrame {
+                                chunk_id,
+                                ip: 0,
+                                base,
+                            });
+                        }
+
                         Value::NativeFn(func) => {
                             let args = self.stack.drain(self.stack.len() - argc..).collect();
                             self.stack.pop();
@@ -547,7 +576,89 @@ impl VM {
                             return Err(format!("unknown stdlib module '{}'", path));
                         }
                     } else {
-                        todo!();
+                        let chunk_id = self.frames.last().unwrap().chunk_id;
+
+                        let current_dir = self.source_path
+                            .parent()
+                            .map(|p| p.to_path_buf())
+                            .unwrap_or_else(|| std::path::PathBuf::from("."));
+                        
+                        let is_package = !path.contains("/") && !path.ends_with(".modu");
+
+                        let resolved: std::path::PathBuf = if is_package {
+                            // so like an file lib/smth.modu will resolve packages
+                            // from ../.modu/....
+                            let packages_path = std::iter::successors(Some(current_dir.as_path()), |p| p.parent())
+                                .find(|p| p.join(".modu").join("packages").is_dir())
+                                .map(|p| p.to_path_buf())
+                                .unwrap_or_else(|| current_dir.clone());
+                            
+                            packages_path
+                                .join(".modu")
+                                .join("packages")
+                                .join(path.as_str())
+                                .join("lib.modu")
+                        } else {
+                            // so lib/utils will resolve lib/utils.modu
+                            let with_ext = if path.ends_with(".modu") {
+                                path.clone()
+                            } else {
+                                format!("{}.modu", path)
+                            };
+
+                            current_dir.join(&with_ext)
+                        };
+
+                        let absolute = resolved
+                            .canonicalize()
+                            .map_err(|_| format!("cannot find module '{}' (looked at {})", path, resolved.display()))?;
+                        
+                        let source = std::fs::read_to_string(&resolved)
+                            .map_err(|e| format!("cannot read '{}': {}", resolved.display(), e))?;
+                        
+                        let ast = crate::parser::parse(&source, &resolved.display().to_string());
+
+                        if ast.is_err() {
+                            return Err(format!("failed to parse package"));
+                        }
+                        
+                        let mut compiler = crate::compiler::compiler::Compiler::new();
+                        compiler.compile_program(ast.clone().unwrap())?;
+
+                        let mut vm = VM::new_with_source(compiler.chunks, absolute);
+                        vm.run()?;
+
+                        let chunk_offset = self.chunks.len();
+                        self.chunks.extend(vm.chunks);
+
+                        let exports: HashMap<String, Value> = vm
+                            .globals
+                            .into_iter()
+                            .filter(|(_, v)| !matches!(v, Value::BuiltinFn(_)))
+                            .map(|(k, v)| (k, remap(v, chunk_offset)))
+                            .collect();
+                        
+                        let module = Value::Object(exports);
+
+                        if let Some(alias) = alias {
+                            if alias == "*" {
+                                if let Value::Object(properties) = module {
+                                    for (key, value) in properties {
+                                        self.globals.insert(key, value);
+                                    }
+                                }
+                            } else {
+                                self.globals.insert(alias.clone(), module);
+                            }
+                        } else {
+                            let default_alias = resolved
+                                .file_stem()
+                                .and_then(|s| s.to_str())
+                                .unwrap_or(path.as_str())
+                                .to_string();
+                            
+                            self.globals.insert(default_alias, module);
+                        }
                     }
                 }
 
@@ -598,5 +709,18 @@ impl VM {
                 }
             }
         }
+    }
+}
+
+fn remap(value: Value, offset: usize) -> Value {
+    match value {
+        Value::Function { chunk_id, arity } => Value::Function { chunk_id: chunk_id + offset, arity },
+        Value::Object(props) => Value::Object(
+            props.into_iter().map(|(k, v)| (k, remap(v, offset))).collect()
+        ),
+        Value::Array(elems) => Value::Array(
+            elems.into_iter().map(|v| remap(v, offset)).collect()
+        ),
+        v => v
     }
 }
