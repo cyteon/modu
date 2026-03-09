@@ -260,6 +260,7 @@ impl VM {
                             }
                         }
 
+                        #[cfg(not(target_arch = "wasm32"))]
                         Value::FFIFunc(lib_idx, func_name) => {
                             let args = self.stack.drain(self.stack.len() - argc..).collect();
                             self.stack.pop();
@@ -433,6 +434,7 @@ impl VM {
                             self.stack.push(Value::NativeFn(method));
                         }
 
+                        #[cfg(not(target_arch = "wasm32"))]
                         Value::FFILib(idx) => {
                             self.stack.pop();
                             self.stack.push(Value::FFIFunc(idx, name.clone()));

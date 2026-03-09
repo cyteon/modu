@@ -1,6 +1,7 @@
 use wasm_bindgen::prelude::*;
 use std::sync::Mutex;
 use std::panic::{catch_unwind, AssertUnwindSafe};
+use yansi::Paint;
 
 static OUTPUT: Mutex<String> = Mutex::new(String::new());
 
@@ -15,11 +16,23 @@ pub fn init() {
 static ALLOC: wee_alloc::WeeAlloc = wee_alloc::WeeAlloc::INIT;
 
 #[wasm_bindgen]
-pub fn eval_modu(code: &str) -> String {
-    let mut context = modu::utils::create_context();
-    
+pub fn eval_modu(code: &str) -> String {    
     let result = catch_unwind(AssertUnwindSafe(|| {
-        modu::parser::parse(code, "<browser>", &mut context);
+        let ast = modu::parser::parse(code, "<browser>");
+
+        let mut compiler = modu::compiler::compiler::Compiler::new();
+
+        if let Err(e) = compiler.compile_program(ast.clone().unwrap()) {
+            println!("{}: {}", "Compilation error".red(), e);
+            return;
+        }
+
+        let mut vm = modu::vm::vm::VM::new(compiler.chunks);
+
+        if let Err(e) = vm.run() {
+            println!("{}: {}", "Runtime error".red(), e);
+            return;
+        }
     }));
 
     if let Err(panic) = result {
