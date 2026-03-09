@@ -39,7 +39,7 @@ impl Highlighter for Syntax {
         let mut result = line.to_string();
 
         result = self.keyword_re.replace_all(&result, |caps: &regex::Captures| {
-            format!("\x1b[1m{}\x1b[0m", caps[0].magenta()) // bug that with .blue().magenta() it didnt work, but this works
+            format!("\x1b[1m{}\x1b[0m", caps[0].magenta()) // bug that with .bold().magenta() it didnt work, but this works
         }).to_string();
 
         result = self.number_re.replace_all(&result, |caps: &regex::Captures| {

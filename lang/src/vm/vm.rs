@@ -1,4 +1,5 @@
 use std::collections::HashMap;
+use colored::Colorize;
 
 use super::chunk::Chunk;
 use super::value::Value;
@@ -20,6 +21,25 @@ pub struct VM {
 
 const STACK_MAX: usize = 2048;
 const FRAMES_MAX: usize = 256;
+
+fn find_closest(name: String, options: impl Iterator<Item = String>) -> Option<String> {
+    let options: Vec<String> = options.collect();
+
+    if options.is_empty() {
+        return None;
+    }
+
+    let (best, score) = options
+        .iter()
+        .map(|c| (c.clone(), strsim::jaro_winkler(&name, c)))
+        .max_by(|a, b| a.1.partial_cmp(&b.1).unwrap())?;
+    
+    if score > 0.75 {
+        Some(best)
+    } else {
+        None
+    }
+}
 
 impl VM {
     pub fn new(chunks: Vec<Chunk>) -> Self {
@@ -439,7 +459,15 @@ impl VM {
                                 None => {
                                     let method = match crate::natives::object::get_fn(name.to_string()) {
                                         Some(m) => m,
-                                        None => return Err(format!("undefined property '{}' on object", name)),
+                                        None => {
+                                            let closest = find_closest(name.clone(), properties.keys().cloned());
+
+                                            if let Some(closest) = closest {
+                                                return Err(format!("undefined property '{}' on object.\nDid you maybe mean: '{}'?", name, closest.green()));
+                                            }
+
+                                            return Err(format!("undefined property '{}' on object", name))
+                                        }
                                     };
 
                                     self.stack.push(Value::NativeFn(method));
@@ -450,7 +478,15 @@ impl VM {
                         Value::String(_) => {
                             let method = match crate::natives::string::get_fn(name.to_string()) {
                                 Some(m) => m,
-                                None => return Err(format!("undefined property '{}' on string", name)),
+                                None => {
+                                    let closest = find_closest(name.clone(), crate::natives::string::list_fns().into_iter());
+
+                                    if let Some(closest) = closest {
+                                        return Err(format!("undefined property '{}' on string.\nDid you maybe mean: '{}'?", name, closest.green()));
+                                    }
+
+                                    return Err(format!("undefined property '{}' on string", name))
+                                }
                             };
 
                             self.stack.push(Value::NativeFn(method));
@@ -459,7 +495,15 @@ impl VM {
                         Value::Int(_) => {
                             let method = match crate::natives::int::get_fn(name.to_string()) {
                                 Some(m) => m,
-                                None => return Err(format!("undefined property '{}' on {}", name, target.type_name())),
+                                None => {
+                                    let closest = find_closest(name.clone(), crate::natives::int::list_fns().into_iter());
+
+                                    if let Some(closest) = closest {
+                                        return Err(format!("undefined property '{}' on int.\nDid you maybe mean: '{}'?", name, closest.green()));
+                                    }
+
+                                    return Err(format!("undefined property '{}' on int", name))
+                                }
                             };
 
                             self.stack.push(Value::NativeFn(method));
@@ -468,7 +512,15 @@ impl VM {
                         Value::Float(_) => {
                             let method = match crate::natives::float::get_fn(name.to_string()) {
                                 Some(m) => m,
-                                None => return Err(format!("undefined property '{}' on float", name)),
+                                None => {
+                                    let closest = find_closest(name.clone(), crate::natives::float::list_fns().into_iter());
+
+                                    if let Some(closest) = closest {
+                                        return Err(format!("undefined property '{}' on float.\nDid you maybe mean: '{}'?", name, closest.green()));
+                                    }
+
+                                    return Err(format!("undefined property '{}' on float", name))
+                                }
                             };
 
                             self.stack.push(Value::NativeFn(method));
@@ -477,7 +529,15 @@ impl VM {
                         Value::Array(_) => {
                             let method = match crate::natives::array::get_fn(name.to_string()) {
                                 Some(m) => m,
-                                None => return Err(format!("undefined property '{}' on array", name)),
+                                None => {
+                                    let closest = find_closest(name.clone(), crate::natives::array::list_fns().into_iter());
+
+                                    if let Some(closest) = closest {
+                                        return Err(format!("undefined property '{}' on array.\nDid you maybe mean: '{}'?", name, closest.green()));
+                                    }
+
+                                    return Err(format!("undefined property '{}' on array", name))
+                                }
                             };
 
                             self.stack.push(Value::NativeFn(method));
@@ -697,7 +757,15 @@ impl VM {
                 Instruction::LoadGlobal(name) => {
                     let v = match self.globals.get(name) {
                         Some(v) => v.clone(),
-                        None => return Err(format!("undefined variable '{}'", name)),
+                        None => {
+                            let closest = find_closest(name.clone(), self.globals.keys().cloned());
+
+                            if let Some(closest) = closest {
+                                return Err(format!("undefined variable '{}'\nDid you maybe mean: {}?", name, format!("'{}'", closest).green()));
+                            }
+
+                            return Err(format!("undefined variable '{}'", name))
+                        },
                     };
 
                     self.stack.push(v);

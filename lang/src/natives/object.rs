@@ -13,6 +13,18 @@ pub fn get_fn(name: String) -> Option<NativeFn> {
     }
 }
 
+pub fn list_fns() -> Vec<String> {
+    vec![
+        "get".to_string(),
+        "set".to_string(),
+        "has".to_string(),
+        "delete".to_string(),
+        "stringify".to_string(),
+        "keys".to_string(),
+        "values".to_string(),
+    ]
+}
+
 pub fn get(this: Value, args: Vec<Value>) -> Result<(Value, Option<Value>), String> {
     if args.len() != 1 {
         return Err(format!("<object>.get() takes exactly one argument ({} given)", args.len()));

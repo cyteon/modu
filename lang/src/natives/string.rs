@@ -15,6 +15,20 @@ pub fn get_fn(name: String) -> Option<NativeFn> {
     }
 }
 
+pub fn list_fns() -> Vec<String> {
+    vec![
+        "len".to_string(),
+        "split".to_string(),
+        "replace".to_string(),
+        "trim".to_string(),
+        "to_upper".to_string(),
+        "to_lower".to_string(),
+        "starts_with".to_string(),
+        "ends_with".to_string(),
+        "chars".to_string(),
+    ]
+}
+
 pub fn len(this: Value, args: Vec<Value>) -> Result<(Value, Option<Value>), String> {
     if !args.is_empty() {
         return Err(format!("<string>.len() takaes no arguments ({} given)", args.len()));

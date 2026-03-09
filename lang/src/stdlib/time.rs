@@ -17,6 +17,19 @@ pub fn object() -> Value {
     Value::Object(methods)
 }
 
+pub fn list_fns() -> Vec<String> {
+    vec![
+        "now_unix".to_string(),
+        "now_unix_ms".to_string(),
+        "now_utc".to_string(),
+        "now_local".to_string(),
+        "to_iso_8601".to_string(),
+        "to_rfc_2822".to_string(),
+        "to_local_date_time".to_string(),
+        "to_utc_date_time".to_string(),
+    ]
+}
+
 fn now_unix(args: Vec<Value>) -> Result<Value, String> {
     if !args.is_empty() {
         return Err(format!("time.now_unix() takes no arguments ({} given)", args.len()));

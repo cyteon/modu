@@ -10,6 +10,10 @@ pub fn get_fn(name: String) -> Option<NativeFn> {
     }
 }
 
+pub fn list_fns() -> Vec<String> {
+    vec!["len".to_string(), "push".to_string(), "pop".to_string(), "join".to_string()]
+}
+
 pub fn len(this: Value, args: Vec<Value>) -> Result<(Value, Option<Value>), String> {
     if !args.is_empty() {
         return Err(format!("<array>.len() takes no arguments ({} given)", args.len()));

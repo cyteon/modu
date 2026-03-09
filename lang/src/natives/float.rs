@@ -13,6 +13,18 @@ pub fn get_fn(name: String) -> Option<NativeFn> {
     }
 }
 
+pub fn list_fns() -> Vec<String> {
+    vec![
+        "min".to_string(),
+        "max".to_string(),
+        "abs".to_string(),
+        "sqrt".to_string(),
+        "round".to_string(),
+        "ceil".to_string(),
+        "floor".to_string(),
+    ]
+}
+
 pub fn min(this: Value, args: Vec<Value>) -> Result<(Value, Option<Value>), String> {
     if args.len() != 1 {
         return Err(format!("<float>.min() takes exactly one argument ({} given)", args.len()));

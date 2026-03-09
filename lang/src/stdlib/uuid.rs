@@ -10,6 +10,13 @@ pub fn object() -> Value {
     Value::Object(methods)
 }
 
+pub fn list_fns() -> Vec<String> {
+    vec![
+        "v4".to_string(),
+        "v7".to_string(),
+    ]
+}
+
 fn v4(args: Vec<Value>) -> Result<Value, String> {
     if !args.is_empty() {
         return Err(format!("uuid.v4() takes no arguments ({} given)", args.len()));

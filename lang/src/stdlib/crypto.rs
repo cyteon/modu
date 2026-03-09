@@ -18,6 +18,18 @@ pub fn object() -> Value {
     Value::Object(methods)
 }
 
+pub fn list_fns() -> Vec<String> {
+    vec![
+        "sha256".to_string(),
+        "sha512".to_string(),
+        "blake3".to_string(),
+        "bcrypt_hash".to_string(),
+        "bcrypt_verify".to_string(),
+        "argon2_hash".to_string(),
+        "argon2_verify".to_string(),
+    ]
+}
+
 fn sha256(args: Vec<Value>) -> Result<Value, String> {
     if args.len() != 1 {
         return Err(format!("crypto.sha256() takes exactly one argument ({} given)", args.len()));

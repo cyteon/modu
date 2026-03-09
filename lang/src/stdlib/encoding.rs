@@ -13,6 +13,15 @@ pub fn object() -> Value {
     Value::Object(methods)
 }
 
+pub fn list_fns() -> Vec<String> {
+    vec![
+        "encode_base64".to_string(),
+        "decode_base64".to_string(),
+        "encode_base16".to_string(),
+        "decode_base16".to_string(),
+    ]
+}
+
 fn encode_base64(args: Vec<Value>) -> Result<Value, String> {
     if args.len() != 1 {
         return Err(format!("encoding.encode_base64() takes exactly one argument ({} given)", args.len()));

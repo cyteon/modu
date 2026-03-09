@@ -1,6 +1,18 @@
 use std::collections::HashMap;
 use crate::vm::value::{BuiltinFn, Value};
 
+pub fn object() -> Value {
+    let mut methods = HashMap::new();
+
+    methods.insert("parse".to_string(), Value::BuiltinFn(BuiltinFn::new("parse", parse)));
+
+    Value::Object(methods)
+}
+
+pub fn list_fns() -> Vec<String> {
+    vec!["parse".to_string()]
+}
+
 fn parse_obj(obj: &mut HashMap<String, serde_json::Value>) -> Result<HashMap<String, Value>, String> {
     let mut map = HashMap::new();
 
@@ -81,12 +93,4 @@ pub fn parse(args: Vec<Value>) -> Result<Value, String> {
 
     let properties = parse_obj(&mut parsed)?;
     Ok(Value::Object(properties))
-}
-
-pub fn object() -> Value {
-    let mut methods = HashMap::new();
-
-    methods.insert("parse".to_string(), Value::BuiltinFn(BuiltinFn::new("parse", parse)));
-
-    Value::Object(methods)
 }
