@@ -50,6 +50,20 @@ test(5);
 test(-3);
 test(0);
 
+print("\ntesting and/or:\n");
+print(true and true);
+print(true and false);
+print(false and false);
+
+print(true or true);
+print(true or false);
+print(false or false);
+
+print("\ntesting !:\n");
+print(!true);
+print(!false);
+print(!"a");
+
 // Expected Output:
 //
 // a == 1

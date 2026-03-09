@@ -7,7 +7,7 @@ pub enum Instruction {
 
     Add, Sub, Mul, Div, Mod, Pow, Neg,
     Eq, Neq, Gt, Lt, Gte, Lte,
-    In, NotIn,
+    In, NotIn, And, Or, Not,
 
     LoadLocal(usize),
     StoreLocal(usize),

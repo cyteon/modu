@@ -396,6 +396,23 @@ impl Compiler {
                 self.emit(Instruction::NotIn);
             }
 
+            Expr::And(a, b) => {
+                self.compile_expr(*a.clone())?;
+                self.compile_expr(*b.clone())?;
+                self.emit(Instruction::And);
+            }
+
+            Expr::Or(a, b) => {
+                self.compile_expr(*a.clone())?;
+                self.compile_expr(*b.clone())?;
+                self.emit(Instruction::Or);
+            }
+
+            Expr::Not(v) => {
+                self.compile_expr(*v.clone())?;
+                self.emit(Instruction::Not);
+            }
+
             Expr::Function { name, args, body } => {
                 let chunk_id = self.chunks.len();
                 self.chunks.push(Chunk::new(name));
@@ -585,11 +602,6 @@ impl Compiler {
 
             Expr::Import { name, alias } => {
                 self.emit(Instruction::Import { path: name.clone(), alias: alias.clone() });
-            }
-
-            v => {
-                dbg!(v);
-                todo!();
             }
         }
 

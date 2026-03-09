@@ -119,4 +119,7 @@ pub enum Expr {
     GreaterThanOrEqual(Box<Spanned<Expr>>, Box<Spanned<Expr>>),
     In(Box<Spanned<Expr>>, Box<Spanned<Expr>>),
     NotIn(Box<Spanned<Expr>>, Box<Spanned<Expr>>),
+    And(Box<Spanned<Expr>>, Box<Spanned<Expr>>),
+    Or(Box<Spanned<Expr>>, Box<Spanned<Expr>>),
+    Not(Box<Spanned<Expr>>)
 }

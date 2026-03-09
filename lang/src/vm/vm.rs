@@ -186,6 +186,26 @@ impl VM {
                     self.stack.push(Value::Bool(!b.contains(&a)?));
                 }
 
+                Instruction::And => {
+                    let b = self.stack.pop().unwrap_or(Value::Null);
+                    let a = self.stack.pop().unwrap_or(Value::Null);
+
+                    self.stack.push(Value::Bool(a.truthy() && b.truthy()));
+                }
+
+                Instruction::Or => {
+                    let b = self.stack.pop().unwrap_or(Value::Null);
+                    let a = self.stack.pop().unwrap_or(Value::Null);
+
+                    self.stack.push(Value::Bool(a.truthy() || b.truthy()));
+                }
+
+                Instruction::Not => {
+                    let a = self.stack.pop().unwrap_or(Value::Null);
+
+                    self.stack.push(Value::Bool(!a.truthy()));
+                }
+
                 Instruction::Call(argc) => {
                     let callee = self.stack[self.stack.len() - 1 - argc].clone();
 
@@ -576,8 +596,6 @@ impl VM {
                             return Err(format!("unknown stdlib module '{}'", path));
                         }
                     } else {
-                        let chunk_id = self.frames.last().unwrap().chunk_id;
-
                         let current_dir = self.source_path
                             .parent()
                             .map(|p| p.to_path_buf())
@@ -700,12 +718,6 @@ impl VM {
 
                 Instruction::Jump(offset) => {
                     frame.ip = *offset;
-                }
-
-                // ik nothing can reach it, but if i add new stuff i want it to compile but with todo!
-                _ => {
-                    dbg!(instruction);
-                    todo!();
                 }
             }
         }

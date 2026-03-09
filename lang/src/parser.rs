@@ -137,15 +137,22 @@ fn parser<'src>() -> impl Parser<
             .labelled("postfix expression")
             .boxed();
 
-        let unary = select! { (Token::Minus, span) => span }
+        let unary = choice((
+            select! { (Token::Minus, span) => (Token::Minus, span) },
+            select! { (Token::Not, span) => (Token::Not, span) },
+        ))
             .repeated()
-            .collect::<Vec<Span>>()
+            .collect::<Vec<(Token, Span)>>()
             .then(postfix)
-            .map(|(neg, mut expr): (Vec<Span>, SpannedExpr)| {
-                for neg_span in neg.into_iter().rev() {
+            .map(|(ops, mut expr): (Vec<(Token, Span)>, SpannedExpr)| {
+                for (op, op_span) in ops.into_iter().rev() {
                     expr = SpannedExpr {
-                        node: Expr::Neg(Box::new(expr.clone())),
-                        span: Span::from(neg_span.start..expr.span.end),
+                        node: match op {
+                            Token::Minus => Expr::Neg(Box::new(expr.clone())),
+                            Token::Not => Expr::Not(Box::new(expr.clone())),
+                            _ => unreachable!(),
+                        },
+                        span: Span::from(op_span.start..expr.span.end),
                     };
                 }
 
@@ -266,8 +273,9 @@ fn parser<'src>() -> impl Parser<
                     select! { (Token::GreaterThanOrEqual, span) => span }.then(inclusive_range.clone()).map(|(span, right)| (Token::GreaterThanOrEqual, span, right)),
                     select! { (Token::In, span) => span }.then(inclusive_range.clone()).map(|(span, right)| (Token::In, span, right)),
                     select! { (Token::NotIn, span) => span }.then(inclusive_range.clone()).map(|(span, right)| (Token::NotIn, span, right)),
+                    select! { (Token::And, span) => span }.then(inclusive_range.clone()).map(|(span, right)| (Token::And, span, right)),
+                    select! { (Token::Or, span) => span }.then(inclusive_range.clone()).map(|(span, right)| (Token::Or, span, right)),
                 )).repeated(),
-
                 |left: SpannedExpr, (op, _span, right): (Token, Span, SpannedExpr)| SpannedExpr {
                     node: match op {
                         Token::Equal => Expr::Equal(Box::new(left.clone()), Box::new(right.clone())),
@@ -278,6 +286,8 @@ fn parser<'src>() -> impl Parser<
                         Token::GreaterThanOrEqual => Expr::GreaterThanOrEqual(Box::new(left.clone()), Box::new(right.clone())),
                         Token::In => Expr::In(Box::new(left.clone()), Box::new(right.clone())),
                         Token::NotIn => Expr::NotIn(Box::new(left.clone()), Box::new(right.clone())),
+                        Token::And => Expr::And(Box::new(left.clone()), Box::new(right.clone())),
+                        Token::Or => Expr::Or(Box::new(left.clone()), Box::new(right.clone())),
                         _ => unreachable!(),
                     },
                     span: Span::from(left.span.start..right.span.end),
