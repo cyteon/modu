@@ -629,7 +629,7 @@ impl VM {
 
                         let absolute = resolved
                             .canonicalize()
-                            .map_err(|_| format!("cannot find module '{}' (looked at {})", path, resolved.display()))?;
+                            .map_err(|_| format!("cannot find module '{}' (looked for {})", path, resolved.display()))?;
                         
                         let source = std::fs::read_to_string(&resolved)
                             .map_err(|e| format!("cannot read '{}': {}", resolved.display(), e))?;

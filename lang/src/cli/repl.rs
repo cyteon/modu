@@ -15,17 +15,21 @@ pub struct Syntax {
     number_re: Regex,
     boolean_re: Regex,
     function_re: Regex,
+    compare_re: Regex,
+    math_re: Regex,
 }
 
 impl Syntax {
     pub fn new() -> Self {
         Self {
-            keyword_re: Regex::new(r"\b(if|else|fn|let|import|as|return|loop|break|continue|for|in|not in)\b").unwrap(),
+            keyword_re: Regex::new(r"\b(if|else|fn|let|import|as|return|loop|break|continue|for|while|and|or|in|not in)\b").unwrap(),
             string_re: Regex::new(r#""([^"\\]|\\.)*"|'([^'\\]|\\.)*'"#).unwrap(),
             comment_re: Regex::new(r"//.*$|/\*.*?\*/").unwrap(),
             number_re: Regex::new(r"\b\d(?:_?\d)*\b").unwrap(),
             boolean_re: Regex::new(r"\b(true|false|null)\b").unwrap(),
             function_re: Regex::new(r"\b([a-zA-Z_][a-zA-Z0-9_]*)(\()").unwrap(),
+            compare_re: Regex::new(r"(==|!=|<=|>=|<|>|!)").unwrap(),
+            math_re: Regex::new(r"(\+|-|\*|/|%)").unwrap(),
         }
     }
 }
@@ -56,6 +60,14 @@ impl Highlighter for Syntax {
 
         result = self.comment_re.replace_all(&result, |caps: &regex::Captures| {
             caps[0].dimmed().to_string()
+        }).to_string();
+
+        result = self.compare_re.replace_all(&result, |caps: &regex::Captures| {
+            caps[0].cyan().to_string()
+        }).to_string();
+
+        result = self.math_re.replace_all(&result, |caps: &regex::Captures| {
+            caps[0].cyan().to_string()
         }).to_string();
 
         std::borrow::Cow::Owned(result)
