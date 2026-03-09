@@ -82,7 +82,9 @@ impl PartialOrd for Value {
     fn partial_cmp(&self, other: &Self) -> Option<std::cmp::Ordering> {
         match (self, other) {
             (Value::Int(a), Value::Int(b)) => a.partial_cmp(b),
+            (Value::Int(a), Value::Float(b)) => (*a as f64).partial_cmp(b),
             (Value::Float(a), Value::Float(b)) => a.partial_cmp(b),
+            (Value::Float(a), Value::Int(b)) => a.partial_cmp(&(*b as f64)),
             (Value::String(a), Value::String(b)) => a.partial_cmp(b),
             (Value::Bool(a), Value::Bool(b)) => a.partial_cmp(b),
             _ => None,
@@ -189,7 +191,9 @@ impl Value {
             Value::Null => "null",
             Value::Array(_) => "array",
             Value::Object { .. } => "object",
-            Value::Function { .. } | Value::NativeFn(_) | Value::BuiltinFn(_) => "function",
+            Value::Function { .. } => "function",
+            Value::NativeFn(_) => "native_fn",
+            Value::BuiltinFn(_) => "builtin_fn",
             Value::Range { .. } => "range",
             Value::FFILib(_) => "ffi_lib",
             Value::FFIFunc(_, _) => "ffi_function",
