@@ -1,9 +1,4 @@
 use std::collections::HashMap;
-use std::sync::Arc;
-
-#[cfg(not(target_arch = "wasm32"))]
-use libloading::Library;
-
 use crate::lexer::Span;
 
 pub type SpannedExpr = Spanned<Expr>;
@@ -11,24 +6,6 @@ pub type SpannedExpr = Spanned<Expr>;
 pub struct Spanned<T> {
     pub node: T,
     pub span: Span,
-}
-
-impl PartialEq for Spanned<Expr> {
-    fn eq(&self, other: &Self) -> bool {
-        self.node == other.node
-    }
-}
-
-impl std::fmt::Display for Spanned<Expr> {
-    fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
-        write!(f, "{}", self.node)
-    }
-}
-
-#[derive(Debug, Clone)]
-pub struct InternalFunctionResponse {
-    pub return_value: Expr,
-    pub replace_self: Option<Expr>,
 }
 
 #[derive(Debug, Clone)]
@@ -89,12 +66,6 @@ pub enum Expr {
     Block(Vec<Spanned<Expr>>),
     Array(Vec<Spanned<Expr>>),
 
-    InternalFunction {
-        name: String,
-        args: Vec<String>, // Vec<"__args__"> for an optional amount
-        func: fn(Vec<Spanned<Expr>>) -> Result<InternalFunctionResponse, (String, Span)>,
-    },
-
     Function {
         name: String,
         args: Vec<String>,
@@ -108,16 +79,6 @@ pub enum Expr {
         name: String,
         alias: Option<String>,
     },
-
-    Module {
-        symbols: HashMap<String, Spanned<Expr>>,
-    },
-
-    #[cfg(not(target_arch = "wasm32"))]
-    FFILibrary(Arc<Library>),
-
-    #[cfg(not(target_arch = "wasm32"))]
-    File(Arc<std::fs::File>),
 
     Object {
         properties: HashMap<String, Spanned<Expr>>,
@@ -158,150 +119,4 @@ pub enum Expr {
     GreaterThanOrEqual(Box<Spanned<Expr>>, Box<Spanned<Expr>>),
     In(Box<Spanned<Expr>>, Box<Spanned<Expr>>),
     NotIn(Box<Spanned<Expr>>, Box<Spanned<Expr>>),
-}
-
-impl std::fmt::Display for Expr {
-    fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
-        match self {
-            Expr::Int(n) => write!(f, "{}", n),
-            Expr::Float(fl) => write!(f, "{}", fl),
-            Expr::String(s) => {
-                let processed = Self::process_escape_sequences(s);
-                write!(f, "{}", processed)
-            },
-            Expr::Identifier(name) => write!(f, "{}", name),
-            Expr::Bool(b) => write!(f, "{}", b),
-            Expr::Null => write!(f, "null"),
-
-            Expr::Array(elements) => {
-                write!(f, "[")?;
-
-                for (i, element) in elements.iter().enumerate() {
-                    if let Expr::String(s) = &element.node {
-                        let processed = Self::process_escape_sequences(s);
-                        write!(f, "\"{}\"", processed)?;
-                    } else {
-                        write!(f, "{}", element.node)?;
-                    }
-
-                    if i != elements.len() - 1 {
-                        write!(f, ", ")?;
-                    }
-                }
-
-                write!(f, "]")
-            }
-
-            Expr::Object { properties } => {
-                write!(f, "{{")?;
-
-                let mut first = true;
-                for (key, value) in properties {
-                    if !first {
-                        write!(f, ", ")?;
-                    }
-
-                    first = false;
-
-                    let value_str = match &value.node {
-                        Expr::String(s) => format!("\"{}\"", Self::process_escape_sequences(&s)),
-                        Expr::Int(n) => n.to_string(),
-                        Expr::Float(fl) => fl.to_string(),
-                        Expr::Bool(b) => b.to_string(),
-                        Expr::Array(_) => format!("{}", value),
-                        Expr::Object { .. } => format!("{}", value),
-                        Expr::Null => "null".to_string(),
-                        _ => "\"<complex value>\"".to_string(),
-                    };
-
-                    write!(f, "\"{}\": {}", key, value_str)?;
-                }
-
-                write!(f, "}}")
-            }
-
-            _ => write!(f, "{:?}", self),
-        }
-    }
-}
-
-impl PartialEq for Expr {
-    fn eq(&self, other: &Self) -> bool {
-        match (self, other) {
-            (Expr::Int(a), Expr::Int(b)) => a == b,
-            (Expr::Float(a), Expr::Float(b)) => a == b,
-            (Expr::String(a), Expr::String(b)) => a == b,
-            (Expr::Identifier(a), Expr::Identifier(b)) => a == b,
-            (Expr::Bool(a), Expr::Bool(b)) => a == b,
-            (Expr::Array(a), Expr::Array(b)) => {
-                if a.len() != b.len() {
-                    return false;
-                }
-
-                for (elem_a, elem_b) in a.iter().zip(b.iter()) {
-                    if elem_a.node != elem_b.node {
-                        return false;
-                    }
-                }
-
-                true
-            }
-            (Expr::Object { properties: a }, Expr::Object { properties: b }) => a == b,
-            (Expr::Null, Expr::Null) => true,
-            _ => false,
-        }
-    }
-}
-
-impl Expr {
-    fn process_escape_sequences(s: &str) -> String {
-        let mut result = String::new();
-        let mut chars = s.chars();
-        
-        while let Some(ch) = chars.next() {
-            if ch == '\\' {
-                if let Some(next) = chars.next() {
-                    match next {
-                        'n' => result.push('\n'),
-                        't' => result.push('\t'),
-                        '"' => result.push('"'),
-                        '\\' => result.push('\\'),
-                        'x' => {
-                            let hex: String = chars.by_ref().take(2).collect();
-                            if let Ok(byte) = u8::from_str_radix(&hex, 16) {
-                                result.push(byte as char);
-                            } else {
-                                result.push('\\');
-                                result.push('x');
-                                result.push_str(&hex);
-                            }
-                        }
-                        _ => {
-                            result.push('\\');
-                            result.push(next);
-                        }
-                    }
-                } else {
-                    result.push('\\');
-                }
-            } else {
-                result.push(ch);
-            }
-        }
-        
-        result
-    }
-
-    pub fn truthy(&self) -> bool {
-        match self {
-            Expr::Null => false,
-            Expr::Bool(b) => *b,
-            Expr::Int(n) => *n != 0,
-            Expr::Float(f) => *f != 0.0,
-            Expr::String(s) => !s.is_empty(),
-            Expr::Array(elements) => !elements.is_empty(),
-            Expr::Object { properties } => !properties.is_empty(),
-            _ => true,
-        }
-    }
 }

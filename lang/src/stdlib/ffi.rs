@@ -145,7 +145,7 @@ pub fn call_ffi(idx: usize, name: &str, args: Vec<Value>) -> Result<Value, Strin
             return Err(format!("function '{}' expects {} arguments, got {}", name, sig.arg_types.len(), args.len()));
         }
 
-        let mut ffi_args: Vec<FFIArg> = args.iter()
+        let ffi_args: Vec<FFIArg> = args.iter()
             .zip(&sig.arg_types)
             .map(|(v, t)| to_ffi_arg(v, t))
             .collect::<Result<_, _>>()?;
@@ -177,7 +177,7 @@ pub fn call_ffi(idx: usize, name: &str, args: Vec<Value>) -> Result<Value, Strin
                     if ptr.is_null() {
                         Ok(Value::Null)
                     } else {
-                        let c_str = unsafe { std::ffi::CStr::from_ptr(ptr) };
+                        let c_str = std::ffi::CStr::from_ptr(ptr);
                         c_str.to_str()
                             .map(|s| Value::String(s.to_string()))
                             .map_err(|e| format!("failed to convert C string to Rust string: {}", e))
@@ -214,7 +214,7 @@ enum FFIArg {
 }
 
 impl FFIArg {
-    fn as_arg(&self) -> libffi::middle::Arg {
+    fn as_arg(&self) -> libffi::middle::Arg<'_> {
         match self {
             FFIArg::I64(i) => libffi::middle::Arg::new(i),
             FFIArg::F64(f) => libffi::middle::Arg::new(f),

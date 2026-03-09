@@ -1,4 +1,3 @@
-use assert_cmd::Command;
 use predicates::prelude::*;
 use std::fs;
 use std::path::Path;
@@ -11,8 +10,7 @@ fn run_test(name: &str) {
     let expected_output = fs::read_to_string(&expected_file)
         .expect("Failed to read expected output file");
 
-    Command::cargo_bin(env!("CARGO_PKG_NAME"))
-        .expect("Failed to find binary")
+    assert_cmd::cargo::cargo_bin_cmd!(env!("CARGO_PKG_NAME"))
         .arg("run")
         .arg(modu_file)
         .assert()
