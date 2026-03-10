@@ -29,7 +29,7 @@ pub fn eval_modu(code: &str) -> String {
 
         let mut vm = modu::vm::vm::VM::new(compiler.chunks);
 
-        if let Err(e) = vm.run() {
+        if let Err(e) = vm.run(0) {
             println!("{}: {}", "Runtime error".red(), e);
             return;
         }
@@ -47,7 +47,7 @@ pub fn eval_modu(code: &str) -> String {
     }
 
     let string = format!("{}", OUTPUT.lock().unwrap().as_str());
-    OUTPUT.lock().unwrap().clear();
+    OUTPUT.lock().unwrap().truncate(0);
 
     string
 }
