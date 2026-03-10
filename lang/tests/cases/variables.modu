@@ -8,8 +8,8 @@ a.test2 = "test";
 
 print(a.test);
 
-let b = [-1];
+let b = [[-1, 0], 0];
 
-b[0] += 6;
+b[0][0] += 6;
 
-print(b[0]);
+print(b[0][0]);
