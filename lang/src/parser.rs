@@ -1,7 +1,7 @@
 use std::collections::HashMap;
 use ariadne::{Color, Label, Report, ReportKind, Source};
 use chumsky::prelude::*;
-use crate::{ast::{Expr, SpannedExpr, AssignOp}, eval, lexer::{Span, Token, lex}};
+use crate::{ast::{Expr, SpannedExpr, AssignOp}, lexer::{Span, Token, lex}};
 
 enum Postfix {
     Property(String, Span),
@@ -137,15 +137,22 @@ fn parser<'src>() -> impl Parser<
             .labelled("postfix expression")
             .boxed();
 
-        let unary = select! { (Token::Minus, span) => span }
+        let unary = choice((
+            select! { (Token::Minus, span) => (Token::Minus, span) },
+            select! { (Token::Not, span) => (Token::Not, span) },
+        ))
             .repeated()
-            .collect::<Vec<Span>>()
+            .collect::<Vec<(Token, Span)>>()
             .then(postfix)
-            .map(|(neg, mut expr): (Vec<Span>, SpannedExpr)| {
-                for neg_span in neg.into_iter().rev() {
+            .map(|(ops, mut expr): (Vec<(Token, Span)>, SpannedExpr)| {
+                for (op, op_span) in ops.into_iter().rev() {
                     expr = SpannedExpr {
-                        node: Expr::Neg(Box::new(expr.clone())),
-                        span: Span::from(neg_span.start..expr.span.end),
+                        node: match op {
+                            Token::Minus => Expr::Neg(Box::new(expr.clone())),
+                            Token::Not => Expr::Not(Box::new(expr.clone())),
+                            _ => unreachable!(),
+                        },
+                        span: Span::from(op_span.start..expr.span.end),
                     };
                 }
 
@@ -266,8 +273,9 @@ fn parser<'src>() -> impl Parser<
                     select! { (Token::GreaterThanOrEqual, span) => span }.then(inclusive_range.clone()).map(|(span, right)| (Token::GreaterThanOrEqual, span, right)),
                     select! { (Token::In, span) => span }.then(inclusive_range.clone()).map(|(span, right)| (Token::In, span, right)),
                     select! { (Token::NotIn, span) => span }.then(inclusive_range.clone()).map(|(span, right)| (Token::NotIn, span, right)),
+                    select! { (Token::And, span) => span }.then(inclusive_range.clone()).map(|(span, right)| (Token::And, span, right)),
+                    select! { (Token::Or, span) => span }.then(inclusive_range.clone()).map(|(span, right)| (Token::Or, span, right)),
                 )).repeated(),
-
                 |left: SpannedExpr, (op, _span, right): (Token, Span, SpannedExpr)| SpannedExpr {
                     node: match op {
                         Token::Equal => Expr::Equal(Box::new(left.clone()), Box::new(right.clone())),
@@ -278,6 +286,8 @@ fn parser<'src>() -> impl Parser<
                         Token::GreaterThanOrEqual => Expr::GreaterThanOrEqual(Box::new(left.clone()), Box::new(right.clone())),
                         Token::In => Expr::In(Box::new(left.clone()), Box::new(right.clone())),
                         Token::NotIn => Expr::NotIn(Box::new(left.clone()), Box::new(right.clone())),
+                        Token::And => Expr::And(Box::new(left.clone()), Box::new(right.clone())),
+                        Token::Or => Expr::Or(Box::new(left.clone()), Box::new(right.clone())),
                         _ => unreachable!(),
                     },
                     span: Span::from(left.span.start..right.span.end),
@@ -458,7 +468,7 @@ fn parser<'src>() -> impl Parser<
                     .labelled("optional 'as' clause")
             )
             .then(select! { (Token::Semicolon, span) => span }.labelled("semicolon"))
-            .map(|(((start, name_expr), import_as), end): (((Span, SpannedExpr), Option<(Span, String)>), Span)| {
+            .map(|(((start, name_expr), alias), end): (((Span, SpannedExpr), Option<(Span, String)>), Span)| {
                 let import_name = match name_expr.node {
                     Expr::String(s) => s,
                     _ => "".to_string(),
@@ -467,7 +477,7 @@ fn parser<'src>() -> impl Parser<
                 SpannedExpr {
                     node: Expr::Import {
                         name: import_name,
-                        import_as: import_as.map(|(_, n)| n),
+                        alias: alias.map(|(_, n)| n),
                     },
                     span: Span::from(start.start..end.end),
                 }
@@ -492,7 +502,7 @@ fn parser<'src>() -> impl Parser<
     stmt.repeated().collect::<Vec<_>>().then_ignore(end()).labelled("program")
 }
 
-pub fn parse(input: &str, filename: &str, context: &mut Vec<HashMap<String, Expr>>) {
+pub fn parse(input: &str, filename: &str) -> Result<Vec<SpannedExpr>, ()> {
     let tokens = match lex(input) {
         Ok(toks) => toks,
         Err(e) => {
@@ -507,46 +517,16 @@ pub fn parse(input: &str, filename: &str, context: &mut Vec<HashMap<String, Expr
             
             report_error(report, filename, input);
 
-            return;
+            return Err(());
         }
     };
 
     match parser().parse(&tokens).into_result() {
         Ok(ast) => {
-            let sys_args = std::env::args().collect::<Vec<String>>();
-
-            if sys_args.contains(&"--debug".to_string()) {
-                println!("AST: {:#?}", ast);
-            }
-
             if let Err(()) = crate::validator::validate_ast(&ast, filename, input) {
-                return;
-            }
-
-            for expr in ast {
-                match eval::eval(&expr, context, 0) {
-                    Ok(_) => {}
-
-                    Err(e) => {
-                        let mut report = Report::build(ReportKind::Error, (filename, e.span.into_range()))
-                            .with_message(format!("Evaluation error: {}", e.message))
-                            .with_label(
-                                Label::new((filename, e.span.into_range()))
-                                    .with_color(Color::Red)
-                                    .with_message(format!("{}", e.message_short)),
-                            );
-                        
-                        if let Some(help_message) = e.help_message {
-                            report = report.with_help(help_message);
-                        }
-
-                        let report = report.finish();
-                        
-                        report_error(report, filename, input);
-
-                        return;
-                    }
-                }
+                return Err(());
+            } else {
+                return Ok(ast);
             }
         }
 
@@ -596,6 +576,8 @@ pub fn parse(input: &str, filename: &str, context: &mut Vec<HashMap<String, Expr
                     }
                } 
             }
+
+            return Err(());
         }
     }
 }

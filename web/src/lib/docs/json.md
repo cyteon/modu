@@ -5,9 +5,9 @@ json.new() creates a new empty json object, and json.parse(string) parses a json
 
 ```rust
 let object = { "a": 1 };
-let string = object.to_string();
+let string = object.stringify();
 
-import "json" as json;
+import "std/json" as json;
 let parsed_object = json.parse(string);
 ```
 
@@ -18,8 +18,9 @@ object.get(key)        - gets the value of the key in the object, returns null i
 object.has(key)        - returns true if the key exists in the object, false otherwise
 object.set(key, value) - sets the value of the key in the object
 object.delete(key)     - deletes the key from the object
-object.to_string()     - converts the object to a json string
+object.stringify()     - converts the object to a json string
 object.keys()          - returns an array of the keys in the object
 object.values()        - returns an array of the values in the object
-object[key]            - gets the value of the key in the object, returns null if the
+object[key]            - gets the value with the key from the object
+object.key             - gets the value with the key from the object
 ```

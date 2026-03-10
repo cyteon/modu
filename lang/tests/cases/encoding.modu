@@ -1,4 +1,4 @@
-import "encoding" as encoding;
+import "std/encoding" as encoding;
 
 print(encoding.encode_base64("test"));
 print(encoding.encode_base16("test"));

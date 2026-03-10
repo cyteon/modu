@@ -18,7 +18,7 @@ body        - string
 
 ## Example get request
 ```rust
-import "http" as http;
+import "std/http";
 
 let result = http.get("https://httpbin.org/get");
 print("Status: ", result.status, " - ", result.status_text);
@@ -28,8 +28,8 @@ print("\nBody:\n", result.body);
 
 ## Example post request
 ```rust
-import "http" as http;
-import "json" as json;
+import "std/http";
+import "std/json";
 
 let headers = json.new();
 headers.set("Content-Type", "application/json");
@@ -42,8 +42,8 @@ print("\nBody:\n", result.body);
 
 ## Example put request
 ```rust
-import "http" as http;
-import "json" as json;
+import "std/http";
+import "std/json"
 
 let data = json.new();
 data.set("name", "modu");
@@ -59,8 +59,8 @@ print("\nBody:\n", result.body);
 
 ## Example patch request
 ```rust
-import "http" as http;
-import "json" as json;
+import "std/http";
+import "std/json"
 
 let data = json.new();
 data.set("name", "modu");
@@ -73,8 +73,7 @@ print("\nBody:\n", result.body);
 
 ## Example delete request
 ```rust
-import "http" as http;
-import "json" as json;
+import "std/http";
 
 let result = http.delete("https://httpbin.org/delete");
 print("Status: ", result.status, " - ", result.status_text);

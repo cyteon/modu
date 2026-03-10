@@ -4,6 +4,7 @@ use rustyline::error::ReadlineError;
 use rustyline::{Editor, history::DefaultHistory, Helper, Completer, Hinter, Validator};
 use regex::Regex;
 use colored::Colorize;
+use std::collections::HashMap;
 use crate::parser::parse;
 
 #[derive(Completer, Helper, Hinter, Validator)]
@@ -14,17 +15,21 @@ pub struct Syntax {
     number_re: Regex,
     boolean_re: Regex,
     function_re: Regex,
+    compare_re: Regex,
+    math_re: Regex,
 }
 
 impl Syntax {
     pub fn new() -> Self {
         Self {
-            keyword_re: Regex::new(r"\b(if|else|fn|let|import|as|return|loop|break|continue|for|in|not in)\b").unwrap(),
+            keyword_re: Regex::new(r"\b(if|else|fn|let|import|as|return|loop|break|continue|for|while|and|or|in|not in)\b").unwrap(),
             string_re: Regex::new(r#""([^"\\]|\\.)*"|'([^'\\]|\\.)*'"#).unwrap(),
             comment_re: Regex::new(r"//.*$|/\*.*?\*/").unwrap(),
             number_re: Regex::new(r"\b\d(?:_?\d)*\b").unwrap(),
             boolean_re: Regex::new(r"\b(true|false|null)\b").unwrap(),
             function_re: Regex::new(r"\b([a-zA-Z_][a-zA-Z0-9_]*)(\()").unwrap(),
+            compare_re: Regex::new(r"(==|!=|<=|>=|<|>|!)").unwrap(),
+            math_re: Regex::new(r"(\+|-|\*|/|%)").unwrap(),
         }
     }
 }
@@ -34,7 +39,7 @@ impl Highlighter for Syntax {
         let mut result = line.to_string();
 
         result = self.keyword_re.replace_all(&result, |caps: &regex::Captures| {
-            format!("\x1b[1m{}\x1b[0m", caps[0].magenta()) // bug that with .blue().magenta() it didnt work, but this works
+            format!("\x1b[1m{}\x1b[0m", caps[0].magenta()) // bug that with .bold().magenta() it didnt work, but this works
         }).to_string();
 
         result = self.number_re.replace_all(&result, |caps: &regex::Captures| {
@@ -57,6 +62,14 @@ impl Highlighter for Syntax {
             caps[0].dimmed().to_string()
         }).to_string();
 
+        result = self.compare_re.replace_all(&result, |caps: &regex::Captures| {
+            caps[0].cyan().to_string()
+        }).to_string();
+
+        result = self.math_re.replace_all(&result, |caps: &regex::Captures| {
+            caps[0].cyan().to_string()
+        }).to_string();
+
         std::borrow::Cow::Owned(result)
     }
 
@@ -76,12 +89,18 @@ impl Highlighter for Syntax {
 pub fn repl() {
     println!("Modu REPL");
 
-    let context = &mut crate::utils::create_context();
     let mut rl: Editor<Syntax, DefaultHistory> = Editor::new().unwrap();
     rl.set_helper(Some(Syntax::new()));
 
     let mut open_functions = 0;
     let mut buffer = String::new();
+
+    let mut globals: HashMap<String, crate::vm::value::Value> = HashMap::new();
+    for func in crate::functions::get_functions() {
+        globals.insert(func.name.clone(), crate::vm::value::Value::BuiltinFn(func));
+    }
+
+    let mut persistent_chunks: Vec<crate::vm::chunk::Chunk> = Vec::new();
 
     loop {
         let prompt = if open_functions > 0 {
@@ -105,7 +124,35 @@ pub fn repl() {
                 buffer.push('\n');
 
                 if open_functions == 0 {
-                    parse(&buffer, "<repl>", context);
+                    let ast = parse(&buffer, "<repl>");
+                    buffer.clear();
+        
+                    if let Err(_) = ast {
+                        continue;
+                    }
+
+                    let mut compiler = crate::compiler::compiler::Compiler::new();
+                    compiler.offset = persistent_chunks.len();
+                    
+                    if let Err(e) = compiler.compile_program(ast.clone().unwrap()) {
+                        println!("{}: {}", "Compilation error".red(), e);
+                        continue;
+                    }
+
+                    let mut all_chunks = persistent_chunks.clone();
+                    all_chunks.extend(compiler.chunks.into_iter());
+
+                    let mut vm = crate::vm::vm::VM::new(all_chunks.clone());
+                    vm.globals = globals.clone();
+
+                    if let Err(e) = vm.run(persistent_chunks.len()) {
+                        println!("{}: {}", "Runtime error".red(), e);
+                        continue;
+                    }
+
+                    globals = vm.globals.clone();
+                    persistent_chunks = vm.chunks;
+
                     buffer.clear();
                 }
             }

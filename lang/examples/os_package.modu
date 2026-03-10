@@ -1,4 +1,4 @@
-import "os" as os;
+import "std/os";
 
 if os.name == "linux" {
     print("i use arch btw");

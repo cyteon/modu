@@ -1,25 +1,26 @@
-import "ffi" as ffi;
-import "os" as os;
+import "std/ffi" as ffi;
+import "std/os" as os;
 
-let path = "./libffi_test";
+print("Suffix: " + ffi.suffix);
 
-if os.name == "linux" {
-    let path = path + ".so";
-}
+let path = "./libffi_test." + ffi.suffix;
 
 if os.name == "macos" {
-    let path = path + ".dylib";
     print("This may error out if you have not built ffi_test and put the .dylib in same folder as main.modu!");
     print("I will remove this message once i add a .dylib myself there");
 }
 
 if os.name == "windows" {
-    let path = path + ".dll";
     print("This may error out if you have not built ffi_test and put the .dll in same folder as main.modu!");
     print("I will remove this message once i add a .dll myself there");
 }
 
 let lib = ffi.load(path);
+ffi.define(lib, "hello_world", [],             null);
+ffi.define(lib, "one",         [],             "i64");
+ffi.define(lib, "add",         ["i64", "i64"], "i64");
+ffi.define(lib, "string",      [],             "string");
+ffi.define(lib, "print",       ["string"],      null);
 
 lib.hello_world();
 print(lib.one());

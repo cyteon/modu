@@ -2,7 +2,7 @@
 // for everything except get you need to provide body before headers
 // body can just be a empty string
 
-import "http" as http;
+import "std/http" as http;
 
 let headers = {
     "User-Agent": "modu",
@@ -21,21 +21,21 @@ let data = {
     "name": "modu",
 };
 
-let result = http.post("https://httpbin.org/post", data.to_string(), headers);
+let result = http.post("https://httpbin.org/post", data.stringify(), headers);
 print("Status: ", result.status, " - ", result.status_text);
 print("\nHeaders: ", result.headers);
 print("\nBody:\n", result.body);
 
 print("\nHTTP PUT Request:");
 
-let result = http.put("https://httpbin.org/put", data.to_string(), headers);
+let result = http.put("https://httpbin.org/put", data.stringify(), headers);
 print("Status: ", result.status, " - ", result.status_text);
 print("\nHeaders: ", result.headers);
 print("\nBody:\n", result.body);
 
 print("\nHTTP PATCH Request:");
 
-let result = http.patch("https://httpbin.org/patch", data.to_string(), headers);
+let result = http.patch("https://httpbin.org/patch", data.stringify(), headers);
 print("Status: ", result.status, " - ", result.status_text);
 print("\nHeaders: ", result.headers);
 print("\nBody:\n", result.body);

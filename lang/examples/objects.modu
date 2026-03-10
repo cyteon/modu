@@ -1,6 +1,6 @@
-import "json" as json;
+import "std/json";
 
-let obj = json.new();
+let obj = {};
 
 obj.set("name", "test");
 obj.set("age", 67);
@@ -10,11 +10,11 @@ print("obj: ", obj);
 print("obj keys: ", obj.keys());
 print("obj values: ", obj.values());
 
-print(json.new());
+print({});
 print(obj.stringify());
-print(json.new().stringify());
+print({}.stringify());
 
-let everything = json.new();
+let everything = {};
 everything.set("string", "hello");
 everything.set("int", 5);
 everything.set("float", 5.5);

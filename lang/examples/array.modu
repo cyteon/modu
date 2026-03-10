@@ -12,9 +12,6 @@ for v in array {
     print("v: ", v);
 }
 
-array.clear();
-print("after array.clear: ", array);
-
 array.push("new element");
 print("after array.push: ", array);
 

@@ -2,19 +2,20 @@ use std::panic::{catch_unwind, AssertUnwindSafe};
 use colored::Colorize;
 
 mod ast;
-mod eval;
 mod lexer;
 mod parser;
 mod functions;
 mod validator;
 
 mod cli;
-mod utils;
-mod libraries;
-mod builtins;
+mod stdlib;
+mod natives;
+
+mod compiler;
+mod vm;
 
 fn main() {
-    std::panic::set_hook(Box::new(|_| {}));
+    //std::panic::set_hook(Box::new(|_| {}));
 
     let args = std::env::args().collect::<Vec<String>>();
 

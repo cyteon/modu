@@ -1,8 +1,7 @@
 # Imports
 
-We currently only support importing other files and internal packages, no external ones yet \
-When you import a file, you can access it's variables and functions using pkg.*, if you imported with "... as pkg". \
-'pkg' can be any non-reserved keyword.
+You can import files and installed packages with `import "path/name"`, and standard packages with `import "std/name"`. \
+You can also optionally add `as alias` to change what it's imported as.
 
 ```rust
 // yapper.modu
@@ -42,26 +41,26 @@ print(abc);
 
 ## Internal packages
 
-Internal and installed packages are imported without **.modu** like:
+Internal packages are imported with the `std/` prefix, but the prefix is stripped from the imported name
 ```rust
-import "math" as math;
-import "file" as file;
+import "std/math" as math;
+import "std/file" as file;
 
 let a = math.abs(-5);
 let b = file.open("input.modu");
 ```
 or alternatively
 ```rust
-import "math";
-import "file";
+import "std/math"; // it will import without the std/ prefix
+import "std/file";
 
 let a = math.abs(-5);
 let b = file.open("input.modu");
 ```
 or even
 ```rust
-import "math" as *;
-import "file" as *;
+import "std/math" as *;
+import "std/file" as *;
 
 let a = abs(-5);
 let b = open("input.modu");

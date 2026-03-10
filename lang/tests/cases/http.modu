@@ -1,4 +1,4 @@
-import "http" as http;
+import "std/http" as http;
 
 let result = http.get("http://example.com");
 print(result.status, " - ", result.status_text);

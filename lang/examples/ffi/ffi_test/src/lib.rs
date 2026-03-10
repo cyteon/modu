@@ -1,51 +1,34 @@
-use modu_ffi::*;
-
 #[unsafe(no_mangle)]
 pub extern "C" fn add(
-    argc: std::ffi::c_int,
-    argv: *const FFIValue
-) -> FFIValue {
-    if argc != 2 {
-        panic!("add requires 2 arguments");
-    }
-
-    unsafe {
-        let a = (*argv.offset(0 as isize)).value.integer;
-        let b = (*argv.offset(1 as isize)).value.integer;
-
-        FFIValue::integer((a + b) as i64)
-    }
+    a: i64,
+    b: i64
+) -> i64 {
+    a + b
 }
 
 #[unsafe(no_mangle)]
-pub extern "C" fn one() -> FFIValue {
-    FFIValue::integer(1)
+pub extern "C" fn one() -> i64 {
+    1
 }
 
 #[unsafe(no_mangle)]
-pub extern "C" fn string() -> FFIValue {
-    FFIValue::string(std::ffi::CString::new("Hello from Rust!").unwrap().into_raw())
+pub extern "C" fn string() -> *const std::os::raw::c_char {
+    std::ffi::CString::new("Hello from Rust!").unwrap().into_raw()
 }
 
 #[unsafe(no_mangle)]
 pub extern "C" fn print(
-    argc: std::ffi::c_int,
-    argv: *const FFIValue
+    ptr: *const std::os::raw::c_char
 ) {
-    if argc != 1 {
-        panic!("print requires 1 argument");
+    let c_str = unsafe { std::ffi::CStr::from_ptr(ptr) };
+    if let Ok(s) = c_str.to_str() {
+        println!("{}", s);
+    } else {
+        eprintln!("Failed to convert C string to Rust string");
     }
-
-    let str = unsafe {
-        std::ffi::CStr::from_ptr((*argv.offset(0 as isize)).value.string)
-    };
-
-    println!("{}", str.to_str().unwrap());
 }
 
-
 #[unsafe(no_mangle)]
-pub extern "C" fn hello_world() -> FFIValue {
-    println!("Hello, World!");
-    FFIValue::null()
+pub extern "C" fn hello_world() {
+    println!("Hello, world!");
 }

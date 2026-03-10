@@ -1,5 +1,5 @@
-import "encoding" as encoding;
-import "crypto" as crypto;
+import "std/encoding";
+import "std/crypto" as crypto;
 
 let string = input("String to encode: ");
 print("Base64: ", encoding.encode_base64(string));
@@ -7,10 +7,8 @@ print("Base16: ", encoding.encode_base16(string));
 print("SHA-256: ", crypto.sha256(string));
 print("SHA-512: ", crypto.sha512(string));
 print("BLAKE3: ", crypto.blake3(string));
-print("MD5 (legacy, insecure): ", crypto.legacy.md5(string));
 print("Bcrypt: ", crypto.bcrypt_hash(string));
 print("Argon2: ", crypto.argon2_hash(string));
-// print("Scrypt: ", crypto.scrypt_hash(string)); // too slow
 
 let encoded = input("\nBase64 to decode: ");
 print("Decoded base64: ", encoding.decode_base64(encoded));

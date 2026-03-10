@@ -1,4 +1,4 @@
-import "uuid" as uuid;
+import "std/uuid" as uuid;
 
 print(uuid.v4());
 print(uuid.v7());

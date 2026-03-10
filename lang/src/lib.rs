@@ -1,13 +1,14 @@
 pub mod ast;
-pub mod eval;
 pub mod lexer;
 pub mod parser;
 pub mod functions;
 pub mod validator;
 
-pub mod utils;
-pub mod builtins;
-pub mod libraries;
+pub mod natives;
+pub mod stdlib;
+
+pub mod compiler;
+pub mod vm;
 
 pub const VERSION: &str = env!("CARGO_PKG_VERSION");
 

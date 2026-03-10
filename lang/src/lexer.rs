@@ -122,6 +122,15 @@ pub enum Token {
     #[token("not in")]
     NotIn,
 
+    #[token("and")]
+    And,
+
+    #[token("or")]
+    Or,
+
+    #[token("!")]
+    Not,
+
     #[token(",")]
     Comma,
 

@@ -1,17 +1,17 @@
 [package]
 name = "modu-wasm"
-version = "2.8.0"
+version = "3.0.0"
 edition = "2024"
 
 [lib]
 crate-type = ["cdylib"]
 
 [dependencies]
-wasm-bindgen = "0.2"
+wasm-bindgen = "0.2.114"
 console_error_panic_hook = "0.1"
 wee_alloc = "0.4"
 web-sys = { version = "0.3", features = ["Window"] }
-
+yansi = "1.0.1"
 modu = { path = "../lang", default-features = false }
 
 [profile.release]
