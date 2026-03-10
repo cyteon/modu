@@ -828,6 +828,22 @@ impl VM {
                 Instruction::Jump(offset) => {
                     frame.ip = *offset;
                 }
+
+                Instruction::Swap => {
+                    let a = self.stack.pop().unwrap_or(Value::Null);
+                    let b = self.stack.pop().unwrap_or(Value::Null);
+                    self.stack.push(a);
+                    self.stack.push(b);
+                }
+
+                Instruction::Rotate3 => {
+                    let c = self.stack.pop().unwrap_or(Value::Null);
+                    let b = self.stack.pop().unwrap_or(Value::Null);
+                    let a = self.stack.pop().unwrap_or(Value::Null);
+                    self.stack.push(b);
+                    self.stack.push(c);
+                    self.stack.push(a);
+                }
             }
         }
     }

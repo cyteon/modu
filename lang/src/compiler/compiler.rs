@@ -145,14 +145,9 @@ impl Compiler {
                         }
                     }
 
-                    Expr::IndexAccess { object, index } => {
+                    Expr::IndexAccess { .. } | Expr::PropertyAccess { .. } => {
                         if let Some(op) = operator {
-                            self.compile_expr(*object.clone())?;
-                            self.compile_expr(*index.clone())?;
-                            self.compile_expr(*object.clone())?;
-                            self.compile_expr(*index.clone())?;
-
-                            self.emit(Instruction::IndexGet);
+                            self.compile_expr(*target.clone())?;
                             self.compile_expr(*value.clone())?;
 
                             match op {
@@ -163,63 +158,10 @@ impl Compiler {
                                 AssignOp::Mod => { self.emit(Instruction::Mod); }
                             }
                         } else {
-                            self.compile_expr(*object.clone())?;
-                            self.compile_expr(*index.clone())?;
                             self.compile_expr(*value.clone())?;
                         }
 
-                        self.emit(Instruction::IndexSet);
-
-                        match &object.node {
-                            Expr::Identifier(name) => {
-                                match self.scope.resolve(name) {
-                                    Variable::Local(index) => {
-                                        self.emit(Instruction::StoreLocal(index));
-                                    }
-
-                                    Variable::Global => {
-                                        self.emit(Instruction::StoreGlobal(name.to_string()));
-                                    }
-                                }
-                            }
-
-                            _ => return Err("cant assign on complex index access targets".to_string()),
-                        }
-                    }
-
-                    Expr::PropertyAccess { object, property } => {
-                        self.compile_expr(*object.clone())?;
-                        self.compile_expr(*value.clone())?;
-
-                        if let Some(op) = operator {
-                            self.emit(Instruction::GetProperty(property.clone()));
-
-                            match op {
-                                AssignOp::Add => { self.emit(Instruction::Add); }
-                                AssignOp::Sub => { self.emit(Instruction::Sub); }
-                                AssignOp::Mul => { self.emit(Instruction::Mul); }
-                                AssignOp::Div => { self.emit(Instruction::Div); }
-                                AssignOp::Mod => { self.emit(Instruction::Mod); }
-                            }  
-                        }
-
-                        self.emit(Instruction::SetProperty(property.clone()));
-
-                        match &object.node {
-                            Expr::Identifier(name) => {
-                                match self.scope.resolve(name) {
-                                    Variable::Local(index) => {
-                                        self.emit(Instruction::StoreLocal(index));
-                                    }
-
-                                    Variable::Global => {
-                                        self.emit(Instruction::StoreGlobal(name.to_string()));
-                                    }
-                                }
-                            }
-
-                            _ => return Err("cant assign on complex property access targets".to_string()),
-                        }
+                        self.compile_assign(target)?;
                     }
 
                     _ => return Err("invalid assignment target".to_string()),
@@ -603,6 +545,36 @@ impl Compiler {
             Expr::Import { name, alias } => {
                 self.emit(Instruction::Import { path: name.clone(), alias: alias.clone() });
             }
+        }
+
+        Ok(())
+    }
+
+    fn compile_assign(&mut self, target: &SpannedExpr) -> Result<(), String> {
+        match &target.node {
+            Expr::Identifier(name) => {
+                match self.scope.resolve(name) {
+                    Variable::Local(slot) => self.emit(Instruction::StoreLocal(slot)),
+                    Variable::Global => self.emit(Instruction::StoreGlobal(name.clone())),
+                }
+            }
+
+            Expr::IndexAccess { object, index } => {
+                self.compile_expr(*object.clone())?;
+                self.compile_expr(*index.clone())?;
+                self.emit(Instruction::Rotate3);
+                self.emit(Instruction::IndexSet);
+                self.compile_assign(object)?;
+            }
+    
+            Expr::PropertyAccess { object, property } => {
+                self.compile_expr(*object.clone())?;
+                self.emit(Instruction::Swap);
+                self.emit(Instruction::SetProperty(property.clone()));
+                self.compile_assign(object)?;
+            },
+
+            _ => return Err("invalid assignment target".to_string()),
         }
 
         Ok(())

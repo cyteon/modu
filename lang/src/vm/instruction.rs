@@ -4,6 +4,8 @@ pub enum Instruction {
     Push(usize),
     PushNull,
     Pop,
+    Swap,
+    Rotate3,
 
     Add, Sub, Mul, Div, Mod, Pow, Neg,
     Eq, Neq, Gt, Lt, Gte, Lte,
