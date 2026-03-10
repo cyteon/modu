@@ -392,15 +392,30 @@ impl VM {
 
                     match target {
                         Value::Array(elements) => {
-                            let index = match index {
-                                Value::Int(i) => i,
-                                _ => return Err(format!("expected int index for array but got {}", index.type_name())),
-                            };
+                            match index {
+                                Value::Int(i) => {
+                                    if i < 0 || (i as usize) >= elements.len() {
+                                        return Err("index is out of bounds".to_string());
+                                    } else {
+                                        self.stack.push(elements[i as usize].clone());
+                                    }
+                                }
 
-                            if index < 0 || (index as usize) >= elements.len() {
-                                self.stack.push(Value::Null);
-                            } else {
-                                self.stack.push(elements[index as usize].clone());
+                                Value::Range { start, end, inclusive } => {
+                                    let end = if inclusive { end + 1 } else { end };
+
+                                    if start < 0 || (start as usize) >= elements.len() {
+                                        return Err("start is out of bounds".to_string());
+                                    }
+
+                                    if end < 0 || (end as usize) > elements.len() {
+                                        return Err("end is out of bounds".to_string());
+                                    }
+
+                                    self.stack.push(Value::Array(elements[(start as usize)..(end as usize)].to_vec()));
+                                }
+
+                                _ => return Err(format!("expected int index for array but got {}", index.type_name())),
                             }
                         }
 
@@ -414,7 +429,33 @@ impl VM {
                             self.stack.push(value);
                         }
 
-                        Value::String(_) => todo!(),
+                        Value::String(s) => {
+                            match index {
+                                Value::Int(i) => {
+                                    if i < 0 || (i as usize) >= s.len() {
+                                        return Err("index is out of bounds".to_string());
+                                    }
+                                    
+                                    self.stack.push(Value::String(s.chars().nth(i as usize).unwrap().to_string()));
+                                }
+
+                                Value::Range { start, end, inclusive } => {
+                                    let end = if inclusive { end + 1 } else { end };
+
+                                    if start < 0 || (start as usize) >= s.len() {
+                                        return Err("start is out of bounds".to_string());
+                                    }
+
+                                    if end < 0 || (end as usize) > s.len() {
+                                        return Err("end is out of bounds".to_string());
+                                    }
+
+                                    self.stack.push(Value::String(s[(start as usize)..(end as usize)].to_string()));
+                                } 
+
+                                _ => return Err(format!("expected int index for string but got {}", index.type_name())),
+                            }
+                        }
 
                         _ => return Err(format!("{} is not indexable", target.type_name())),
                     }
