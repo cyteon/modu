@@ -8,6 +8,18 @@ pub fn object() -> Value {
     methods.insert("define".to_string(), Value::BuiltinFn(BuiltinFn::new("define", define)));
     methods.insert("unload".to_string(), Value::BuiltinFn(BuiltinFn::new("unload", unload)));
 
+    methods.insert("suffix".to_string(), Value::String({
+        if cfg!(target_os = "windows") {
+            "dll"
+        } else if cfg!(target_os = "linux") {
+            "so"
+        } else if cfg!(target_os = "macos") {
+            "dylib"
+        } else {
+            "so"
+        }
+    }.to_string()));
+
     Value::Object(methods)
 }
 

@@ -84,7 +84,12 @@ pub fn run() {
             .unwrap();
     }
 
-    let mut vm = crate::vm::vm::VM::new(compiler.chunks);
+    let source_path = std::path::PathBuf::from(&args[2])
+        .canonicalize()
+        .map_err(|_| format!("cannot find file '{}'", args[2]))
+        .unwrap();
+
+    let mut vm = crate::vm::vm::VM::new_with_source(compiler.chunks, source_path);
 
     if let Err(e) = vm.run() {
         println!("{}: {}", "Runtime error".red(), e);
