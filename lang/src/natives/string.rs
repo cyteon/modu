@@ -31,7 +31,7 @@ pub fn list_fns() -> Vec<String> {
 
 pub fn len(this: Value, args: Vec<Value>) -> Result<(Value, Option<Value>), String> {
     if !args.is_empty() {
-        return Err(format!("<string>.len() takaes no arguments ({} given)", args.len()));
+        return Err(format!("<string>.len() takes no arguments ({} given)", args.len()));
     }
 
     match this {

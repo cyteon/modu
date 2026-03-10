@@ -501,10 +501,12 @@ impl VM {
                                     let method = match crate::natives::object::get_fn(name.to_string()) {
                                         Some(m) => m,
                                         None => {
-                                            let closest = find_closest(name.clone(), properties.keys().cloned());
+                                            let props = crate::natives::object::list_fns().into_iter().chain(properties.keys().cloned());
+                                            let closest = find_closest(name.clone(), props);
 
                                             if let Some(closest) = closest {
                                                 return Err(format!("undefined property '{}' on object.\nDid you maybe mean: '{}'?", name, closest.green()));
+                                            } else {
                                             }
 
                                             return Err(format!("undefined property '{}' on object", name))
@@ -600,6 +602,12 @@ impl VM {
 
                     let result = match target {
                         Value::Object(mut properties) => {
+                            let fns = crate::natives::object::list_fns();
+
+                            if fns.contains(name) {
+                                return Err(format!("'{}' is a read-only property on object", name));
+                            }
+
                             properties.insert(name.clone(), value);
                             Value::Object(properties)
                         }

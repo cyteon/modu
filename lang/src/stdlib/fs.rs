@@ -45,22 +45,22 @@ fn open(args: Vec<Value>) -> Result<Value, String> {
 
     let (file, mode) = match mode.as_str() {
         "r" => (
-            std::fs::File::open(path).map_err(|e| format!("failed to open file '{}': {}", path, e)),
+            std::fs::File::open(path).map_err(|e| format!("failed to open file '{}': {}", path, e))?,
             FileMode::Read
         ),
 
         "w" => (
-            std::fs::File::create(path).map_err(|e| format!("failed to create file '{}': {}", path, e)),
+            std::fs::File::create(path).map_err(|e| format!("failed to create file '{}': {}", path, e))?,
             FileMode::Write
         ),
 
         "a" => (
-            std::fs::OpenOptions::new().append(true).create(true).open(path).map_err(|e| format!("failed to open file '{}': {}", path, e)),
+            std::fs::OpenOptions::new().append(true).create(true).open(path).map_err(|e| format!("failed to open file '{}': {}", path, e))?,
             FileMode::Append
         ),
 
         "rw" => (
-            std::fs::OpenOptions::new().read(true).write(true).create(true).open(path).map_err(|e| format!("failed to open file '{}': {}", path, e)),
+            std::fs::OpenOptions::new().read(true).write(true).create(true).open(path).map_err(|e| format!("failed to open file '{}': {}", path, e))?,
             FileMode::ReadWrite
         ),
 
@@ -69,7 +69,7 @@ fn open(args: Vec<Value>) -> Result<Value, String> {
     
    let idx = FILES.with(|files| {
         let mut files = files.borrow_mut();
-        files.push(Some((file.unwrap(), mode)));
+        files.push(Some((file, mode)));
         files.len() - 1
     });
 
@@ -128,6 +128,10 @@ fn write(args: Vec<Value>) -> Result<Value, String> {
 
         if !matches!(mode, FileMode::Write | FileMode::Append | FileMode::ReadWrite) {
             return Err(format!("fs.write() file at index {} is not open for writing", idx));
+        }
+
+        if matches!(mode, FileMode::Write | FileMode::ReadWrite) {
+            file.set_len(0).map_err(|e| format!("failed to truncate file at index {}: {}", idx, e))?;
         }
 
         std::io::Write::write_all(file, content.as_bytes()).map_err(|e| format!("failed to write to file at index {}: {}", idx, e))?;

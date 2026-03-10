@@ -5,11 +5,9 @@ The fs package is imported with `import "fs";` and has the following functions:
 fs.open(path)        - opens a file and returns a file object
 fs.read(file)        - reads the contents of a file object and returns it as a string
 fs.write(file, data) - writes the given data to a file object
-fs.stat(path)        - returns an object with information about the file at the given path (size, creation date, etc.)
+fs.stat(file)        - returns an object with information about the file
 fs.exists(path)      - returns true if the file exists, false otherwise
 fs.mkdir(path)       - creates a new directory at the given path
-fs.rmdir(path)       - removes the directory at the given path
-fs.remove(path)      - removes the file at the given path
 ```
 
 ## Files

@@ -1,7 +1,7 @@
 # Imports
 
 You can import files and installed packages with `import "path/name"`, and standard packages with `import "std/name"`. \
-You can also optionally add `as alias` to change what its imported as.
+You can also optionally add `as alias` to change what it's imported as.
 
 ```rust
 // yapper.modu

@@ -20,6 +20,10 @@ pub fn eval_modu(code: &str) -> String {
     let result = catch_unwind(AssertUnwindSafe(|| {
         let ast = modu::parser::parse(code, "<browser>");
 
+        if ast.is_err() {
+            return;
+        }
+
         let mut compiler = modu::compiler::compiler::Compiler::new();
 
         if let Err(e) = compiler.compile_program(ast.clone().unwrap()) {

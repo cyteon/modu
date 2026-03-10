@@ -25,7 +25,7 @@ os.name               - the name of the operating system, can be "windows", "lin
 import "std/os" as os;
 
 if os.name == "windows" {
-    print("this example dosent run on windows :C\nbut if u wanted to know, the pid was ", os.pid());
+    print("this example doesn't run on windows :C\nbut if u wanted to know, the pid was ", os.pid());
     exit();
 }
 
