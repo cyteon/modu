@@ -91,7 +91,7 @@ pub fn run() {
 
     let mut vm = crate::vm::vm::VM::new_with_source(compiler.chunks, source_path);
 
-    if let Err(e) = vm.run() {
+    if let Err(e) = vm.run(0) {
         println!("{}: {}", "Runtime error".red(), e);
         return;
     }

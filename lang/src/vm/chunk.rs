@@ -1,7 +1,7 @@
 use super::value::Value;
 use super::instruction::Instruction;
 
-#[derive(Debug)]
+#[derive(Debug, Clone)]
 pub struct Chunk {
     pub name: String,
     pub instructions: Vec<Instruction>,

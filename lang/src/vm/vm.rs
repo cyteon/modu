@@ -62,11 +62,11 @@ impl VM {
         vm
     }
 
-    pub fn run(&mut self) -> Result<(), String> {
+    pub fn run(&mut self, chunk_id: usize) -> Result<(), String> {
         let locals_count = self.chunks[0].locals_count;
 
         self.frames.push(CallFrame {
-            chunk_id: 0,
+            chunk_id,
             ip: 0,
             base: 0,
         });
@@ -745,7 +745,7 @@ impl VM {
                         compiler.compile_program(ast.clone().unwrap())?;
 
                         let mut vm = VM::new_with_source(compiler.chunks, absolute);
-                        vm.run()?;
+                        vm.run(0)?;
 
                         let chunk_offset = self.chunks.len();
                         self.chunks.extend(vm.chunks);

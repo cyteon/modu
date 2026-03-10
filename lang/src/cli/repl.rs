@@ -100,6 +100,8 @@ pub fn repl() {
         globals.insert(func.name.clone(), crate::vm::value::Value::BuiltinFn(func));
     }
 
+    let mut persistent_chunks: Vec<crate::vm::chunk::Chunk> = Vec::new();
+
     loop {
         let prompt = if open_functions > 0 {
             format!("|{}", " ".repeat(open_functions * 4))
@@ -130,21 +132,27 @@ pub fn repl() {
                     }
 
                     let mut compiler = crate::compiler::compiler::Compiler::new();
+                    compiler.offset = persistent_chunks.len();
                     
                     if let Err(e) = compiler.compile_program(ast.clone().unwrap()) {
                         println!("{}: {}", "Compilation error".red(), e);
                         continue;
                     }
 
-                    let mut vm = crate::vm::vm::VM::new(compiler.chunks);
+                    let mut all_chunks = persistent_chunks.clone();
+                    all_chunks.extend(compiler.chunks.into_iter());
+
+                    let mut vm = crate::vm::vm::VM::new(all_chunks.clone());
                     vm.globals = globals.clone();
 
-                    if let Err(e) = vm.run() {
+                    if let Err(e) = vm.run(persistent_chunks.len()) {
                         println!("{}: {}", "Runtime error".red(), e);
                         continue;
                     }
 
                     globals = vm.globals.clone();
+                    persistent_chunks = vm.chunks;
+
                     buffer.clear();
                 }
             }

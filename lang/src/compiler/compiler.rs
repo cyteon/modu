@@ -7,6 +7,7 @@ use super::scope::{ScopeStack, Variable};
 
 pub struct Compiler {
     pub chunks: Vec<Chunk>,
+    pub offset: usize,
     scope: ScopeStack,
     current_chunk: usize,
     break_patches: Vec<Vec<usize>>,
@@ -17,6 +18,7 @@ impl Compiler {
     pub fn new() -> Self {
         Self {
             chunks: vec![Chunk::new("main")],
+            offset: 0,
             scope: ScopeStack::new(),
             current_chunk: 0,
             break_patches: Vec::new(),
@@ -356,7 +358,7 @@ impl Compiler {
             }
 
             Expr::Function { name, args, body } => {
-                let chunk_id = self.chunks.len();
+                let chunk_id = self.chunks.len() + self.offset;
                 self.chunks.push(Chunk::new(name));
 
                 let saved_chunk = self.current_chunk;
