@@ -17,20 +17,6 @@ pub fn object() -> Value {
     Value::Object(methods)
 }
 
-pub fn list_fns() -> Vec<String> {
-    vec![
-        "open".to_string(),
-        "read".to_string(),
-        "write".to_string(),
-        "stat".to_string(),
-        "close".to_string(),
-        "exists".to_string(),
-        "mkdir".to_string(),
-        "rmdir".to_string(),
-        "remove".to_string(),
-    ]
-}
-
 thread_local! {
     static FILES: std::cell::RefCell<Vec<Option<(std::fs::File, FileMode)>>> = std::cell::RefCell::new(Vec::new());
 }

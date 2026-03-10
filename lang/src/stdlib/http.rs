@@ -13,16 +13,6 @@ pub fn object() -> Value {
     Value::Object(methods)
 }
 
-pub fn list_fns() -> Vec<String> {
-    vec![
-        "get".to_string(),
-        "post".to_string(),
-        "put".to_string(),
-        "patch".to_string(),
-        "delete".to_string(),
-    ]
-}
-
 fn create_response_obj(response: reqwest::blocking::Response) -> Value {
     let mut properties = HashMap::new();
 

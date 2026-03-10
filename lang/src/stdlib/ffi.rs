@@ -11,14 +11,6 @@ pub fn object() -> Value {
     Value::Object(methods)
 }
 
-pub fn list_fns() -> Vec<String> {
-    vec![
-        "load".to_string(),
-        "define".to_string(),
-        "unload".to_string(),
-    ]
-}
-
 pub struct FFILib {
     pub lib: libloading::Library,
     pub funcs: HashMap<String, FFISig>,

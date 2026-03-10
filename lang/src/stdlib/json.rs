@@ -9,10 +9,6 @@ pub fn object() -> Value {
     Value::Object(methods)
 }
 
-pub fn list_fns() -> Vec<String> {
-    vec!["parse".to_string()]
-}
-
 fn parse_obj(obj: &mut HashMap<String, serde_json::Value>) -> Result<HashMap<String, Value>, String> {
     let mut map = HashMap::new();
 

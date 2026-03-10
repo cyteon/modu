@@ -17,18 +17,6 @@ pub fn object() -> Value {
     Value::Object(methods)
 }
 
-pub fn list_fns() -> Vec<String> {
-    vec![
-        "rand".to_string(),
-        "randi".to_string(),
-        "sin".to_string(),
-        "cos".to_string(),
-        "tan".to_string(),
-        "PI".to_string(),
-        "E".to_string(),
-    ]
-}
-
 fn rand(args: Vec<Value>) -> Result<Value, String> {
     if !args.is_empty() {
         return Err(format!("math.rand() takes no arguments ({} given)", args.len()));

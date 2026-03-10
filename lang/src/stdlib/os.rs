@@ -29,19 +29,6 @@ pub fn object() -> Value {
     Value::Object(methods)
 }
 
-pub fn list_fns() -> Vec<String> {
-    vec![
-        "exec".to_string(),
-        "pid".to_string(),
-        "uid".to_string(),
-        "gid".to_string(),
-        "getenv".to_string(),
-        "setenv".to_string(),
-        "unsetenv".to_string(),
-        "name".to_string(),
-    ]
-}
-
 fn exec(args: Vec<Value>) -> Result<Value, String> {
     if args.is_empty() {
         return Err("os.exec() takes at least one argument (0 given)".to_string());
