@@ -1,0 +1,11 @@
+encode_base64(input: string) -> string
+    - Encodes a string to Base64
+
+decode_base64(input: string) -> string
+    - Decodes a Base64 string back to its original form
+
+encode_base16(input: string) -> string
+    - Encodes a string to Base16 (hexadecimal)
+
+decode_base16(input: string) -> string
+    - Decodes a Base16 (hexadecimal) string back to its original form

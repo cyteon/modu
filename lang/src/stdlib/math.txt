@@ -1,0 +1,17 @@
+rand() -> float
+    - Returns a random float between 0 and 1
+
+randi() -> int
+    - Returns a random i64 integer
+
+sin(x: float) -> float
+    - Returns the sine of an angle in radians
+
+cos(x: float) -> float
+    - Returns the cosine of an angle in radians
+
+tan(x: float) -> float
+    - Returns the tangent of an angle in radians
+
+PI: float
+E: float

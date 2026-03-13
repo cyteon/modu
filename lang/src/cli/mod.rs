@@ -1,5 +1,6 @@
 pub mod run;
 pub mod repl;
+pub mod help;
 pub mod login;
 pub mod init;
 pub mod publish;

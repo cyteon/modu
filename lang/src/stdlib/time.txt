@@ -1,0 +1,23 @@
+now_unix() -> int
+    - Returns the current unix timestamp in seconds
+
+now_unix_ms() -> int
+    - Returns the current unix timestamp in milliseconds
+
+now_utc() -> string
+    - Returns the current date and time in UTC as an RFC 3339 formatted string
+
+now_local() -> string
+    - Returns the current date and time in the local timezone as an RFC 3339 formatted string
+
+to_iso_8601(timestamp: int) -> string
+    - Converts a unix timestamp in seconds to an ISO 8601 formatted string
+
+to_rfc_2822(timestamp: int) -> string
+    - Converts a unix timestamp in seconds to an RFC 2822 formatted string
+
+to_local_date_time(timestamp: int) -> string
+    - Converts a unix timestamp in seconds to a local date and time string
+
+to_utc_date_time(timestamp: int) -> string
+    - Converts a unix timestamp in seconds to a UTC date and time string
