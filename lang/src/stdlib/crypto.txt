@@ -1,0 +1,20 @@
+sha256(input: string) -> string
+    - Returns the SHA-256 hash of a string
+
+sha512(input: string) -> string
+    - Returns the SHA-512 hash of a string
+
+blake3(input: string) -> string
+    - Returns the BLAKE3 hash of a string
+
+bcrypt_hash(input: string) -> string
+    - Returns the bcrypt hash of a string
+
+bcrypt_verify(input: string, hash: string) -> bool
+    - Verifies a string against a bcrypt hash, returns true if they match
+
+argon2_hash(input: string) -> string
+    - Returns the Argon2 hash of a string
+
+argon2_verify(input: string, hash: string) -> bool
+    - Verifies a string against an Argon2 hash, returns true if they match

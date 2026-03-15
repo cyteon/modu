@@ -1,0 +1,15 @@
+--- request response
+{
+    "status": int,
+    "status_text": string,
+    "ok": bool,
+    "headers": { "key": string },
+    "body": string
+}
+
+--- functions
+get(url: string, headers: object (optional)) -> response
+post(url: string, body: string (optional), headers: object (optional)) -> response
+put(url: string, body: string (optional), headers: object (optional)) -> response
+patch(url: string, body: string (optional), headers: object (optional)) -> response
+delete(url: string, headers: object (optional)) -> response

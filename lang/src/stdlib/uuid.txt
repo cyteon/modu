@@ -1,0 +1,5 @@
+v4() -> string
+    - Generates a random UUID v4 string
+
+v7() -> string
+    - Generates a time-based UUID v7 string using the current timestamp

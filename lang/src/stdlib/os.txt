@@ -1,0 +1,22 @@
+exec(cmd: string) -> { "stdout": string, "stderr": string, "status": int, "success": bool }
+    - Executes a shell command and returns an object
+
+pid() -> int
+    - Returns the current process ID
+
+uid() -> int
+    - Returns the current user ID (unix-like operating systems only)
+
+gid() -> int
+    - Returns the current group ID (unix-like operating systems only)
+
+getenv(key: string) -> string
+    - Retrieves the value of an environment variable
+
+setenv(key: string, value: string) -> null
+    - Sets the value of an environment variable
+
+unsetenv(key: string) -> null
+    - Unsets an environment variable
+
+name: string - "windows", "linux", "macos" or "unknown"

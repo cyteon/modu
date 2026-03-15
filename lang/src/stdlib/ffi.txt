@@ -1,0 +1,11 @@
+load(path: string) -> FFILib
+    - Loads a shared library from the specified path and returns a handle to it
+
+define(lib: FFILib, func_name: string, arg_types: [type: string], return_type: string) -> null
+    - Defines a function from the loaded library with the given name, argument types, and return type
+    - You can then call <FFILib>.<func_name>(args...) to invoke the function
+
+unload(lib: FFILib) -> null
+    - Unloads the previously loaded library, freeing any associated resources
+
+suffix: string - the shared library suffix for the current operating system

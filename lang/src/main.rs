@@ -21,13 +21,14 @@ fn main() {
 
     if args.len() < 2 {
         println!("Commands:
-    run     <file> - Run a Modu file
-    repl           - Start the Modu REPL
-    init           - Initialize a new Modu package
-    login          - Login with Modu Packages
-    publish        - Publish a Modu package
-    install <name> - Install a Modu package
-    uninstall <name> - Uninstall a Modu package");
+    run       <file>   - Run a Modu file
+    repl               - Start the Modu REPL
+    help      <stdlib> - Show documentation for a standard library module
+    init               - Initialize a new Modu package
+    login              - Login with Modu Packages
+    publish            - Publish a Modu package
+    install   <name>   - Install a Modu package
+    uninstall <name>   - Uninstall a Modu package");
         return;
     }
 
@@ -37,12 +38,13 @@ fn main() {
         match action.as_str() {
             "run" => cli::run::run(),
             "repl" => cli::repl::repl(),
+            "help" => cli::help::help(),
             "login" => cli::login::login(),
             "init" => cli::init::init(),
             "publish" => cli::publish::publish(),
             "install" => cli::install::install(),
             "uninstall" => cli::uninstall::uninstall(),
-            "--version" => {
+            "--version" | "-v" | "version" => { 
                 println!("Modu v{}", env!("CARGO_PKG_VERSION"));
             }
 

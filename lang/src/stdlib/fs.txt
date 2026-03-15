@@ -1,0 +1,27 @@
+open(path: string, mode: string) -> file
+    - Opens a file and returns a file handle for reading or writing
+    - "r" = read, "w" = write, "a" = append, "rw" = read/write
+
+read(file: file) -> string
+    - Reads the entire contents of a file and returns it as a strings
+
+write(file: file, content: string) -> null
+    - Writes a string to a file
+
+stat(file: file) -> { size: int, is_file: bool, is_dir: bool }
+    - Returns metadata about a file, including its size and last modified time
+
+close(file: file) -> null
+    - Closes a file handle, freeing any associated resources
+
+exists(path: string) -> bool
+    - Checks if a file or directory exists at the specified path
+
+mkdir(path: string) -> null
+    - Creates a new directory at the specified path
+
+rmdir(path: string) -> null
+    - Removes an empty directory at the specified path
+
+remove(path: string) -> null
+    - Deletes a file at the specified path
