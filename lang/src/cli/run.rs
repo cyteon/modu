@@ -37,7 +37,6 @@ pub fn run() {
     let ast = parse(&file, &file_path);
 
     if ast.is_err() {
-        println!("{}: failed to parse file", "error".red());
         return;
     }
 
@@ -63,7 +62,8 @@ pub fn run() {
             string.push_str(&format!("=== chunk[{}] \"{}\" ({} locals) ===\n", i, chunk.name, chunk.locals_count));
 
             for (j, instruction) in chunk.instructions.iter().enumerate() {
-                string.push_str(&format!("\t{:04}: {:?}\n", j, instruction));
+                let span = chunk.spans.get(j).map(|s| format!("[{}-{}]", s.start, s.end)).unwrap_or_default();
+                string.push_str(&format!("\t{:04} {}: {:?}\n", j, span, instruction));
             }
 
             if !chunk.constants.is_empty() {
@@ -92,7 +92,7 @@ pub fn run() {
     let mut vm = crate::vm::vm::VM::new_with_source(compiler.chunks, source_path);
 
     if let Err(e) = vm.run(0) {
-        println!("{}: {}", "Runtime error".red(), e);
+        println!("{}", e);
         return;
     }
 }
