@@ -33,6 +33,7 @@ impl Compiler {
             Expr::Let { .. }
             | Expr::Assign { .. }
             | Expr::Function { .. }
+            | Expr::Import { .. }
         )
     }
 
@@ -78,7 +79,6 @@ impl Compiler {
     pub fn compile_program(&mut self, ast: Vec<SpannedExpr>) -> Result<(), String> {
         for expr in ast {
             let span = expr.span;
-
             self.compile_expr(expr.clone())?;
 
             if !Self::is_void(&expr.node) {
@@ -485,10 +485,11 @@ impl Compiler {
 
                 let last = exprs.len().saturating_sub(1);
                 for (i, expr) in exprs.iter().enumerate() {
+                    let expr_span = expr.span;
                     self.compile_expr(expr.clone())?;
 
                     if i != last && !Self::is_void(&expr.node) {
-                        self.emit(Instruction::Pop, span);
+                        self.emit(Instruction::Pop, expr_span);
                     }
                 }
 

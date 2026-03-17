@@ -62,7 +62,8 @@ pub fn run() {
             string.push_str(&format!("=== chunk[{}] \"{}\" ({} locals) ===\n", i, chunk.name, chunk.locals_count));
 
             for (j, instruction) in chunk.instructions.iter().enumerate() {
-                string.push_str(&format!("\t{:04}: {:?}\n", j, instruction));
+                let span = chunk.spans.get(j).map(|s| format!("[{}-{}]", s.start, s.end)).unwrap_or_default();
+                string.push_str(&format!("\t{:04} {}: {:?}\n", j, span, instruction));
             }
 
             if !chunk.constants.is_empty() {
