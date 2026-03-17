@@ -1,0 +1,74 @@
+// file made by claude :(
+
+import "std/time" as time;
+
+print("=== Modu Benchmark Results ===");
+
+// 1. Arithmetic loop
+let start = time.now_unix_ms();
+let z = 0;
+for x in 0..1000 {
+    for y in 0..1000 {
+        z = x * y;
+    }
+}
+let t = time.now_unix_ms() - start;
+print("  nested_loop_arithmetic         " + str(t) + "ms");
+
+// 2. Function calls
+start = time.now_unix_ms();
+fn add(a, b) {
+    return a + b;
+}
+let s = 0;
+for i in 0..100000 {
+    s = add(s, i);
+}
+t = time.now_unix_ms() - start;
+print("  function_calls_100k            " + str(t) + "ms");
+
+// 3. Recursion (fibonacci)
+start = time.now_unix_ms();
+fn fib(n) {
+    if n <= 1 {
+        return n;
+    }
+    
+    return fib(n - 1) + fib(n - 2);
+}
+fib(28);
+t = time.now_unix_ms() - start;
+print("  recursion_fib28                " + str(t) + "ms");
+
+// 4. String operations
+start = time.now_unix_ms();
+let str_val = "";
+for i in 0..10000 {
+    str_val = str_val + "a";
+}
+t = time.now_unix_ms() - start;
+print("  string_concat_10k              " + str(t) + "ms");
+
+// 5. Array operations
+start = time.now_unix_ms();
+let arr = [];
+for i in 0..100000 {
+    arr.push(i);
+}
+s = 0;
+for x in arr {
+    s = s + x;
+}
+t = time.now_unix_ms() - start;
+print("  array_build_iter_100k          " + str(t) + "ms");
+
+// 6. Variable reads/writes in tight loop
+start = time.now_unix_ms();
+let a = 0;
+let b = 1;
+for i in 0..1000000 {
+    a = a + b;
+    b = a - b;
+}
+t = time.now_unix_ms() - start;
+print("  var_rw_1m                      " + str(t) + "ms");
