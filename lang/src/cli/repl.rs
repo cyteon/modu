@@ -146,7 +146,7 @@ pub fn repl() {
                     vm.globals = globals.clone();
 
                     if let Err(e) = vm.run(persistent_chunks.len()) {
-                        println!("{}: {}", "Runtime error".red(), e);
+                        println!("{}", e);
                         continue;
                     }
 

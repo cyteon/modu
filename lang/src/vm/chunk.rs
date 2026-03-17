@@ -1,3 +1,4 @@
+use chumsky::span::SimpleSpan;
 use super::value::Value;
 use super::instruction::Instruction;
 
@@ -5,6 +6,7 @@ use super::instruction::Instruction;
 pub struct Chunk {
     pub name: String,
     pub instructions: Vec<Instruction>,
+    pub spans: Vec<SimpleSpan>,
     pub constants: Vec<Value>,
     pub locals_count: usize,
 }
@@ -14,14 +16,16 @@ impl Chunk {
         Self {
             name: name.to_string(),
             instructions: Vec::new(),
+            spans: Vec::new(),
             constants: Vec::new(),
             locals_count: 0,
         }
     }
 
-    pub fn emit(&mut self, instruction: Instruction) -> usize {
+    pub fn emit(&mut self, instruction: Instruction, span: SimpleSpan) -> usize {
         let index = self.instructions.len();
         self.instructions.push(instruction);
+        self.spans.push(span);
         index
     }
 
