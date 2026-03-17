@@ -6,6 +6,10 @@ pub fn get_fn(name: String) -> Option<NativeFn> {
         "push" => Some(NativeFn::new("push", push)),
         "pop" => Some(NativeFn::new("pop", pop)),
         "join" => Some(NativeFn::new("join", join)),
+        "min" => Some(NativeFn::new("min", min)),
+        "max" => Some(NativeFn::new("max", max)),
+        "reverse" => Some(NativeFn::new("reverse", reverse)),
+        "sort" => Some(NativeFn::new("sort", sort)),
         _ => None,
     }
 }
@@ -69,6 +73,84 @@ pub fn join(this: Value, args: Vec<Value>) -> Result<(Value, Option<Value>), Str
         Value::Array(arr) => {
             let joined = arr.iter().map(|v| format!("{}", v)).collect::<Vec<_>>().join(sep);
             Ok((Value::String(joined), None))
+        }
+
+        _ => unreachable!(),
+    }
+}
+
+pub fn min(this: Value, args: Vec<Value>) -> Result<(Value, Option<Value>), String> {
+    if !args.is_empty() {
+        return Err(format!("<array>.min() takes no arguments ({} given)", args.len()));
+    }
+
+    match this {
+        Value::Array(arr) => {
+            let min_value = arr.iter().min_by(|a, b| a.partial_cmp(b).unwrap()).cloned().unwrap_or(Value::Null);
+            Ok((min_value, None))
+        }
+
+        _ => unreachable!(),
+    }
+}
+
+pub fn max(this: Value, args: Vec<Value>) -> Result<(Value, Option<Value>), String> {
+    if !args.is_empty() {
+        return Err(format!("<array>.max() takes no arguments ({} given)", args.len()));
+    }
+
+    match this {
+        Value::Array(arr) => {
+            let max_value = arr.iter().max_by(|a, b| a.partial_cmp(b).unwrap()).cloned().unwrap_or(Value::Null);
+            Ok((max_value, None))
+        }
+
+        _ => unreachable!(),
+    }
+}
+
+pub fn reverse(this: Value, args: Vec<Value>) -> Result<(Value, Option<Value>), String> {
+    if !args.is_empty() {
+        return Err(format!("<array>.reverse() takes no arguments ({} given)", args.len()));
+    }
+
+    match this {
+        Value::Array(arr) => {
+            let mut reversed = arr.clone();
+            reversed.reverse();
+            Ok((Value::Array(reversed), None))
+        }
+
+        _ => unreachable!(),
+    }
+}
+
+pub fn sort(this: Value, args: Vec<Value>) -> Result<(Value, Option<Value>), String> {
+    if !args.is_empty() {
+        return Err(format!("<array>.sort() takes no arguments ({} given)", args.len()));
+    }
+
+    let mut err = None;
+
+    match this {
+        Value::Array(arr) => {
+            let mut sorted = arr.clone();
+
+            sorted.sort_by(|a, b| {
+                match a.partial_cmp(b) {
+                    Some(ordering) => ordering,
+                    None => {
+                        err = Some(format!("partial_cmp failed for values '{}' and '{}'", a, b));
+                        std::cmp::Ordering::Equal
+                    }
+                }
+            });
+
+            if let Some(e) = err {
+                return Err(e);
+            }
+
+            Ok((Value::Array(sorted), None))
         }
 
         _ => unreachable!(),

@@ -17,3 +17,8 @@ print("after array.push: ", array);
 
 print("array.pop(): ", array.pop());
 print("after array.pop: ", array);
+
+print([2, 3, 1].max());
+print([3, 1, 2].min());
+print([1, 2, 3].reverse());
+print([8, 7, 2, 1, 5, 100, 3, false, "test"].sort());
