@@ -545,6 +545,12 @@ impl Compiler {
                     }
                 }
 
+                // so if statements always leave smth on the stack
+                let has_else = branches.last().map(|(c, _)| c.is_none()).unwrap_or(false);
+                if !has_else {
+                    self.emit(Instruction::PushNull, span);
+                }
+
                 for jump in end_jumps {
                     self.patch_jump(jump);
                 }
