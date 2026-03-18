@@ -11,8 +11,6 @@ pub fn object() -> Value {
     methods.insert("suffix".to_string(), Value::String({
         if cfg!(target_os = "windows") {
             "dll"
-        } else if cfg!(target_os = "linux") {
-            "so"
         } else if cfg!(target_os = "macos") {
             "dylib"
         } else {
@@ -36,7 +34,6 @@ pub struct FFISig {
 thread_local! {
     pub static LIBS: std::cell::RefCell<Vec<Option<FFILib>>> = std::cell::RefCell::new(Vec::new());
 }
-
 
 fn load(args: Vec<Value>) -> Result<Value, String> {
     if args.len() != 1 {
@@ -138,8 +135,8 @@ fn unload(args: Vec<Value>) -> Result<Value, String> {
 
 fn validate_type(t: &str) -> Result<(), String> {
     match t {
-        "i64" | "f64" | "string" | "bool" | "void" => Ok(()),
-        _ => Err(format!("unsupported ffi type '{}', supported types: i64, f64, string, bool, void", t)),
+        "i64" | "i32" | "f64" | "f32" | "string" | "bool" | "void" => Ok(()),
+        _ => Err(format!("unsupported ffi type '{}', supported types: i64, i32, f64, f32, string, bool, void", t)),
     }
 }
 
@@ -181,7 +178,9 @@ pub fn call_ffi(idx: usize, name: &str, args: Vec<Value>) -> Result<Value, Strin
         unsafe {
             match sig.ret_type.as_str() {
                 "i64" => Ok(Value::Int(cif.call::<i64>(code_ptr, &c_args))),
+                "i32" => Ok(Value::Int(cif.call::<i32>(code_ptr, &c_args) as i64)),
                 "f64" => Ok(Value::Float(cif.call::<f64>(code_ptr, &c_args))),
+                "f32" => Ok(Value::Float(cif.call::<f32>(code_ptr, &c_args) as f64)),
                 "bool" => Ok(Value::Bool(cif.call::<i32>(code_ptr, &c_args) != 0)),
 
                 "string" => {
@@ -210,7 +209,9 @@ pub fn call_ffi(idx: usize, name: &str, args: Vec<Value>) -> Result<Value, Strin
 fn modu_to_ffi_type(t: &str) -> Result<libffi::middle::Type, String> {
     match t {
         "i64" => Ok(libffi::middle::Type::i64()),
+        "i32" => Ok(libffi::middle::Type::i32()),
         "f64" => Ok(libffi::middle::Type::f64()),
+        "f32" => Ok(libffi::middle::Type::f32()),
         "bool" => Ok(libffi::middle::Type::i32()),
         "string" => Ok(libffi::middle::Type::pointer()),
         "void" => Ok(libffi::middle::Type::void()),
@@ -220,8 +221,9 @@ fn modu_to_ffi_type(t: &str) -> Result<libffi::middle::Type, String> {
 
 enum FFIArg {
     I64(i64),
-    F64(f64),
     I32(i32),
+    F64(f64),
+    F32(f32),
     CString { ptr: *const std::os::raw::c_char, _owner: std::ffi::CString },
 }
 
@@ -229,8 +231,9 @@ impl FFIArg {
     fn as_arg(&self) -> libffi::middle::Arg<'_> {
         match self {
             FFIArg::I64(i) => libffi::middle::Arg::new(i),
-            FFIArg::F64(f) => libffi::middle::Arg::new(f),
             FFIArg::I32(i) => libffi::middle::Arg::new(i),
+            FFIArg::F64(f) => libffi::middle::Arg::new(f),
+            FFIArg::F32(f) => libffi::middle::Arg::new(f),
             FFIArg::CString { ptr, .. } => libffi::middle::Arg::new(ptr),
         }
     }
@@ -239,7 +242,9 @@ impl FFIArg {
 fn to_ffi_arg(value: &Value, t: &str) -> Result<FFIArg, String> {
     match (value, t) {
         (Value::Int(i), "i64") => Ok(FFIArg::I64(*i)),
+        (Value::Int(i), "i32") => Ok(FFIArg::I32(*i as i32)),
         (Value::Float(f), "f64") => Ok(FFIArg::F64(*f)),
+        (Value::Float(f), "f32") => Ok(FFIArg::F32(*f as f32)),
         (Value::Bool(b), "bool") => Ok(FFIArg::I32(*b as i32)),
 
         (Value::String(s), "string") => {
