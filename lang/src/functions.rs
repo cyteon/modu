@@ -22,6 +22,7 @@ pub fn get_functions() -> Vec<BuiltinFn> {
         builtin("float", float),
         builtin("str", str),
         builtin("bool", bool),
+        builtin("type", r#type),
         builtin("exit", exit),
         builtin("error", error),
     ]
@@ -125,6 +126,14 @@ fn bool(args: Vec<Value>) -> Result<Value, String> {
     }
 
     Ok(Value::Bool(args[0].truthy()))
+}
+
+fn r#type(args: Vec<Value>) -> Result<Value, String> {
+    if args.len() != 1 {
+        return Err(format!("type() takes exactly one argument ({} given)", args.len()));
+    }
+
+    Ok(Value::String(args[0].type_name().to_string()))
 }
 
 fn exit(args: Vec<Value>) -> Result<Value, String> {

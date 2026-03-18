@@ -54,10 +54,6 @@ impl Highlighter for Syntax {
             format!("{}{}", caps[1].blue().to_string(), &caps[2])
         }).to_string();
 
-        result = self.string_re.replace_all(&result, |caps: &regex::Captures| {
-            caps[0].green().to_string()
-        }).to_string();
-
         result = self.comment_re.replace_all(&result, |caps: &regex::Captures| {
             caps[0].dimmed().to_string()
         }).to_string();
@@ -68,6 +64,10 @@ impl Highlighter for Syntax {
 
         result = self.math_re.replace_all(&result, |caps: &regex::Captures| {
             caps[0].cyan().to_string()
+        }).to_string();
+
+        result = self.string_re.replace_all(&result, |caps: &regex::Captures| {
+            caps[0].green().to_string()
         }).to_string();
 
         std::borrow::Cow::Owned(result)

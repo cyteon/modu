@@ -241,6 +241,7 @@ impl VM {
                             match (func.func)(args) {
                                 Ok(result) => self.stack.push(result),
                                 Err(e) => {
+                                    // this isnt great lmfao but it works ig
                                     if func.name == "error" && !e.contains("error() takes exactly one argument") {
                                         return Err(self.runtime_error(format!("{}", e), span));
                                     }
