@@ -39,13 +39,13 @@ With streamlined error messages for easy debugging</p>
         <div class="flex flex-col px-2">
             <div class="mx-auto bg-bg1 p-4 rounded-md border border-bg2 my-4">
                 <p class="text-xl whitespace-pre-wrap font-mono"><span class="font-bold">Example Error:<br/></span>
-<span class="text-red">[00] Error:</span> Lexing error: UnexpectedToken
-    ╭─[ examples/test.modu:1:7 ]
-    │
-  1 │ print(<span class="text-red">!</span>);
-    │       ┬
-    │       ╰── Unexpected token
-────╯</p>
+<span class="text-red">Error:</span> I expected [an expression after '='], but found Semicolon
+   ╭─[ test:1:9 ]
+   │
+ 1 │ let a = ;
+   │         ┬  
+   │         ╰── expected [an expression after '=']
+───╯</p>
             </div>
         </div>
     </div>

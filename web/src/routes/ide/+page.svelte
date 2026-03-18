@@ -154,25 +154,25 @@ yap("Hello, World!");
 </svelte:head>
 
 <div class="flex flex-col w-full h-screen">
-    <div class="w-full border-b border-bg1 p-2 px-4 flex">
+    <div class="w-full border-b border-bg1 py-1 px-6 flex">
         <a href={base + "/"} class="text-2xl font-bold">modu</a>
-        <p class="ml-2 mt-auto text-xl">{moduVersion ? `${moduVersion}` : ""}</p>
+        <p class="ml-2 mt-auto">{moduVersion ? `v${moduVersion}` : "loading..."}</p>
 
         <div class="ml-auto my-auto">
-            <a href="docs" class="text-2xl">docs</a>
+            <a href="docs" class="text-lg">docs</a>
         </div>
 
         <div class="ml-auto flex">
             <button class={`${runClicked ? "text-blue" : ""} mr-5`} on:click={run}>
-                <Play size={28} class="my-auto" />
+                <Play size={22} class="my-auto" />
             </button>
 
             <button class="mr-5" on:click={upload}>
-                <Download size={28} class="my-auto" />
+                <Download size={22} class="my-auto" />
             </button>
 
             <button on:click={download}>
-                <Upload size={28} class="my-auto" />
+                <Upload size={22} class="my-auto" />
             </button>
         </div>
     </div>
