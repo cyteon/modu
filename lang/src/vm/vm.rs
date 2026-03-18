@@ -240,7 +240,13 @@ impl VM {
 
                             match (func.func)(args) {
                                 Ok(result) => self.stack.push(result),
-                                Err(e) => return Err(self.runtime_error(format!("error calling {}(): {}", func.name, e), span)),
+                                Err(e) => {
+                                    if func.name == "error" && !e.contains("error() takes exactly one argument") {
+                                        return Err(self.runtime_error(format!("{}", e), span));
+                                    }
+
+                                    return Err(self.runtime_error(format!("error calling {}(): {}", func.name, e), span));
+                                }
                             }
                         }
 
