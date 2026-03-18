@@ -118,7 +118,7 @@ fn parser<'src>() -> impl Parser<
                     },
 
                     Postfix::Call(args) => SpannedExpr {
-                        span: obj.span.clone(),
+                        span: (obj.span.start..(obj.span.end + 2)).into(), // include ()
                         node: Expr::Call {
                             callee: Box::new(obj.clone()),
                             args,

@@ -14,6 +14,8 @@ pub fn object() -> Value {
     methods.insert("getenv".to_string(), Value::BuiltinFn(BuiltinFn::new("getenv", getenv)));
     methods.insert("setenv".to_string(), Value::BuiltinFn(BuiltinFn::new("setenv", setenv)));
     methods.insert("unsetenv".to_string(), Value::BuiltinFn(BuiltinFn::new("unsetenv", unsetenv)));
+    methods.insert("args".to_string(), Value::BuiltinFn(BuiltinFn::new("args", args)));
+
     methods.insert("name".to_string(), Value::String({
         if cfg!(target_os = "windows") {
             "windows"
@@ -156,4 +158,9 @@ fn unsetenv(args: Vec<Value>) -> Result<Value, String> {
     }
 
     Ok(Value::Null)
+}
+
+fn args(_args: Vec<Value>) -> Result<Value, String> {
+    let args: Vec<Value> = std::env::args().map(|s| Value::String(s)).collect();
+    Ok(Value::Array(args))
 }

@@ -5,6 +5,7 @@ use crate::vm::value::{BuiltinFn, Value};
 pub fn object() -> Value {
     let mut methods = HashMap::new();
 
+    methods.insert("parse".to_string(), Value::BuiltinFn(BuiltinFn::new("parse", parse)));
     methods.insert("now_unix".to_string(), Value::BuiltinFn(BuiltinFn::new("now_unix", now_unix)));
     methods.insert("now_unix_ms".to_string(), Value::BuiltinFn(BuiltinFn::new("now_unix_ms", now_unix_ms)));
     methods.insert("now_utc".to_string(), Value::BuiltinFn(BuiltinFn::new("now_utc", now_utc)));
@@ -13,8 +14,30 @@ pub fn object() -> Value {
     methods.insert("to_rfc_2822".to_string(), Value::BuiltinFn(BuiltinFn::new("to_rfc_2822", to_rfc_2822)));
     methods.insert("to_local_date_time".to_string(), Value::BuiltinFn(BuiltinFn::new("to_local_date_time", to_local_date_time)));
     methods.insert("to_utc_date_time".to_string(), Value::BuiltinFn(BuiltinFn::new("to_utc_date_time", to_utc_date_time)));
+    methods.insert("sleep".to_string(), Value::BuiltinFn(BuiltinFn::new("sleep", sleep)));
 
     Value::Object(methods)
+}
+
+fn parse(args: Vec<Value>) -> Result<Value, String> {
+    if args.len() != 1 {
+        return Err(format!("time.parse() takes exactly one argument ({} given)", args.len()));
+    }
+
+    let input = match &args[0] {
+        Value::String(s) => s,
+        _ => return Err(format!("time.parse() argument must be a string, got {}", args[0].type_name())),
+    };
+
+    match DateTime::parse_from_rfc3339(input) {
+        Ok(dt) => Ok(Value::Int(dt.timestamp())),
+        Err(_) => {
+            match DateTime::parse_from_rfc2822(input) {
+                Ok(dt) => Ok(Value::Int(dt.timestamp())),
+                Err(_) => Err(format!("time.parse() failed to parse date string: '{}'", input)),
+            }
+        }
+    }
 }
 
 fn now_unix(args: Vec<Value>) -> Result<Value, String> {
@@ -115,4 +138,19 @@ fn to_utc_date_time(args: Vec<Value>) -> Result<Value, String> {
     let dt = DateTime::<chrono::Utc>::from(chrono::Utc.timestamp(timestamp, 0));
 
     Ok(Value::String(dt.to_string()))
+}
+
+fn sleep(args: Vec<Value>) -> Result<Value, String> {
+    if args.len() != 1 {
+        return Err(format!("time.sleep() takes exactly one argument ({} given)", args.len()));
+    }
+
+    let duration_ms = match &args[0] {
+        Value::Int(i) => *i,
+        _ => return Err(format!("time.sleep() argument must be an integer duration in milliseconds, got {}", args[0].type_name())),
+    };
+
+    std::thread::sleep(std::time::Duration::from_millis(duration_ms as u64));
+
+    Ok(Value::Null)
 }

@@ -22,6 +22,10 @@ pub fn get_functions() -> Vec<BuiltinFn> {
         builtin("float", float),
         builtin("str", str),
         builtin("bool", bool),
+        builtin("type", r#type),
+        builtin("exit", exit),
+        builtin("error", error),
+        builtin("assert", assert),
     ]
 }
 
@@ -123,4 +127,45 @@ fn bool(args: Vec<Value>) -> Result<Value, String> {
     }
 
     Ok(Value::Bool(args[0].truthy()))
+}
+
+fn r#type(args: Vec<Value>) -> Result<Value, String> {
+    if args.len() != 1 {
+        return Err(format!("type() takes exactly one argument ({} given)", args.len()));
+    }
+
+    Ok(Value::String(args[0].type_name().to_string()))
+}
+
+fn exit(args: Vec<Value>) -> Result<Value, String> {
+    if args.len() == 0 {
+        std::process::exit(0);
+    } else if args.len() == 1 {
+        match &args[0] {
+            Value::Int(i) => std::process::exit(*i as i32),
+            _ => return Err(format!("exit() argument must be an int, got {}", args[0].type_name())),
+        }
+    } else {
+        return Err(format!("exit() takes at most one argument ({} given)", args.len()));
+    }
+}
+
+fn error(args: Vec<Value>) -> Result<Value, String> {
+    if args.len() != 1 {
+        return Err(format!("error() takes exactly one argument ({} given)", args.len()));
+    }
+
+    Err(format!("{}", args[0]))
+}
+
+fn assert(args: Vec<Value>) -> Result<Value, String> {
+    if args.len() != 1 {
+        return Err(format!("assert() takes exactly one argument ({} given)", args.len()));
+    }
+
+    if !args[0].truthy() {
+        return Err(format!("assertion failed: {} is not truthy", args[0]));
+    }
+
+    Ok(Value::Null)
 }
