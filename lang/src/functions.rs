@@ -25,6 +25,7 @@ pub fn get_functions() -> Vec<BuiltinFn> {
         builtin("type", r#type),
         builtin("exit", exit),
         builtin("error", error),
+        builtin("assert", assert),
     ]
 }
 
@@ -155,4 +156,16 @@ fn error(args: Vec<Value>) -> Result<Value, String> {
     }
 
     Err(format!("{}", args[0]))
+}
+
+fn assert(args: Vec<Value>) -> Result<Value, String> {
+    if args.len() != 1 {
+        return Err(format!("assert() takes exactly one argument ({} given)", args.len()));
+    }
+
+    if !args[0].truthy() {
+        return Err(format!("assertion failed: {} is not truthy", args[0]));
+    }
+
+    Ok(Value::Null)
 }
