@@ -65,7 +65,7 @@ impl Compiler {
                     self.emit(Instruction::StoreLocal(index), span);
                 }
 
-                Variable::Global => {
+                Variable::Global(_) => {
                     let slot = self.scope.define_local(name);
                     self.emit(Instruction::StoreLocal(slot), span);
                 }
@@ -107,7 +107,7 @@ impl Compiler {
                         self.emit(Instruction::LoadLocal(index), span);
                     }
 
-                    Variable::Global => {
+                    Variable::Global(_) => {
                         self.emit(Instruction::LoadGlobal(name.to_string()), span);
                     }
                 }
@@ -124,7 +124,7 @@ impl Compiler {
                                     self.emit(Instruction::LoadLocal(index), span);
                                 }
 
-                                Variable::Global => {
+                                Variable::Global(_) => {
                                     self.emit(Instruction::LoadGlobal(name.to_string()), span);
                                 }
                             }
@@ -147,7 +147,7 @@ impl Compiler {
                                 self.emit(Instruction::StoreLocal(index), span);
                             }
 
-                            Variable::Global => {
+                            Variable::Global(_) => {
                                 self.emit(Instruction::StoreGlobal(name.to_string()), span);
                             }
                         }
@@ -189,7 +189,7 @@ impl Compiler {
                         Expr::Identifier(name) => {
                             match self.scope.resolve(name) {
                                 Variable::Local(index) => (Some(index), None),
-                                Variable::Global => (None, Some(name.to_string())),
+                                Variable::Global(_) => (None, Some(name.to_string())),
                             }
                         }
 
@@ -581,7 +581,7 @@ impl Compiler {
 
                         self.compile_expr(*body.clone())?;
 
-                        if method_name == "new" {
+                        if method_name == "init" {
                             self.emit(Instruction::LoadLocal(0), span);
                         } else {
                             self.emit(Instruction::PushNull, span);
@@ -620,7 +620,7 @@ impl Compiler {
             Expr::Identifier(name) => {
                 match self.scope.resolve(name) {
                     Variable::Local(slot) => self.emit(Instruction::StoreLocal(slot), span),
-                    Variable::Global => self.emit(Instruction::StoreGlobal(name.clone()), span),
+                    Variable::Global(_) => self.emit(Instruction::StoreGlobal(name.clone()), span),
                 }
             }
 

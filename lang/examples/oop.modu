@@ -1,5 +1,5 @@
 class Counter {
-    fn new(start) {
+    fn init(start) {
         self.value = start;
     }
 
@@ -11,7 +11,7 @@ class Counter {
         self.value -= 1;
     }
     
-    fn value() {
+    fn get() {
         return self.value;
     }
 
@@ -21,12 +21,13 @@ class Counter {
 }
 
 let counter = Counter(1);
-counter.increment();
+print(counter);
 
+counter.increment();
 print(counter.value);
 
 counter.decrement();
-print(counter.value());
+print(counter.get());
 
 counter.reset();
 counter.decrement();

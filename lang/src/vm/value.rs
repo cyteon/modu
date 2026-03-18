@@ -28,6 +28,17 @@ pub enum Value {
         name: String,
         methods: HashMap<String, Value>,
     },
+
+    Instance {
+        class_name: String,
+        properties: HashMap<String, Value>,
+    },
+
+    InstanceFn {
+        instance: Box<Value>,
+        chunk_id: usize,
+        arity: usize,
+    }
 }
 
 #[derive(Clone)]
@@ -203,6 +214,8 @@ impl Value {
             Value::FFILib(_) => "ffi_lib",
             Value::FFIFunc(_, _) => "ffi_function",
             Value::Class { .. } => "class",
+            Value::Instance { .. } => "instance",
+            Value::InstanceFn { .. } => "instance_fn",
         }
     }
 
