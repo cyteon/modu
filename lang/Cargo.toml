@@ -32,7 +32,7 @@ serde = { version = "1.0.228", features = ["derive"] }
 base64 = "0.22.1"
 sha2 = "0.10.9"
 blake3 = "1.8.3"
-bcrypt = "0.19.0"
+bcrypt = "0.18.0"
 argon2 = "0.5.3"
 base16 = "0.2.1"
 chumsky = "0.12.0"
@@ -45,7 +45,7 @@ stacker = "0.1.23"
 wasm-bindgen = "0.2.114"
 getrandom_v2 = { package = "getrandom", version = "0.2", features = ["js"] }
 getrandom_v3 = { package = "getrandom", version = "0.3.4", features = ["wasm_js"] }
-uuid = { version = "1.21.0", features = ["v4", "v7", "js"]}
+uuid = { version = "1.22.0", features = ["v4", "v7", "js"]}
 
 [target.'cfg(not(target_arch = "wasm32"))'.dependencies]
 uuid = { version = "1.22.0", features = ["v4", "v7"] }
