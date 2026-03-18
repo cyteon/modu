@@ -21,7 +21,9 @@ class Counter {
 }
 
 let counter = Counter(1);
+print(Counter);
 print(counter);
+print(counter.increment);
 
 counter.increment();
 print(counter.value);

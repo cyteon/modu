@@ -85,10 +85,27 @@ impl PartialEq for Value {
             (Value::String(a), Value::String(b)) => a == b,
             (Value::Bool(a), Value::Bool(b)) => a == b,
             (Value::Null, Value::Null) => true,
+
             (Value::Array(a), Value::Array(b)) => a == b,
             (Value::Object(a), Value::Object(b)) => a == b,
             (Value::FFILib(a), Value::FFILib(b)) => a == b,
             (Value::FFIFunc(lib_a, name_a), Value::FFIFunc(lib_b, name_b)) => lib_a == lib_b && name_a == name_b,
+
+            (Value::Function { chunk_id: a_id, arity: a_arity }, Value::Function { chunk_id: b_id, arity: b_arity }) => a_id == b_id && a_arity == b_arity,
+            (Value::NativeFn(a), Value::NativeFn(b)) => a.name == b.name,
+            (Value::BuiltinFn(a), Value::BuiltinFn(b)) => a.name == b.name,
+            (Value::Class { name: a_name, methods: a_methods }, Value::Class { name: b_name, methods: b_methods }) => a_name == b_name && a_methods == b_methods,
+
+            (
+                Value::Instance { class_name: a_class, properties: a_props },
+                Value::Instance { class_name: b_class, properties: b_props }
+            ) => a_class == b_class && a_props == b_props,
+
+            (
+                Value::InstanceFn { instance: a_instance, chunk_id: a_id, arity: a_arity },
+                Value::InstanceFn { instance: b_instance, chunk_id: b_id, arity: b_arity }
+            ) => a_instance == b_instance && a_id == b_id && a_arity == b_arity,
+
             _ => false,
         }
     }
@@ -140,6 +157,24 @@ impl std::fmt::Display for Value {
 
                 write!(f, "{{ {} }}", properties.join(", "))
             }
+
+            Value::Function { chunk_id, arity } => write!(f, "<fn {}:{}>", chunk_id, arity),
+            Value::NativeFn(native_fn) => write!(f, "{:?}", native_fn),
+            Value::BuiltinFn(builtin_fn) => write!(f, "{:?}", builtin_fn),
+            Value::FFILib(lib_id) => write!(f, "<ffi lib {}>", lib_id),
+            Value::FFIFunc(lib_id, name) => write!(f, "<ffi func {} from lib {}>", name, lib_id),
+            
+            Value::Range { start, end, inclusive } => {
+                if *inclusive {
+                    write!(f, "{}..={}", start, end)
+                } else {
+                    write!(f, "{}..{}", start, end)
+                }
+            }
+
+            Value::Class { name, .. } => write!(f, "<class {}>", name),
+            Value::Instance { class_name, .. } => write!(f, "<instance of class {}>", class_name),
+            Value::InstanceFn { instance, chunk_id, arity } => write!(f, "<fn {}:{} of {}>", chunk_id, arity, instance),
 
             _ => write!(f, "{:?}", self),
         }
