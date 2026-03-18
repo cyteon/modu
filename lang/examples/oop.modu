@@ -1,0 +1,33 @@
+class Counter {
+    fn new(start) {
+        self.value = start;
+    }
+
+    fn increment() {
+        self.value += 1;
+    }
+
+    fn decrement() {
+        self.value -= 1;
+    }
+    
+    fn value() {
+        return self.value;
+    }
+
+    fn reset() {
+        self.value = 0;
+    }
+}
+
+let counter = Counter(1);
+counter.increment();
+
+print(counter.value);
+
+counter.decrement();
+print(counter.value());
+
+counter.reset();
+counter.decrement();
+print(counter.value);

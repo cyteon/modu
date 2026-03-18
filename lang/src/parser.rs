@@ -118,7 +118,11 @@ fn parser<'src>() -> impl Parser<
                     },
 
                     Postfix::Call(args) => SpannedExpr {
-                        span: (obj.span.start..(obj.span.end + 2)).into(), // include ()
+                        span: (obj.span.start..(
+                            obj.span.end + 2 
+                            + args.iter().map(|arg| arg.span.end - arg.span.start).sum::<usize>() 
+                            + (args.len().saturating_sub(1) * 2))
+                        ).into(), // so it marks (..) in call(..)
                         node: Expr::Call {
                             callee: Box::new(obj.clone()),
                             args,
@@ -370,6 +374,19 @@ fn parser<'src>() -> impl Parser<
             })
             .labelled("function declaration");
         
+        let class_stmt = select! { (Token::Class, span) => span }
+            .then(select! { (Token::Identifier(name), _) => name }.labelled("class name"))
+            .then(
+                select! { (Token::LBrace, span) => span }
+                    .then(fn_stmt.clone().repeated().collect::<Vec<_>>())
+                    .then(select! { (Token::RBrace, span) => span })
+            )
+            .map(|((start, name), ((_lbrace, methods), end)): ((Span, String), ((Span, Vec<SpannedExpr>), Span))| SpannedExpr {
+                node: Expr::Class { name, methods },
+                span: Span::from(start.start..end.end),
+            })
+            .labelled("class declaration");
+        
         let infinite_loop_stmt = select! { (Token::Loop, span) => span }
             .then(block.clone().labelled("loop body"))
             .map(|(start, body): (Span, SpannedExpr)| SpannedExpr {
@@ -488,6 +505,7 @@ fn parser<'src>() -> impl Parser<
             let_stmt,
             assign_stmt,
             fn_stmt,
+            class_stmt,
             infinite_loop_stmt,
             for_loop_stmt,
             while_loop_stmt,

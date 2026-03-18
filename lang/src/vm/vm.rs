@@ -274,6 +274,16 @@ impl VM {
                             });
                         }
 
+                        Value::Class { name, methods } => {
+                            let args: Vec<Value> = self.stack.drain(self.stack.len() - argc..).collect();
+                            self.stack.pop();
+
+                            let instance = Value::Instance {
+                                class: name.clone(),
+                                properties: HashMap::new()
+                            };
+                        }
+
                         _ => {
                             return Err(self.runtime_error(format!("{} is not callable", callee.type_name()), span));
                         }

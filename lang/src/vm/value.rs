@@ -22,7 +22,12 @@ pub enum Value {
         start: i64,
         end: i64,
         inclusive: bool,
-    }
+    },
+
+    Class {
+        name: String,
+        methods: HashMap<String, Value>,
+    },
 }
 
 #[derive(Clone)]
@@ -197,6 +202,7 @@ impl Value {
             Value::Range { .. } => "range",
             Value::FFILib(_) => "ffi_lib",
             Value::FFIFunc(_, _) => "ffi_function",
+            Value::Class { .. } => "class",
         }
     }
 

@@ -1,4 +1,5 @@
 use chumsky::span::SimpleSpan;
+use std::collections::HashMap;
 
 use crate::vm::chunk::Chunk;
 use crate::vm::instruction::Instruction;
@@ -558,6 +559,54 @@ impl Compiler {
 
             Expr::Import { name, alias } => {
                 self.emit(Instruction::Import { path: name.clone(), alias: alias.clone() }, span);
+            }
+
+            Expr::Class { name, methods } => {
+                let mut methods_map = HashMap::new();
+
+                for f in methods {
+                    if let Expr::Function { name: method_name, args, body } = &f.node {
+                        let chunk_id = self.chunks.len() + self.offset;
+                        self.chunks.push(Chunk::new(&format!("{}::{}", name, method_name)));
+                        
+                        let saved_chunk = self.current_chunk;
+                        self.current_chunk = chunk_id;
+
+                        let saved_scope = self.scope.enter_function();
+                        self.scope.define_local("self");
+
+                        for arg in args {
+                            self.scope.define_local(arg);
+                        }
+
+                        self.compile_expr(*body.clone())?;
+
+                        if method_name == "new" {
+                            self.emit(Instruction::LoadLocal(0), span);
+                        } else {
+                            self.emit(Instruction::PushNull, span);
+                        }
+
+                        self.emit(Instruction::Return, span);
+
+                        let locals_count = self.scope.exit_function(saved_scope);
+                        self.chunks[chunk_id].locals_count = locals_count;
+                        self.current_chunk = saved_chunk;
+
+                        methods_map.insert(
+                            method_name.clone(), 
+                            Value::Function { chunk_id, arity: args.len() }
+                        );
+                    } else {
+                        return Err("class body can only contain functions".to_string());
+                    }
+                }
+
+                let class_value = Value::Class { name: name.clone(), methods: methods_map };
+                let index = self.add_constant(class_value);
+
+                self.emit(Instruction::Push(index), span);
+                self.store_variable(name, span);
             }
         }
 
