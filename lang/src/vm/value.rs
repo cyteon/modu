@@ -175,8 +175,6 @@ impl std::fmt::Display for Value {
             Value::Class { name, .. } => write!(f, "<class {}>", name),
             Value::Instance { class_name, .. } => write!(f, "<instance of class {}>", class_name),
             Value::InstanceFn { instance, chunk_id, arity } => write!(f, "<fn {}:{} of {}>", chunk_id, arity, instance),
-
-            _ => write!(f, "{:?}", self),
         }
     }
 }

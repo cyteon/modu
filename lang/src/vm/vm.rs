@@ -284,7 +284,7 @@ impl VM {
 
                             let instance = Value::Instance {
                                 class_name: name.clone(),
-                                properties: HashMap::new()
+                                properties: methods.clone(),
                             };
 
                             if let Some(Value::Function { chunk_id, arity }) = methods.get("init") {
@@ -308,7 +308,7 @@ impl VM {
                                     chunk_id: *chunk_id,
                                     ip: 0,
                                     base,
-                                    self_target: Some(Variable::Local(base)),
+                                    self_target: None,
                                 });
                             } else {
                                 if *argc != 0 {
@@ -328,14 +328,14 @@ impl VM {
                 Instruction::CallMethod { argc, target_local, target_global } => {
                     let callee = self.stack[self.stack.len() - 1 - argc].clone();
 
+                    if self.frames.len() >= FRAMES_MAX {
+                        return Err(self.runtime_error("stack overflow".to_string(), span));
+                    }
+
                     match callee {
                         Value::Function { chunk_id, arity } => {
                             if arity != *argc {
                                 return Err(self.runtime_error(format!("expected {} arguments but got {}", arity, argc), span));
-                            }
-
-                            if self.frames.len() >= FRAMES_MAX {
-                                return Err(self.runtime_error("stack overflow".to_string(), span));
                             }
 
                             let base = self.stack.len() - argc;
@@ -374,7 +374,7 @@ impl VM {
                             }
 
                             let self_target = if let Some(target) = target_local {
-                                Some(Variable::Local(base))
+                                Some(Variable::Local(*target))
                             } else if let Some(target) = target_global {
                                 Some(Variable::Global(target.clone()))
                             } else {
@@ -408,6 +408,47 @@ impl VM {
                                     self.stack.push(result.0);
                                 }
                                 Err(e) => return Err(self.runtime_error(format!("error calling {}(): {}", func.name, e), span)),
+                            }
+                        }
+
+                        Value::Class { name, methods } => {
+                            let args: Vec<Value> = self.stack.drain(self.stack.len() - argc..).collect();
+                            self.stack.pop();
+
+                            let instance = Value::Instance {
+                                class_name: name.clone(),
+                                properties: methods.clone(),
+                            };
+
+                            if let Some(Value::Function { chunk_id, arity }) = methods.get("init") {
+                                if *argc != *arity {
+                                    return Err(self.runtime_error(format!("{}.init() expected {} arguments but got {}", name, arity, argc), span));
+                                }
+
+                                let base = self.stack.len();
+
+                                self.stack.push(instance);
+                                for arg in args {
+                                    self.stack.push(arg);
+                                }
+
+                                let extra_locals = self.chunks[*chunk_id].locals_count.saturating_sub(*argc + 1);
+                                for _ in 0..extra_locals {
+                                    self.stack.push(Value::Null);
+                                }
+
+                                self.frames.push(CallFrame {
+                                    chunk_id: *chunk_id,
+                                    ip: 0,
+                                    base,
+                                    self_target: None,
+                                });
+                            } else {
+                                if *argc != 0 {
+                                    return Err(self.runtime_error(format!("{} has no init method, but got {} arguments", name, argc), span));
+                                }
+
+                                self.stack.push(instance);
                             }
                         }
 
@@ -451,8 +492,9 @@ impl VM {
                         if matches!(ns, Value::Instance { .. }) {
                             match target {
                                 Variable::Local(slot) => {
-                                    let frame = self.frames.last_mut().unwrap();
-                                    self.stack[frame.base + *slot] = ns;
+                                    if *slot < self.stack.len() {
+                                        self.stack[*slot] = ns;
+                                    }
                                 }
 
                                 Variable::Global(name) => {
@@ -716,38 +758,33 @@ impl VM {
 
                         Value::Instance { class_name, properties } => {
                             if let Some(v) = properties.get(name) {
-                                self.stack.pop();
-                                self.stack.push(v.clone());
-                            } else {
-                                let class = self.globals.get(&class_name).cloned();
+                                match v {
+                                    Value::Function { chunk_id, arity } => {
+                                        let inst = self.stack.pop().unwrap();
 
-                                match class {
-                                    Some(Value::Class { name: _, methods }) => {
-                                        if let Some(Value::Function { chunk_id, arity }) = methods.get(name) {
-                                            let inst = self.stack.pop().unwrap();
-
-                                            self.stack.push(Value::InstanceFn {
-                                                instance: Box::new(inst),
-                                                chunk_id: *chunk_id,
-                                                arity: *arity,
-                                            });
-                                        } else {
-                                            let props = methods.keys().cloned().chain(properties.keys().cloned());
-                                            let closest = find_closest(name.clone(), props);
-
-                                            if let Some(closest) = closest {
-                                                return Err(self.runtime_error_with_help(
-                                                    format!("undefined property '{}' on instance of {}", name, class_name), 
-                                                    format!("did you maybe mean: '{}'?", closest.green()),
-                                                    span
-                                                ));
-                                            } else {
-                                                return Err(self.runtime_error(format!("undefined property '{}' on instance of {}", name, class_name), span));
-                                            }
-                                        }
+                                        self.stack.push(Value::InstanceFn {
+                                            instance: Box::new(inst),
+                                            chunk_id: *chunk_id,
+                                            arity: *arity,
+                                        });
                                     }
 
-                                    _ => return Err(self.runtime_error(format!("class '{}' not found for instance of {}", class_name, class_name), span)),
+                                    _ => {
+                                        self.stack.pop();
+                                        self.stack.push(v.clone());
+                                    }
+                                }
+                            } else {
+                                let closest = find_closest(name.clone(), properties.keys().cloned());
+
+                                if let Some(closest) = closest {
+                                    return Err(self.runtime_error_with_help(
+                                        format!("undefined property '{}' on instance of {}", name, class_name), 
+                                        format!("did you maybe mean: '{}'?", closest.green()),
+                                        span
+                                    ));
+                                } else {
+                                    return Err(self.runtime_error(format!("undefined property '{}' on instance of {}", name, class_name), span));
                                 }
                             }
                         }
@@ -1072,12 +1109,31 @@ impl VM {
 fn remap(value: Value, offset: usize) -> Value {
     match value {
         Value::Function { chunk_id, arity } => Value::Function { chunk_id: chunk_id + offset, arity },
+
         Value::Object(props) => Value::Object(
             props.into_iter().map(|(k, v)| (k, remap(v, offset))).collect()
         ),
+
         Value::Array(elems) => Value::Array(
             elems.into_iter().map(|v| remap(v, offset)).collect()
         ),
+
+        Value::Class { name, methods } => Value::Class { 
+            name, 
+            methods: methods.into_iter().map(|(k, v)| (k, remap(v, offset))).collect() 
+        },
+
+        Value::Instance { class_name, properties } => Value::Instance { 
+            class_name, 
+            properties: properties.into_iter().map(|(k, v)| (k, remap(v, offset))).collect() 
+        },
+
+        Value::InstanceFn { instance, chunk_id, arity } => Value::InstanceFn { 
+            instance: Box::new(remap(*instance, offset)), 
+            chunk_id: chunk_id + offset, 
+            arity 
+        },
+
         v => v
     }
 }
