@@ -1,0 +1,7 @@
+import "oop.modu";
+
+print("\n--- start of oop_2.modu ---\n"); // cuz i have printing stuff in oop.modu so that will print
+
+let c = oop.Counter(10);
+c.decrement();
+print(c.value);

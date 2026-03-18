@@ -121,5 +121,10 @@ pub enum Expr {
     NotIn(Box<Spanned<Expr>>, Box<Spanned<Expr>>),
     And(Box<Spanned<Expr>>, Box<Spanned<Expr>>),
     Or(Box<Spanned<Expr>>, Box<Spanned<Expr>>),
-    Not(Box<Spanned<Expr>>)
+    Not(Box<Spanned<Expr>>),
+
+    Class {
+        name: String,
+        methods: Vec<Spanned<Expr>>,
+    }
 }

@@ -19,33 +19,33 @@
 		"keywords": {
 			"patterns": [{
 				"name": "keyword.control.modu",
-				"match": "\\b(if|else|fn|let|import|as|return|loop|break|continue|for|while|and|or|in|not in)\\b"
+				"match": "\\b(if|else|fn|let|import|as|return|loop|break|continue|for|while|and|or|in|not in|class|self)\\b"
 			}]
 		},
 
 		"strings": {
 			"patterns": [
 				{
-				"name": "string.quoted.double.modu",
-				"begin": "\"",
-				"end": "\"",
-				"patterns": [
-					{
-					"name": "constant.character.escape.modu",
-					"match": "\\\\[nrt0\\\\\"']"
-					}
-				]
+					"name": "string.quoted.double.modu",
+					"begin": "\"",
+					"end": "\"",
+					"patterns": [
+						{
+						"name": "constant.character.escape.modu",
+						"match": "\\\\[nrt0\\\\\"']"
+						}
+					]
 				},
 				{
-				"name": "string.quoted.single.modu",
-				"begin": "'",
-				"end": "'",
-				"patterns": [
-					{
-					"name": "constant.character.escape.modu",
-					"match": "\\\\[nrt0\\\\\"']"
-					}
-				]
+					"name": "string.quoted.single.modu",
+					"begin": "'",
+					"end": "'",
+					"patterns": [
+						{
+						"name": "constant.character.escape.modu",
+						"match": "\\\\[nrt0\\\\\"']"
+						}
+					]
 				}
 			]
 		},

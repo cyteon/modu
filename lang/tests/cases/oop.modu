@@ -1,0 +1,23 @@
+class Counter {
+    fn init(start) {
+        self.value = start;
+    }
+
+    fn inc() {
+        self.value += 1;
+    }
+
+    fn dec() {
+        self.value -= 1;
+    }
+}
+
+let counter = Counter(1);
+counter.inc();
+
+print(counter.value);
+
+counter.value = -1;
+counter.dec();
+
+print(counter.value);

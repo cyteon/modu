@@ -6,11 +6,13 @@ use colored::Colorize;
 use super::chunk::Chunk;
 use super::value::Value;
 use super::instruction::Instruction;
+use crate::compiler::scope::Variable;
 
 pub struct CallFrame {
     chunk_id: usize,
     ip: usize,
-    base: usize, // so we can do like base + 0 etc for local vars
+    base: usize,
+    self_target: Option<Variable>,
 }
 
 pub struct VM {
@@ -71,6 +73,7 @@ impl VM {
             chunk_id,
             ip: 0,
             base: 0,
+            self_target: None,
         });
 
         for _ in 0..locals_count {
@@ -233,6 +236,10 @@ impl VM {
                 Instruction::Call(argc) => {
                     let callee = self.stack[self.stack.len() - 1 - argc].clone();
 
+                    if self.frames.len() >= FRAMES_MAX {
+                        return Err(self.runtime_error("stack overflow".to_string(), span));
+                    }
+
                     match callee {
                         Value::BuiltinFn(func) => {
                             let args: Vec<Value> = self.stack.drain(self.stack.len() - argc..).collect();
@@ -256,10 +263,6 @@ impl VM {
                                 return Err(self.runtime_error(format!("expected {} arguments but got {}", arity, argc), span));
                             }
 
-                            if self.frames.len() >= FRAMES_MAX {
-                                return Err(self.runtime_error("stack overflow".to_string(), span));
-                            }
-
                             let base = self.stack.len() - argc;
 
                             let extra_locals = self.chunks[chunk_id].locals_count.saturating_sub(*argc);
@@ -271,7 +274,49 @@ impl VM {
                                 chunk_id,
                                 ip: 0,
                                 base,
+                                self_target: None,
                             });
+                        }
+
+                        Value::Class { name, methods } => {
+                            let args: Vec<Value> = self.stack.drain(self.stack.len() - argc..).collect();
+                            self.stack.pop();
+
+                            let instance = Value::Instance {
+                                class_name: name.clone(),
+                                properties: methods.clone(),
+                            };
+
+                            if let Some(Value::Function { chunk_id, arity }) = methods.get("init") {
+                                if *argc != *arity {
+                                    return Err(self.runtime_error(format!("{}.init() expected {} arguments but got {}", name, arity, argc), span));
+                                }
+
+                                let base = self.stack.len();
+
+                                self.stack.push(instance);
+                                for arg in args {
+                                    self.stack.push(arg);
+                                }
+
+                                let extra_locals = self.chunks[*chunk_id].locals_count.saturating_sub(*argc + 1);
+                                for _ in 0..extra_locals {
+                                    self.stack.push(Value::Null);
+                                }
+
+                                self.frames.push(CallFrame {
+                                    chunk_id: *chunk_id,
+                                    ip: 0,
+                                    base,
+                                    self_target: None,
+                                });
+                            } else {
+                                if *argc != 0 {
+                                    return Err(self.runtime_error(format!("{} has no init method, but got {} arguments", name, argc), span));
+                                }
+
+                                self.stack.push(instance);
+                            }
                         }
 
                         _ => {
@@ -283,14 +328,14 @@ impl VM {
                 Instruction::CallMethod { argc, target_local, target_global } => {
                     let callee = self.stack[self.stack.len() - 1 - argc].clone();
 
+                    if self.frames.len() >= FRAMES_MAX {
+                        return Err(self.runtime_error("stack overflow".to_string(), span));
+                    }
+
                     match callee {
                         Value::Function { chunk_id, arity } => {
                             if arity != *argc {
                                 return Err(self.runtime_error(format!("expected {} arguments but got {}", arity, argc), span));
-                            }
-
-                            if self.frames.len() >= FRAMES_MAX {
-                                return Err(self.runtime_error("stack overflow".to_string(), span));
                             }
 
                             let base = self.stack.len() - argc;
@@ -304,6 +349,43 @@ impl VM {
                                 chunk_id,
                                 ip: 0,
                                 base,
+                                self_target: None,
+                            });
+                        }
+
+                        Value::InstanceFn { instance, chunk_id, arity } => {
+                            if arity != *argc {
+                                return Err(self.runtime_error(format!("expected {} arguments but got {}", arity, argc), span));
+                            }
+
+                            let args: Vec<Value> = self.stack.drain(self.stack.len() - argc..).collect();
+                            self.stack.pop();
+
+                            self.stack.push(Value::Null);
+                            let base = self.stack.len();
+                            self.stack.push(*instance);
+                            for arg in args {
+                                self.stack.push(arg);
+                            }
+
+                            let extra_locals = self.chunks[chunk_id].locals_count.saturating_sub(*argc + 1);
+                            for _ in 0..extra_locals {
+                                self.stack.push(Value::Null);
+                            }
+
+                            let self_target = if let Some(target) = target_local {
+                                Some(Variable::Local(*target))
+                            } else if let Some(target) = target_global {
+                                Some(Variable::Global(target.clone()))
+                            } else {
+                                None
+                            };
+
+                            self.frames.push(CallFrame {
+                                chunk_id,
+                                ip: 0,
+                                base,
+                                self_target
                             });
                         }
 
@@ -326,6 +408,47 @@ impl VM {
                                     self.stack.push(result.0);
                                 }
                                 Err(e) => return Err(self.runtime_error(format!("error calling {}(): {}", func.name, e), span)),
+                            }
+                        }
+
+                        Value::Class { name, methods } => {
+                            let args: Vec<Value> = self.stack.drain(self.stack.len() - argc..).collect();
+                            self.stack.pop();
+
+                            let instance = Value::Instance {
+                                class_name: name.clone(),
+                                properties: methods.clone(),
+                            };
+
+                            if let Some(Value::Function { chunk_id, arity }) = methods.get("init") {
+                                if *argc != *arity {
+                                    return Err(self.runtime_error(format!("{}.init() expected {} arguments but got {}", name, arity, argc), span));
+                                }
+
+                                let base = self.stack.len();
+
+                                self.stack.push(instance);
+                                for arg in args {
+                                    self.stack.push(arg);
+                                }
+
+                                let extra_locals = self.chunks[*chunk_id].locals_count.saturating_sub(*argc + 1);
+                                for _ in 0..extra_locals {
+                                    self.stack.push(Value::Null);
+                                }
+
+                                self.frames.push(CallFrame {
+                                    chunk_id: *chunk_id,
+                                    ip: 0,
+                                    base,
+                                    self_target: None,
+                                });
+                            } else {
+                                if *argc != 0 {
+                                    return Err(self.runtime_error(format!("{} has no init method, but got {} arguments", name, argc), span));
+                                }
+
+                                self.stack.push(instance);
                             }
                         }
 
@@ -359,10 +482,27 @@ impl VM {
                     let result = self.stack.pop().unwrap_or(Value::Null);
                     let frame = self.frames.pop().unwrap();
 
+                    let new_self = self.stack.get(frame.base).cloned();
+
                     if frame.base > 0 {
                         self.stack.truncate(frame.base - 1);
                     }
-                    
+
+                    if let (Some(target), Some(ns)) = (&frame.self_target, new_self) {
+                        if matches!(ns, Value::Instance { .. }) {
+                            match target {
+                                Variable::Local(slot) => {
+                                    if *slot < self.stack.len() {
+                                        self.stack[*slot] = ns;
+                                    }
+                                }
+
+                                Variable::Global(name) => {
+                                    self.globals.insert(name.clone(), ns);
+                                }
+                            }
+                        }
+                    }
 
                     self.stack.push(result);
                 }
@@ -616,6 +756,39 @@ impl VM {
                             self.stack.push(Value::NativeFn(method));
                         }
 
+                        Value::Instance { class_name, properties } => {
+                            if let Some(v) = properties.get(name) {
+                                match v {
+                                    Value::Function { chunk_id, arity } => {
+                                        let inst = self.stack.pop().unwrap();
+
+                                        self.stack.push(Value::InstanceFn {
+                                            instance: Box::new(inst),
+                                            chunk_id: *chunk_id,
+                                            arity: *arity,
+                                        });
+                                    }
+
+                                    _ => {
+                                        self.stack.pop();
+                                        self.stack.push(v.clone());
+                                    }
+                                }
+                            } else {
+                                let closest = find_closest(name.clone(), properties.keys().cloned());
+
+                                if let Some(closest) = closest {
+                                    return Err(self.runtime_error_with_help(
+                                        format!("undefined property '{}' on instance of {}", name, class_name), 
+                                        format!("did you maybe mean: '{}'?", closest.green()),
+                                        span
+                                    ));
+                                } else {
+                                    return Err(self.runtime_error(format!("undefined property '{}' on instance of {}", name, class_name), span));
+                                }
+                            }
+                        }
+
                         #[cfg(not(target_arch = "wasm32"))]
                         Value::FFILib(idx) => {
                             self.stack.pop();
@@ -640,6 +813,11 @@ impl VM {
 
                             properties.insert(name.clone(), value);
                             Value::Object(properties)
+                        }
+
+                        Value::Instance { class_name, mut properties } => {
+                            properties.insert(name.clone(), value);
+                            Value::Instance { class_name, properties }
                         }
 
                         t => return Err(self.runtime_error(format!("cannot set property '{}' of {}", name, t.type_name()), span)),
@@ -931,12 +1109,31 @@ impl VM {
 fn remap(value: Value, offset: usize) -> Value {
     match value {
         Value::Function { chunk_id, arity } => Value::Function { chunk_id: chunk_id + offset, arity },
+
         Value::Object(props) => Value::Object(
             props.into_iter().map(|(k, v)| (k, remap(v, offset))).collect()
         ),
+
         Value::Array(elems) => Value::Array(
             elems.into_iter().map(|v| remap(v, offset)).collect()
         ),
+
+        Value::Class { name, methods } => Value::Class { 
+            name, 
+            methods: methods.into_iter().map(|(k, v)| (k, remap(v, offset))).collect() 
+        },
+
+        Value::Instance { class_name, properties } => Value::Instance { 
+            class_name, 
+            properties: properties.into_iter().map(|(k, v)| (k, remap(v, offset))).collect() 
+        },
+
+        Value::InstanceFn { instance, chunk_id, arity } => Value::InstanceFn { 
+            instance: Box::new(remap(*instance, offset)), 
+            chunk_id: chunk_id + offset, 
+            arity 
+        },
+
         v => v
     }
 }

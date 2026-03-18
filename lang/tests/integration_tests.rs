@@ -69,6 +69,11 @@ fn nesting_funcs() {
 }
 
 #[test]
+fn oop() {
+    run_test("oop");
+}
+
+#[test]
 fn strings() {
     run_test("strings");
 }

@@ -92,6 +92,9 @@ pub enum Token {
     #[token("fn")]
     Function,
 
+    #[token("class")]
+    Class,
+
     #[token("import")]
     Import,
 

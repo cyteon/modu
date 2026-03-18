@@ -5,7 +5,7 @@ use crate::{ast::{Expr, SpannedExpr, AssignOp}, lexer::{Span, Token, lex}};
 
 enum Postfix {
     Property(String, Span),
-    Call(Vec<SpannedExpr>),
+    Call(Vec<SpannedExpr>, Span),
     Index(SpannedExpr),
 }
 
@@ -100,8 +100,8 @@ fn parser<'src>() -> impl Parser<
                                 .allow_trailing()
                                 .collect::<Vec<_>>()
                         )
-                        .then_ignore(select! { (Token::RParen, span) => span })
-                        .map(Postfix::Call),
+                        .then(select! { (Token::RParen, span) => span })
+                        .map(|(args, span)| Postfix::Call(args, span)),
 
                     select! { (Token::LBracket, _) => () }
                         .ignore_then(expr.clone())
@@ -117,8 +117,8 @@ fn parser<'src>() -> impl Parser<
                         span: Span::from(obj.span.start..span.end),
                     },
 
-                    Postfix::Call(args) => SpannedExpr {
-                        span: (obj.span.start..(obj.span.end + 2)).into(), // include ()
+                    Postfix::Call(args, span) => SpannedExpr {
+                        span: Span::from(obj.span.start..span.end),
                         node: Expr::Call {
                             callee: Box::new(obj.clone()),
                             args,
@@ -370,6 +370,19 @@ fn parser<'src>() -> impl Parser<
             })
             .labelled("function declaration");
         
+        let class_stmt = select! { (Token::Class, span) => span }
+            .then(select! { (Token::Identifier(name), _) => name }.labelled("class name"))
+            .then(
+                select! { (Token::LBrace, span) => span }
+                    .then(fn_stmt.clone().repeated().collect::<Vec<_>>())
+                    .then(select! { (Token::RBrace, span) => span })
+            )
+            .map(|((start, name), ((_lbrace, methods), end)): ((Span, String), ((Span, Vec<SpannedExpr>), Span))| SpannedExpr {
+                node: Expr::Class { name, methods },
+                span: Span::from(start.start..end.end),
+            })
+            .labelled("class declaration");
+        
         let infinite_loop_stmt = select! { (Token::Loop, span) => span }
             .then(block.clone().labelled("loop body"))
             .map(|(start, body): (Span, SpannedExpr)| SpannedExpr {
@@ -488,6 +501,7 @@ fn parser<'src>() -> impl Parser<
             let_stmt,
             assign_stmt,
             fn_stmt,
+            class_stmt,
             infinite_loop_stmt,
             for_loop_stmt,
             while_loop_stmt,
