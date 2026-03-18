@@ -5,7 +5,7 @@ use crate::{ast::{Expr, SpannedExpr, AssignOp}, lexer::{Span, Token, lex}};
 
 enum Postfix {
     Property(String, Span),
-    Call(Vec<SpannedExpr>),
+    Call(Vec<SpannedExpr>, Span),
     Index(SpannedExpr),
 }
 
@@ -100,8 +100,8 @@ fn parser<'src>() -> impl Parser<
                                 .allow_trailing()
                                 .collect::<Vec<_>>()
                         )
-                        .then_ignore(select! { (Token::RParen, span) => span })
-                        .map(Postfix::Call),
+                        .then(select! { (Token::RParen, span) => span })
+                        .map(|(args, span)| Postfix::Call(args, span)),
 
                     select! { (Token::LBracket, _) => () }
                         .ignore_then(expr.clone())
@@ -117,12 +117,8 @@ fn parser<'src>() -> impl Parser<
                         span: Span::from(obj.span.start..span.end),
                     },
 
-                    Postfix::Call(args) => SpannedExpr {
-                        span: (obj.span.start..(
-                            obj.span.end + 2 
-                            + args.iter().map(|arg| arg.span.end - arg.span.start).sum::<usize>() 
-                            + (args.len().saturating_sub(1) * 2))
-                        ).into(), // so it marks (..) in call(..)
+                    Postfix::Call(args, span) => SpannedExpr {
+                        span: Span::from(obj.span.start..span.end),
                         node: Expr::Call {
                             callee: Box::new(obj.clone()),
                             args,
