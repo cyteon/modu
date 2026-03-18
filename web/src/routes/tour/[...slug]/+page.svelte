@@ -91,6 +91,8 @@
                 if (!wasm) {
                     wasm = await import("modu-wasm");
                     await wasm.init();
+
+                    run(); // run code on load
                 }
 
                 console.log(lesson);
@@ -117,7 +119,9 @@
 <div class="flex w-full max-w-screen h-screen flex-col max-w-screen overflow-x-hidden">
     <Navbar />
 
-    <div class="flex flex-col md:flex-row p-6 md:space-x-8 space-y-6 md:space-y-0 flex-1">
+    <hr class="border-bg2 mt-1" />
+
+    <div class="flex flex-col md:flex-row p-4 md:space-x-8 space-y-6 md:space-y-0 flex-1">
         <div class="md:w-1/2 flex flex-col">
             <div class="prose max-w-none border border-bg2 py-2 px-4 rounded-lg flex-1">{@html html}</div>
             <div class="mt-6 text-center">
@@ -127,7 +131,7 @@
             </div>
         </div>
 
-        <div class="flex flex-col md:w-1/2 space-y-2">
+        <div class="flex flex-col h-full md:w-1/2 space-y-2">
             <div class="h-2/3 relative">
                 <div class="h-full border border-bg2 rounded-lg p-1 bg-bg0_h" id="code"></div>
                 <button class="absolute top-4 right-4" on:click={run}>
