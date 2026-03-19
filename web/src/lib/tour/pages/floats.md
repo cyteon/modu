@@ -1,5 +1,5 @@
 ## Floats
-In modu, floats are f64 numbers, and they come with the following built in functions:
+In modu, floats are f64 numbers, and they come with the following methods:
 - `<float>.max(b)`
 - `<float>.min(b)`
 - `<float>.abs()`

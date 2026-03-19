@@ -1,5 +1,5 @@
 ## Strings
-In modu strings have the following builtins
+In modu strings have the following methods:
 - `<string>.len()`
 - `<string>.split(delimiter)`
 - `<string>.replace(old, new)`

@@ -19,20 +19,20 @@ body {
     margin-bottom: 0 !important;
 }
 
-.docs code {
+code {
     font-size: 1rem !important;
     font-weight: normal !important;
+    font-family: monospace;
 }
 
-.docs code:not(pre code) {
+code:not(pre code) {
     padding: 0.1em 0.5em !important;
     border-radius: 0.25rem !important;
     @apply bg-bg0_h
-    
 }
 
-.code:not(pre code)::before,
-.docs code:not(pre code)::after {
+code:not(pre code)::before,
+code:not(pre code)::after {
     content: "" !important;
 }
 

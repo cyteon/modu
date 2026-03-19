@@ -1,5 +1,5 @@
 ## Integers
-In modu, integers are i64 numbers, and they come with the following built in functions:
+In modu, integers are i64 numbers, and they come with the following methods:
 - `<int>.max(b)`
 - `<int>.min(b)`
 - `<int>.abs()`
