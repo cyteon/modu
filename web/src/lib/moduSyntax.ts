@@ -20,7 +20,7 @@ export default StreamLanguage.define({
             while (!stream.eol()) {
                 const ch = stream.next();
                 if (ch === "\\") {
-                    stream.next();r
+                    stream.next();
                 } else if (ch === '"') {
                     break;
                 }
