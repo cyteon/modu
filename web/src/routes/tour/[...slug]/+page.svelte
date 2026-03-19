@@ -92,8 +92,8 @@
     });
 
     var wasm;
-
     let currentSlug = "";
+    let output = "";
 
     export let data;
     $: {
@@ -101,6 +101,7 @@
 
         if (slug !== currentSlug) {
             currentSlug = slug;
+            output = "";
 
             (async () => {
                 const lesson = await getLesson(slug);
@@ -115,14 +116,12 @@
                 if (!wasm) {
                     wasm = await import("modu-wasm");
                     await wasm.init();
-
-                    run(); // run code on load
                 }
+
+                run(); // run code on load
             })();
         }
     }
-
-    let output = "";
 
     let ansi = new AnsiUp();
     ansi.use_classes = true;

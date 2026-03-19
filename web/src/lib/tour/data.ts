@@ -6,6 +6,14 @@ let pages = [
         lessons: [
             { slug: "hello-world", title: "Hello World" },
         ],
+    },
+    {
+        title: "Basics",
+        lessons: [
+            { slug: "variables", title: "Variables" },
+            { slug: "functions", title: "Functions" },
+            { slug: "type-conversion", title: "Type Conversion" }
+        ]
     }
 ]
 
