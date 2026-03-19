@@ -4,7 +4,7 @@ The code examples are editable and can be ran by pressing the run button in the 
 but normally code is ran with `modu run <file>.modu` or through the repl with `modu repl`.
 
 [CODE]
-// This is a comment!
-// The code below prints "Hello, World!"
-// Try to change it!
+// this is a comment!
+// the code below prints "Hello, World!"
+// try to change it!
 print("Hello, World!");

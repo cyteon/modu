@@ -14,6 +14,17 @@ let pages = [
             { slug: "functions", title: "Functions" },
             { slug: "type-conversion", title: "Type Conversion" }
         ]
+    },
+    {
+        title: "Types",
+        lessons: [
+            { slug: "integers", title: "Integers" },
+            { slug: "floats", title: "Floats" },
+            { slug: "strings", title: "Strings" },
+            { slug: "booleans", title: "Booleans" },
+            { slug: "arrays", title: "Arrays" },
+            { slug: "objects", title: "Objects / JSON" },
+        ]
     }
 ]
 

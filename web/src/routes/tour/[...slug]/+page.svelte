@@ -40,8 +40,9 @@
                         backgroundColor: "#1d2021",
                         fontSize: "16px",
                         height: "100%",
+                        maxHeight: "100%",
                         borderRadius: "0.5rem",
-                        overflow: "auto",
+                        overflow: "hidden",
                     },
 
                     "&.cm-focused": {
@@ -142,9 +143,9 @@
 
     <hr class="border-bg2 mt-1" />
 
-    <div class="flex flex-col md:flex-row p-4 md:space-x-8 space-y-6 md:space-y-0 flex-1">
-        <div class="md:w-1/2 flex flex-col">
-            <div class="prose max-w-none border border-bg2 py-2 px-4 rounded-lg flex-1">{@html html}</div>
+    <div class="flex flex-col md:flex-row p-4 md:space-x-8 space-y-6 md:space-y-0 flex-1 min-h-0">
+        <div class="md:w-1/2 flex flex-col min-h-0">
+            <div class="prose max-w-none border border-bg2 py-2 px-4 rounded-lg flex-1 overflow-auto">{@html html}</div>
             <div class="mt-6 text-center">
                 <a href={getPrevious(slug)} class={`text-blue hover:underline ${!getPrevious(slug) && "opacity-50 cursor-not-allowed"}`}>&lt; previous</a>
                 <span class="mx-2 text-[#7c6d67]">—</span>
@@ -152,14 +153,14 @@
             </div>
         </div>
 
-        <div class="flex flex-col h-full md:w-1/2 space-y-2">
-            <div class="h-2/3 relative">
-                <div class="h-full border border-bg2 rounded-lg p-1 bg-bg0_h" id="code"></div>
+        <div class="flex flex-col h-full md:w-1/2 space-y-2 min-h-0">
+            <div class="h-2/3 relative min-h-0">
+                <div class="h-full border border-bg2 rounded-lg p-1 bg-bg0_h overflow-hidden" id="code"></div>
                 <button class="absolute top-4 right-4" on:click={run}>
                     <Play size="20" />
                 </button>
             </div>
-            <pre class="h-1/3 bg-bg0_h py-2 px-4 rounded-lg border border-bg2 text-lg overflow-auto whitespace-pre-wrap">{@html output}</pre>
+            <pre class="h-1/3 min-h-0 bg-bg0_h py-2 px-4 rounded-lg border border-bg2 text-lg overflow-auto whitespace-pre-wrap">{@html output}</pre>
         </div>
     </div>
 </div>
