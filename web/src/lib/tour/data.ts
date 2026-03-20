@@ -3,54 +3,27 @@ import { marked } from 'marked';
 let pages = [
     {
         title: "Getting Started",
-        lessons: [
-            { slug: "hello-world", title: "Hello World" },
-        ],
+        lessons: ["hello-world"]
     },
     {
         title: "Basics",
-        lessons: [
-            { slug: "variables", title: "Variables" },
-            { slug: "functions", title: "Functions" },
-            { slug: "type-conversion", title: "Type Conversion" },
-            { slug: "classes", title: "Classes" },
-        ]
+        lessons: ["variables", "functions", "type-conversion", "classes"]
     },
     {
         title: "Types",
-        lessons: [
-            { slug: "integers", title: "Integers" },
-            { slug: "floats", title: "Floats" },
-            { slug: "strings", title: "Strings" },
-            { slug: "booleans", title: "Booleans" },
-            { slug: "arrays", title: "Arrays" },
-            { slug: "objects", title: "Objects / JSON" },
-        ]
+        lessons: ["integers", "floats", "strings", "booleans", "arrays", "objects"]
     },
     {
         title: "Control Flow",
-        lessons: [
-            { slug: "if-else", title: "If / Else" },
-            { slug: "for-loops", title: "For Loops" },
-            { slug: "while-loops", title: "While Loops" },
-            { slug: "infinite-loops", title: "Infinite Loops" },
-            { slug: "break-continue", title: "Break / Continue" },
-        ]
+        lessons: ["if-else", "for-loops", "while-loops", "infinite-loops", "break-continue"]
     },
     {
         title: "Standard Library",
         lessons: [
-            { slug: "stdlib-intro", title: "Introduction" },
-            { slug: "stdlib-math", title: "Math" },
-            { slug: "stdlib-json", title: "JSON" },
-            { slug: "stdlib-time", title: "Time" },
-            { slug: "stdlib-uuid", title: "UUID"},
-            { slug: "stdlib-crypto", title: "Cryptography" },
-            { slug: "stdlib-encoding", title: "Encoding" },
-            { slug: "stdlib-os", title: "OS" },
-            { slug: "stdlib-fs", title: "Filesystem" },
-            { slug: "stdlib-http", title: "HTTP" },
-            { slug: "stdlib-ffi", title: "FFI" }
+            "stdlib-intro", "stdlib-math", "stdlib-json", 
+            "stdlib-time", "stdlib-uuid", "stdlib-crypto", 
+            "stdlib-encoding", "stdlib-os", "stdlib-fs", 
+            "stdlib-http", "stdlib-ffi"
         ]
     }
 ]
@@ -68,7 +41,7 @@ export async function getLesson(slug: string): { html: string, code: string } {
 }
 
 export function getPrevious(currentSlug: string): string | null {
-    let slugs = pages.flatMap(page => page.lessons.map(lesson => lesson.slug));
+    let slugs = pages.flatMap(page => page.lessons);
     let currentIndex = slugs.indexOf(currentSlug);
 
     if (currentIndex === -1) {
@@ -83,7 +56,7 @@ export function getPrevious(currentSlug: string): string | null {
 }
 
 export function getNext(currentSlug: string): string | null {
-    let slugs = pages.flatMap(page => page.lessons.map(lesson => lesson.slug));
+    let slugs = pages.flatMap(page => page.lessons);
     let currentIndex = slugs.indexOf(currentSlug);
 
     if (currentIndex === -1) {

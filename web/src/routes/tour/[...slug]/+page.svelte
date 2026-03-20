@@ -95,9 +95,11 @@
         <div class="md:w-1/2 flex flex-col min-h-0">
             <div class="prose max-w-none border border-bg2 py-2 px-4 rounded-lg flex-1 overflow-auto">{@html html}</div>
             <div class="mt-6 text-center">
-                <a href={getPrevious(slug)} class={`text-blue hover:underline ${!getPrevious(slug) && "opacity-50 cursor-not-allowed"}`}>&lt; previous</a>
+                <a href={getPrevious(slug)} class={`text-blue hover:underline ${!getPrevious(slug) && "opacity-50 cursor-not-allowed"}`}>back</a>
                 <span class="mx-2 text-[#7c6d67]">—</span>
-                <a href={getNext(slug)} class={`text-blue hover:underline ${!getNext(slug) && "opacity-50 cursor-not-allowed"}`}>next &gt;</a>
+                <a href="/tour/contents" class="text-blue hover:underline">contents</a>
+                <span class="mx-2 text-[#7c6d67]">—</span>
+                <a href={getNext(slug)} class={`text-blue hover:underline ${!getNext(slug) && "opacity-50 cursor-not-allowed"}`}>next</a>
             </div>
         </div>
 
