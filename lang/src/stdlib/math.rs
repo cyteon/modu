@@ -48,7 +48,7 @@ fn sin(args: Vec<Value>) -> Result<Value, String> {
         _ => return Err(format!("math.sin() argument must be a number, got {}", args[0].type_name())),
     };
 
-    Ok(Value::Float(angle.sin()))
+    Ok(Value::Float(angle.to_radians().sin()))
 }
 
 fn cos(args: Vec<Value>) -> Result<Value, String> {
@@ -62,7 +62,7 @@ fn cos(args: Vec<Value>) -> Result<Value, String> {
         _ => return Err(format!("math.cos() argument must be a number, got {}", args[0].type_name())),
     };
 
-    Ok(Value::Float(angle.cos()))
+    Ok(Value::Float(angle.to_radians().cos()))
 }
 
 fn tan(args: Vec<Value>) -> Result<Value, String> {
@@ -76,5 +76,5 @@ fn tan(args: Vec<Value>) -> Result<Value, String> {
         _ => return Err(format!("math.tan() argument must be a number, got {}", args[0].type_name())),
     };
 
-    Ok(Value::Float(angle.tan()))
+    Ok(Value::Float(angle.to_radians().tan()))
 }

@@ -25,6 +25,22 @@ let pages = [
             { slug: "arrays", title: "Arrays" },
             { slug: "objects", title: "Objects / JSON" },
         ]
+    },
+    {
+        title: "Standard Library",
+        lessons: [
+            { slug: "stdlib-intro", title: "Introduction" },
+            { slug: "stdlib-math", title: "Math" },
+            { slug: "stdlib-json", title: "JSON" },
+            { slug: "stdlib-time", title: "Time" },
+            { slug: "stdlib-uuid", title: "UUID"},
+            { slug: "stdlib-crypto", title: "Cryptography" },
+            { slug: "stdlib-encoding", title: "Encoding" },
+            { slug: "stdlib-os", title: "OS" },
+            { slug: "stdlib-fs", title: "Filesystem" },
+            { slug: "stdlib-http", title: "HTTP" },
+            { slug: "stdlib-ffi", title: "FFI" }
+        ]
     }
 ]
 
