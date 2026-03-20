@@ -25,3 +25,7 @@ print(math.sin(30));
 
 // prints the tengent of a value (in degrees) in radians
 print(math.tan(45));
+
+print(math.PI);
+
+print(math.E);

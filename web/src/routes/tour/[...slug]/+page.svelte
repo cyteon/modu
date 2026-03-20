@@ -130,6 +130,21 @@
     async function run() {
         try {
             const code = view?.state.doc.toString() || "";
+
+            if (code.includes("import \"std/os\"")) {
+                output = "The OS package does not work in the browser";
+                return;
+            } else if (code.includes("import \"std/fs\"")) {
+                output = "The FS package does not work in the browser";
+                return;
+            } else if (code.includes("import \"std/ffi\"")) {
+                output = "The FFI package does not work in the browser";
+                return;
+            } if (code.includes("import \"std/http\"")) {
+                output = "The HTTP package does not work in the browser";
+                return;
+            }
+
             const result = await wasm.eval_modu(code);
             output = ansi.ansi_to_html(result);
         } catch (e) {
