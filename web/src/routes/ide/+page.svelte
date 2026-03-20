@@ -1,75 +1,18 @@
 <script lang="ts">
     import { Play, Download, Upload } from "lucide-svelte";
-    import { basicSetup, EditorView } from "codemirror";
-    import { EditorState, Compartment } from "@codemirror/state"
-    import { rust } from "@codemirror/lang-rust";
-    import { tags } from "@lezer/highlight"
-    import { HighlightStyle, syntaxHighlighting } from "@codemirror/language"
+    import { EditorView } from "codemirror";
     import { browser } from "$app/environment";
     import { onMount } from "svelte";
     import { base } from "$app/paths";
     import { AnsiUp } from "ansi_up";
+    import { newIDE } from "$lib/ide";
 
-    let language = new Compartment, tabsize = new Compartment;
     let moduVersion = "";
 
-    let state = EditorState.create({
-        doc: `fn yap(str) {
-    print(str);
-}
+    let state = newIDE();
 
-yap("Hello, World!");
-
-// Expected Output:
-//
-// Hello, World!
-`,
-        extensions: [
-            basicSetup,
-            language.of(rust()),
-            tabsize.of(EditorState.tabSize.of(4)),
-            EditorView.theme({
-                "&": {
-                    color: "#fbg1c7",
-                    backgroundColor: "#282828",
-                    fontSize: "24px",
-                    height: "100%",
-                },
-
-                "&.cm-focused": {
-                    outline: "none",
-                },
-
-                ".cm-activeLine": {
-                    backgroundColor: "#1d202180",
-                },
-
-                ".cm-activeLineGutter" : {
-                    backgroundColor: "#28282880",
-                },
-
-                ".cm-gutters": {
-                    backgroundColor: "#1d2021",
-                },
-
-            }, { dark: true }),
-            syntaxHighlighting(HighlightStyle.define([
-                { tag: tags.string, color: "#a6e3a1" },
-                { tag: tags.keyword, color: "#cba6f7" },
-                { tag: tags.atom, color: "#f38ba8" },
-                { tag: tags.escape, color: "#f5c2e7" },
-                { tag: tags.comment, color: "#a89984" },
-                { tag: tags.number, color: "#fab387" },
-                { tag: tags.float, color: "#fab387" },
-                { tag: tags.operator, color: "#89dceb" },
-                { tag: tags.brace, color: "#a89984" },
-                { tag: tags.bool, color: "#89b4fa" }
-            ])),
-        ]
-    });
-
-    let view;
-    var wasm;
+    let view: EditorView | undefined;
+    var wasm: any;
 
     onMount(async () => {
         if (browser) {
@@ -180,12 +123,12 @@ yap("Hello, World!");
     <div class="flex p-4 h-full space-y-4 flex-col md:flex-row md:space-x-4 md:space-y-0">
         <div class="bg-bg1 w-full p-6 pt-4 h-full rounded-md flex flex-col md:w-2/3 border border-bg2">
             <h1 class="text-3xl font-bold">Input</h1>
-            <div id="code" class="mt-4 h-full max-h-[83vh] rounded-md"></div>
+            <div id="code" class="mt-4 p-1 bg-bg0_h h-full max-h-[83vh] rounded-lg border border-bg2"></div>
         </div>
 
         <div class="bg-bg1 w-full p-6 pt-4 h-full rounded-md flex flex-col md:w-1/3 border border-bg2">
             <h1 class="text-3xl font-bold">Output</h1>
-            <pre class="px-4 py-2 mt-4 text-xl break-words whitespace-pre-wrap bg-bg h-full overflow-y-auto">{@html output}</pre>
+            <pre class="px-4 py-2 mt-4 text-xl break-words whitespace-pre-wrap bg-bg0_h border border-bg2 rounded-lg h-full overflow-y-auto">{@html output}</pre>
         </div>
     </div>
 </div>
