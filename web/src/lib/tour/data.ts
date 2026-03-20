@@ -12,7 +12,8 @@ let pages = [
         lessons: [
             { slug: "variables", title: "Variables" },
             { slug: "functions", title: "Functions" },
-            { slug: "type-conversion", title: "Type Conversion" }
+            { slug: "type-conversion", title: "Type Conversion" },
+            { slug: "classes", title: "Classes" },
         ]
     },
     {
