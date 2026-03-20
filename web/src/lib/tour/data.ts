@@ -27,6 +27,16 @@ let pages = [
         ]
     },
     {
+        title: "Control Flow",
+        lessons: [
+            { slug: "if-else", title: "If / Else" },
+            { slug: "for-loops", title: "For Loops" },
+            { slug: "while-loops", title: "While Loops" },
+            { slug: "infinite-loops", title: "Infinite Loops" },
+            { slug: "break-continue", title: "Break / Continue" },
+        ]
+    },
+    {
         title: "Standard Library",
         lessons: [
             { slug: "stdlib-intro", title: "Introduction" },

@@ -119,7 +119,7 @@
                     await wasm.init();
                 }
 
-                run(); // run code on load
+                await run();
             })();
         }
     }
