@@ -1,4 +1,4 @@
-# While Loops
+## While Loops
 Keep doing something while a condition is true.
 Condition is calculated before each iteration.
 

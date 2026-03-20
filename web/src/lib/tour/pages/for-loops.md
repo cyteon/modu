@@ -1,4 +1,4 @@
-# For Loops
+## For Loops
 For loops can iterate on ranges (`x..y` / `x..=y`) and arrays.
 
 [CODE]

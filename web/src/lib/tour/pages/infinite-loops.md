@@ -1,4 +1,4 @@
-# Infinite Loops
+## Infinite Loops
 Infinite loops keep running until you stop them.
 
 [CODE]
