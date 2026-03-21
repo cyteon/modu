@@ -1,5 +1,5 @@
 ## Type Conversion
-Modu comes with serveral functions to convert between types, which can be useful when getting terminal input with `input()`.
+Modu comes with several functions to convert between types, which can be useful when getting terminal input with `input()`.
 
 [CODE]
 // int() is used to convert to ints

@@ -20,7 +20,7 @@ code {
 code:not(pre code) {
     padding: 0.1em 0.5em !important;
     border-radius: 0.25rem !important;
-    @apply bg-bg0_h
+    @apply bg-bg0_h;
 }
 
 code:not(pre code)::before,

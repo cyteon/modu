@@ -1,5 +1,5 @@
 ## Arrays
-In modu strings have the following methods:
+In modu arrays have the following methods:
 - `<array>.len()`
 - `<array>.push(value)`
 - `<array>.pop()`

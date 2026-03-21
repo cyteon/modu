@@ -1,5 +1,5 @@
 ## JSON
-Modu comes with a JSON library, but its only used for parsing json. Most
+Modu comes with a JSON library, but its only used for parsing json.
 
 [CODE]
 // imports std/json as "json"

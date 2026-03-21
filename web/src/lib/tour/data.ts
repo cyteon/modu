@@ -28,7 +28,7 @@ let pages = [
     }
 ]
 
-export async function getLesson(slug: string): { html: string, code: string } {
+export async function getLesson(slug: string): Promise<{ html: string, code: string }> {
     try {
         let md = (await import(`$lib/tour/pages/${slug.replace(".md", "")}.md?raw`)).default // so hello-world and hello-world.md both work
         let [docs, code] = md.split("[CODE]");

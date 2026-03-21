@@ -61,7 +61,8 @@ export function newIDE() {
                 { tag: tags.float, color: "#fab387" },
                 { tag: tags.operator, color: "#89dceb" },
                 { tag: tags.brace, color: "#a89984" },
-                { tag: tags.bool, color: "#89b4fa" }
+                { tag: tags.bool, color: "#89b4fa" },
+                { tag: tags.special(tags.variableName), color: "#f38ba8" },
             ])),
         ]
     });

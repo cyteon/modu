@@ -7,7 +7,7 @@ import "std/http";
 // sends a get request and prints the body
 print(http.get("https://example.com").body);
 
-let headers = { "User-Agent": "Modu v3 HTTP };
+let headers = { "User-Agent": "Modu v3 HTTP" };
 let body = "modu!";
 
 // sends a post request with a body and headers 
