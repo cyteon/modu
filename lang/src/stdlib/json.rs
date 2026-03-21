@@ -23,7 +23,7 @@ fn parse_obj(value: serde_json::Value) -> Result<Value, String> {
             }
         }
         
-        serde_json::Value::String(s) => Ok(Value::String(s.clone())),
+        serde_json::Value::String(s) => Ok(Value::String(s)),
         
         serde_json::Value::Array(mut arr) => {
             let mut vec = Vec::new();

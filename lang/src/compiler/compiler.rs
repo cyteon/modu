@@ -375,11 +375,12 @@ impl Compiler {
             }
 
             Expr::Function { name, args, body } => {
-                let chunk_id = self.chunks.len() + self.offset;
+                let local_index = self.chunks.len();
+                let chunk_id = local_index + self.offset;
                 self.chunks.push(Chunk::new(name));
 
                 let saved_chunk = self.current_chunk;
-                self.current_chunk = chunk_id;
+                self.current_chunk = local_index;
 
                 let saved = self.scope.enter_function();
                 for arg in args {
@@ -390,7 +391,7 @@ impl Compiler {
                 self.emit(Instruction::Return, span);
 
                 let locals_count = self.scope.exit_function(saved);
-                self.chunks[chunk_id].locals_count = locals_count;
+                self.chunks[local_index].locals_count = locals_count;
 
                 self.current_chunk = saved_chunk;
 
