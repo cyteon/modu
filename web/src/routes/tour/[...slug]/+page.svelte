@@ -103,14 +103,14 @@
             </div>
         </div>
 
-        <div class="flex flex-col h-full md:w-1/2 space-y-2 min-h-0">
-            <div class="h-2/3 relative min-h-0">
+        <div class="flex flex-col gap-2 h-full md:w-1/2">
+            <div class="h-2/3 relative">
                 <div class="h-full border border-bg2 rounded-lg p-1 bg-bg0_h overflow-hidden" id="code"></div>
                 <button class="absolute top-4 right-4" on:click={run}>
                     <Play size="20" />
                 </button>
             </div>
-            <pre class="h-1/3 min-h-0 bg-bg0_h py-2 px-4 rounded-lg border border-bg2 text-lg overflow-auto whitespace-pre-wrap">{@html output}</pre>
+            <pre class="h-1/3 bg-bg0_h py-2 px-4 rounded-lg border border-bg2 text-lg overflow-auto whitespace-pre-wrap">{@html output}</pre>
         </div>
     </div>
 </div>

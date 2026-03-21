@@ -121,12 +121,12 @@
     </div>
 
     <div class="flex p-4 h-full space-y-4 flex-col md:flex-row md:space-x-4 md:space-y-0">
-        <div class="bg-bg1 w-full p-6 pt-4 h-full rounded-md flex flex-col md:w-2/3 border border-bg2">
+        <div class="bg-bg1 w-full p-6 pt-4 h-full rounded-lg flex flex-col md:w-2/3 border border-bg2">
             <h1 class="text-3xl font-bold">Input</h1>
             <div id="code" class="mt-4 p-1 bg-bg0_h h-full max-h-[83vh] rounded-lg border border-bg2"></div>
         </div>
 
-        <div class="bg-bg1 w-full p-6 pt-4 h-full rounded-md flex flex-col md:w-1/3 border border-bg2">
+        <div class="bg-bg1 w-full p-6 pt-4 h-full rounded-lg flex flex-col md:w-1/3 border border-bg2">
             <h1 class="text-3xl font-bold">Output</h1>
             <pre class="px-4 py-2 mt-4 text-xl break-words whitespace-pre-wrap bg-bg0_h border border-bg2 rounded-lg h-full overflow-y-auto">{@html output}</pre>
         </div>

@@ -6,15 +6,7 @@ body {
     @apply bg-bg text-fg0;
 }
 
-.docs h1 {
-    margin-bottom: 0 !important;
-}
-
-.docs h2 {
-    margin-top: 1.0666667em !important;
-}
-
-.docs pre {
+pre {
     margin-top: 0 !important;
     margin-bottom: 0 !important;
 }

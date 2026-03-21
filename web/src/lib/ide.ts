@@ -9,7 +9,7 @@ import moduSyntax from "$lib/moduSyntax.js";
 
 export function newIDE() {
     return EditorState.create({
-        doc: "",
+        doc: "print(\"hello, world!\");",
         extensions: [
             basicSetup,
             EditorState.tabSize.of(4),
