@@ -32,7 +32,7 @@ pub fn eval_modu(code: &str) -> String {
             return;
         }
 
-        let mut vm = modu::vm::vm::VM::new(compiler.chunks);
+        let mut vm = modu::vm::vm::VM::new(compiler.chunks, std::path::PathBuf::from("<browser>"), code.to_string());
 
         if let Err(e) = vm.run(0) {
             let mut output = OUTPUT.lock().unwrap();
