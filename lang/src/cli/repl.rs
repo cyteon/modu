@@ -144,6 +144,8 @@ pub fn repl() {
                     let mut vm = crate::vm::vm::VM::new(all_chunks.clone(), std::path::PathBuf::from("<repl>"), buffer.clone());
                     vm.globals = globals.clone();
 
+                    buffer.clear();
+
                     if let Err(e) = vm.run(persistent_chunks.len()) {
                         println!("{}", e);
                         continue;
@@ -151,8 +153,6 @@ pub fn repl() {
 
                     globals = vm.globals.clone();
                     persistent_chunks = vm.chunks;
-
-                    buffer.clear();
                 }
             }
 

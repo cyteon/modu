@@ -65,7 +65,7 @@ impl VM {
     }
 
     pub fn run(&mut self, chunk_id: usize) -> Result<(), String> {
-        let locals_count = self.chunks[0].locals_count;
+        let locals_count = self.chunks[chunk_id].locals_count;
 
         self.frames.push(CallFrame {
             chunk_id,
