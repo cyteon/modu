@@ -38,6 +38,13 @@ impl Compiler {
         )
     }
 
+    fn block_is_void(expr: &Expr) -> bool {
+        match expr {
+            Expr::Block(exprs) => exprs.last().map(|e| Self::is_void(&e.node)).unwrap_or(true),
+            _ => false,
+        }
+    }
+
     // chunk shit
 
     fn emit(&mut self, instruction: Instruction, span: SimpleSpan) {
@@ -348,8 +355,12 @@ impl Compiler {
 
             Expr::And(a, b) => {
                 self.compile_expr(*a.clone())?;
+                
+                let skip = self.emit_jump(Instruction::JumpIfFalse(0), span);
+                self.emit(Instruction::Pop, span);
+
                 self.compile_expr(*b.clone())?;
-                self.emit(Instruction::And, span);
+                self.patch_jump(skip);
             }
 
             Expr::Or(a, b) => {
@@ -396,6 +407,11 @@ impl Compiler {
                 self.continue_targets.push(start);
 
                 self.compile_expr(*body.clone())?;
+
+                if !Self::block_is_void(&body.node) {
+                    self.emit(Instruction::Pop, span);
+                }
+
                 self.emit(Instruction::Jump(start), span);
 
                 let breaks = self.break_patches.pop().unwrap();
@@ -415,6 +431,11 @@ impl Compiler {
                 let exit = self.emit_jump(Instruction::JumpIfFalse(0), span);
 
                 self.compile_expr(*body.clone())?;
+
+                if !Self::block_is_void(&body.node) {
+                    self.emit(Instruction::Pop, span);
+                }
+
                 self.emit(Instruction::Jump(start), span);
 
                 let breaks = self.break_patches.pop().unwrap();
@@ -469,6 +490,11 @@ impl Compiler {
                 
                 // body
                 self.compile_expr(*body.clone())?;
+
+                if !Self::block_is_void(&body.node) {
+                    self.emit(Instruction::Pop, span);
+                }
+
                 self.emit(Instruction::Jump(start), span);
 
                 self.patch_jump(exit);

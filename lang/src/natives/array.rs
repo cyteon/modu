@@ -15,7 +15,16 @@ pub fn get_fn(name: String) -> Option<NativeFn> {
 }
 
 pub fn list_fns() -> Vec<String> {
-    vec!["len".to_string(), "push".to_string(), "pop".to_string(), "join".to_string()]
+    vec![
+        "len".to_string(),
+        "push".to_string(), 
+        "pop".to_string(), 
+        "join".to_string(),
+        "min".to_string(),
+        "max".to_string(),
+        "reverse".to_string(),
+        "sort".to_string()
+    ]
 }
 
 pub fn len(this: Value, args: Vec<Value>) -> Result<(Value, Option<Value>), String> {
@@ -86,8 +95,21 @@ pub fn min(this: Value, args: Vec<Value>) -> Result<(Value, Option<Value>), Stri
 
     match this {
         Value::Array(arr) => {
-            let min_value = arr.iter().min_by(|a, b| a.partial_cmp(b).unwrap()).cloned().unwrap_or(Value::Null);
-            Ok((min_value, None))
+            if arr.is_empty() {
+                return Ok((Value::Null, None));
+            }
+
+            let mut min_value = &arr[0];
+
+            for v in &arr[1..] {
+                match v.partial_cmp(min_value) {
+                    Some(std::cmp::Ordering::Less) => min_value = v,
+                    None => return Err(format!("cannot compare '{}' and '{}'", v.type_name(), min_value.type_name())),
+                    _ => {}
+                }
+            }
+
+            Ok((min_value.clone(), None))
         }
 
         _ => unreachable!(),
@@ -101,8 +123,21 @@ pub fn max(this: Value, args: Vec<Value>) -> Result<(Value, Option<Value>), Stri
 
     match this {
         Value::Array(arr) => {
-            let max_value = arr.iter().max_by(|a, b| a.partial_cmp(b).unwrap()).cloned().unwrap_or(Value::Null);
-            Ok((max_value, None))
+            if arr.is_empty() {
+                return Ok((Value::Null, None));
+            }
+
+            let mut max_value = &arr[0];
+
+            for v in &arr[1..] {
+                match v.partial_cmp(max_value) {
+                    Some(std::cmp::Ordering::Greater) => max_value = v,
+                    None => return Err(format!("cannot compare '{}' and '{}'", v.type_name(), max_value.type_name())),
+                    _ => {}
+                }
+            }
+
+            Ok((max_value.clone(), None))
         }
 
         _ => unreachable!(),

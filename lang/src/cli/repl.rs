@@ -127,6 +127,7 @@ pub fn repl() {
                     let ast = parse(&buffer, "<repl>");
         
                     if let Err(_) = ast {
+                        buffer.clear();
                         continue;
                     }
 
@@ -135,6 +136,7 @@ pub fn repl() {
                     
                     if let Err(e) = compiler.compile_program(ast.clone().unwrap()) {
                         println!("{}: {}", "Compilation error".red(), e);
+                        buffer.clear();
                         continue;
                     }
 
