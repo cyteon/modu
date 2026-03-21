@@ -87,6 +87,7 @@ fn int(args: Vec<Value>) -> Result<Value, String> {
     }
 
     match &args[0] {
+        Value::Int(i) => Ok(Value::Int(*i)),
         Value::Float(f) => Ok(Value::Int(*f as i64)),
         Value::Bool(b) => Ok(Value::Int(if *b { 1 } else { 0 })),
         Value::String(s) => s.parse::<i64>()
@@ -103,6 +104,7 @@ fn float(args: Vec<Value>) -> Result<Value, String> {
     }
 
     match &args[0] {
+        Value::Float(f) => Ok(Value::Float(*f)),
         Value::Int(i) => Ok(Value::Float(*i as f64)),
         Value::Bool(b) => Ok(Value::Float(if *b { 1.0 } else { 0.0 })),
         Value::String(s) => s.parse::<f64>()

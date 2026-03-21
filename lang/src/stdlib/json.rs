@@ -9,67 +9,62 @@ pub fn object() -> Value {
     Value::Object(methods)
 }
 
-fn parse_obj(obj: &mut HashMap<String, serde_json::Value>) -> Result<HashMap<String, Value>, String> {
-    let mut map = HashMap::new();
-
-    for (k, v) in obj.iter_mut() {
-        let value = match v {
-            serde_json::Value::Null => Value::Null,
-            serde_json::Value::Bool(b) => Value::Bool(*b),
-            serde_json::Value::Number(n) => {
-                if n.is_i64() {
-                    Value::Int(n.as_i64().unwrap())
-                } else if n.is_f64() {
-                    Value::Float(n.as_f64().unwrap())
-                } else {
-                    return Err(format!("Unsupported number type in JSON: {}", n));
-                }
+fn parse_obj(value: serde_json::Value) -> Result<Value, String> {
+    match value {
+        serde_json::Value::Null => Ok(Value::Null),
+        serde_json::Value::Bool(b) => Ok(Value::Bool(b)),
+        serde_json::Value::Number(n) => {
+            if n.is_i64() {
+                Ok(Value::Int(n.as_i64().unwrap()))
+            } else if n.is_f64() {
+                Ok(Value::Float(n.as_f64().unwrap()))
+            } else {
+                return Err(format!("Unsupported number type in JSON: {}", n));
             }
-            
-            serde_json::Value::String(s) => Value::String(s.clone()),
-            
-            serde_json::Value::Array(arr) => {
-                let mut vec = Vec::new();
-                for item in arr.iter_mut() {
-                    let item_value = match item {
-                        serde_json::Value::Null => Value::Null,
-                        serde_json::Value::Bool(b) => Value::Bool(*b),
-                        serde_json::Value::Number(n) => {
-                            if n.is_i64() {
-                                Value::Int(n.as_i64().unwrap())
-                            } else if n.is_f64() {
-                                Value::Float(n.as_f64().unwrap())
-                            } else {
-                                return Err(format!("Unsupported number type in JSON: {}", n));
-                            }
+        }
+        
+        serde_json::Value::String(s) => Ok(Value::String(s)),
+        
+        serde_json::Value::Array(mut arr) => {
+            let mut vec = Vec::new();
+
+            for item in arr.iter_mut() {
+                let item_value = match item {
+                    serde_json::Value::Null => Value::Null,
+                    serde_json::Value::Bool(b) => Value::Bool(*b),
+                    serde_json::Value::Number(n) => {
+                        if n.is_i64() {
+                            Value::Int(n.as_i64().unwrap())
+                        } else if n.is_f64() {
+                            Value::Float(n.as_f64().unwrap())
+                        } else {
+                            return Err(format!("Unsupported number type in JSON: {}", n));
                         }
-                        
-                        serde_json::Value::String(s) => Value::String(s.clone()),
-                        
-                        serde_json::Value::Array(_) | serde_json::Value::Object(_) => {
-                            let mut nested_obj = HashMap::new();
-                            nested_obj.insert("value".to_string(), item.clone());
-                            let properties = parse_obj(&mut nested_obj)?;
-                            properties.get("value").cloned().unwrap_or(Value::Null)
-                        }
-                    };
-                    vec.push(item_value);
-                }
-                Value::Array(vec)
+                    }
+                    
+                    serde_json::Value::String(s) => Value::String(s.clone()),
+                    
+                    serde_json::Value::Array(_) | serde_json::Value::Object(_) => {
+                        parse_obj(item.clone())?
+                    }
+                };
+
+                vec.push(item_value);
             }
 
-            serde_json::Value::Object(obj) => {
-                let mut hashmap: HashMap<String, serde_json::Value> = obj.iter().map(|(k, v)| (k.clone(), v.clone())).collect();
-                let properties = parse_obj(&mut hashmap)?;
+            Ok(Value::Array(vec))
+        }
 
-                Value::Object(properties)
+        serde_json::Value::Object(obj) => {
+            let mut properties = HashMap::new();
+            
+            for (k, v) in obj.into_iter() {
+                properties.insert(k.clone(), parse_obj(v)?);
             }
-        };
 
-        map.insert(k.clone(), value);
-    } 
-
-    Ok(map)
+            Ok(Value::Object(properties))
+        }
+    }
 }
 
 pub fn parse(args: Vec<Value>) -> Result<Value, String> {
@@ -78,15 +73,14 @@ pub fn parse(args: Vec<Value>) -> Result<Value, String> {
     }
 
     let json_str = match &args[0] {
-        Value::String(s) => s,
+        Value::String(s) => Value::process_escape_sequences(s),
         _ => return Err(format!("json.parse() argument must be a string, got {}", args[0].type_name())),
     };
 
-    let mut parsed = match serde_json::from_str::<HashMap<String, serde_json::Value>>(json_str) {
+    let value = match serde_json::from_str::<serde_json::Value>(&json_str) {
         Ok(val) => val,
         Err(e) => return Err(format!("Failed to parse JSON: {}", e)),
     };
 
-    let properties = parse_obj(&mut parsed)?;
-    Ok(Value::Object(properties))
+    Ok(parse_obj(value)?)
 }

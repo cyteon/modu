@@ -125,9 +125,9 @@ pub fn repl() {
 
                 if open_functions == 0 {
                     let ast = parse(&buffer, "<repl>");
-                    buffer.clear();
         
                     if let Err(_) = ast {
+                        buffer.clear();
                         continue;
                     }
 
@@ -136,14 +136,17 @@ pub fn repl() {
                     
                     if let Err(e) = compiler.compile_program(ast.clone().unwrap()) {
                         println!("{}: {}", "Compilation error".red(), e);
+                        buffer.clear();
                         continue;
                     }
 
                     let mut all_chunks = persistent_chunks.clone();
                     all_chunks.extend(compiler.chunks.into_iter());
 
-                    let mut vm = crate::vm::vm::VM::new(all_chunks.clone());
+                    let mut vm = crate::vm::vm::VM::new(all_chunks.clone(), std::path::PathBuf::from("<repl>"), buffer.clone());
                     vm.globals = globals.clone();
+
+                    buffer.clear();
 
                     if let Err(e) = vm.run(persistent_chunks.len()) {
                         println!("{}", e);
@@ -152,8 +155,6 @@ pub fn repl() {
 
                     globals = vm.globals.clone();
                     persistent_chunks = vm.chunks;
-
-                    buffer.clear();
                 }
             }
 

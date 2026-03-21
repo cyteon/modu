@@ -38,6 +38,13 @@ impl Compiler {
         )
     }
 
+    fn block_is_void(expr: &Expr) -> bool {
+        match expr {
+            Expr::Block(exprs) => exprs.last().map(|e| Self::is_void(&e.node)).unwrap_or(true),
+            _ => false,
+        }
+    }
+
     // chunk shit
 
     fn emit(&mut self, instruction: Instruction, span: SimpleSpan) {
@@ -348,8 +355,12 @@ impl Compiler {
 
             Expr::And(a, b) => {
                 self.compile_expr(*a.clone())?;
+                
+                let skip = self.emit_jump(Instruction::JumpIfFalse(0), span);
+                self.emit(Instruction::Pop, span);
+
                 self.compile_expr(*b.clone())?;
-                self.emit(Instruction::And, span);
+                self.patch_jump(skip);
             }
 
             Expr::Or(a, b) => {
@@ -364,11 +375,12 @@ impl Compiler {
             }
 
             Expr::Function { name, args, body } => {
-                let chunk_id = self.chunks.len() + self.offset;
+                let local_index = self.chunks.len();
+                let chunk_id = local_index + self.offset;
                 self.chunks.push(Chunk::new(name));
 
                 let saved_chunk = self.current_chunk;
-                self.current_chunk = chunk_id;
+                self.current_chunk = local_index;
 
                 let saved = self.scope.enter_function();
                 for arg in args {
@@ -379,7 +391,7 @@ impl Compiler {
                 self.emit(Instruction::Return, span);
 
                 let locals_count = self.scope.exit_function(saved);
-                self.chunks[chunk_id].locals_count = locals_count;
+                self.chunks[local_index].locals_count = locals_count;
 
                 self.current_chunk = saved_chunk;
 
@@ -396,6 +408,11 @@ impl Compiler {
                 self.continue_targets.push(start);
 
                 self.compile_expr(*body.clone())?;
+
+                if !Self::block_is_void(&body.node) {
+                    self.emit(Instruction::Pop, span);
+                }
+
                 self.emit(Instruction::Jump(start), span);
 
                 let breaks = self.break_patches.pop().unwrap();
@@ -415,6 +432,11 @@ impl Compiler {
                 let exit = self.emit_jump(Instruction::JumpIfFalse(0), span);
 
                 self.compile_expr(*body.clone())?;
+
+                if !Self::block_is_void(&body.node) {
+                    self.emit(Instruction::Pop, span);
+                }
+
                 self.emit(Instruction::Jump(start), span);
 
                 let breaks = self.break_patches.pop().unwrap();
@@ -469,6 +491,11 @@ impl Compiler {
                 
                 // body
                 self.compile_expr(*body.clone())?;
+
+                if !Self::block_is_void(&body.node) {
+                    self.emit(Instruction::Pop, span);
+                }
+
                 self.emit(Instruction::Jump(start), span);
 
                 self.patch_jump(exit);

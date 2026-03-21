@@ -180,7 +180,7 @@ impl std::fmt::Display for Value {
 }
 
 impl Value {
-    fn process_escape_sequences(s: &str) -> String {
+    pub fn process_escape_sequences(s: &str) -> String {
         let mut result = String::new();
         let mut chars = s.chars();
         
@@ -279,6 +279,15 @@ impl Value {
             (Value::Float(a), Value::Float(b)) => Ok(Value::Float(a * b)),
             (Value::Int(a), Value::Float(b)) => Ok(Value::Float(*a as f64 * b)),
             (Value::Float(a), Value::Int(b)) => Ok(Value::Float(a * *b as f64)),
+
+            (Value::String(s), Value::Int(n)) => {
+                if *n < 0 {
+                    Err("cannot multiply string by negative integer".to_string())
+                } else {
+                    Ok(Value::String(s.repeat(*n as usize)))
+                }
+            }
+
             _ => Err(format!("cannot multiply {} and {}", self.type_name(), other.type_name())),
         }
     }
@@ -326,6 +335,7 @@ impl Value {
                     Ok(Value::Int(a % b))
                 }
             }
+
             (Value::Float(a), Value::Float(b)) => {
                 if *b == 0.0 {
                     Err("modulo by zero".to_string())
@@ -333,6 +343,7 @@ impl Value {
                     Ok(Value::Float(a % b))
                 }
             }
+
             (Value::Int(a), Value::Float(b)) => {
                 if *b == 0.0 {
                     Err("modulo by zero".to_string())
@@ -340,6 +351,7 @@ impl Value {
                     Ok(Value::Float(*a as f64 % b))
                 }
             }
+
             (Value::Float(a), Value::Int(b)) => {
                 if *b == 0 {
                     Err("modulo by zero".to_string())
@@ -354,10 +366,18 @@ impl Value {
 
     pub fn pow(&self, other: &Value) -> Result<Value, String> {
         match (self, other) {
-            (Value::Int(a), Value::Int(b)) => Ok(Value::Int(a.pow(*b as u32))),
+            (Value::Int(a), Value::Int(b)) => {
+                if *b < 0 {
+                    Ok(Value::Float((*a as f64).powf(*b as f64)))
+                } else {
+                    Ok(Value::Int(a.pow(*b as u32)))
+                }
+            },
+
             (Value::Float(a), Value::Float(b)) => Ok(Value::Float(a.powf(*b))),
             (Value::Int(a), Value::Float(b)) => Ok(Value::Float((*a as f64).powf(*b))),
             (Value::Float(a), Value::Int(b)) => Ok(Value::Float(a.powf(*b as f64))),
+
             _ => Err(format!("cannot exponentiate {} and {}", self.type_name(), other.type_name())),
         }
     }
