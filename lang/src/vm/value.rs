@@ -180,7 +180,7 @@ impl std::fmt::Display for Value {
 }
 
 impl Value {
-    fn process_escape_sequences(s: &str) -> String {
+    pub fn process_escape_sequences(s: &str) -> String {
         let mut result = String::new();
         let mut chars = s.chars();
         
