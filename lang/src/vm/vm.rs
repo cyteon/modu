@@ -21,6 +21,7 @@ pub struct VM {
     pub frames: Vec<CallFrame>,
     pub globals: HashMap<String, Value>,
     pub source_path: std::path::PathBuf,
+    pub source: String,
 }
 
 const STACK_MAX: usize = 2048;
@@ -46,17 +47,14 @@ fn find_closest(name: String, options: impl Iterator<Item = String>) -> Option<S
 }
 
 impl VM {
-    pub fn new(chunks: Vec<Chunk>) -> Self {
-        Self::new_with_source(chunks, std::path::PathBuf::from("."))
-    }
-
-    pub fn new_with_source(chunks: Vec<Chunk>, source_path: std::path::PathBuf) -> Self {
+    pub fn new(chunks: Vec<Chunk>, source_path: std::path::PathBuf, source: String) -> Self {
         let mut vm = Self {
             chunks,
             stack: Vec::with_capacity(STACK_MAX),
             frames: Vec::with_capacity(FRAMES_MAX),
             globals: HashMap::new(),
             source_path,
+            source,
         };
 
         for func in crate::functions::get_functions() {
@@ -960,7 +958,7 @@ impl VM {
                         let mut compiler = crate::compiler::compiler::Compiler::new();
                         compiler.compile_program(ast.clone().unwrap())?;
 
-                        let mut vm = VM::new_with_source(compiler.chunks, absolute);
+                        let mut vm = VM::new(compiler.chunks, absolute, source);
                         vm.run(0)?;
 
                         let chunk_offset = self.chunks.len();
@@ -1069,7 +1067,6 @@ impl VM {
     }
 
     fn runtime_error(&self, msg: String, span: SimpleSpan) -> String {        
-        let src = std::fs::read_to_string(&self.source_path).unwrap_or_default();
         let filename = self.source_path.to_string_lossy().to_string();
 
         let mut buf: Vec<u8> = Vec::new();
@@ -1078,7 +1075,7 @@ impl VM {
             .with_label(Label::new((&filename, span.start..span.end)).with_color(Color::Red))
             .finish()
             .write(
-                (&filename, Source::from(src)),
+                (&filename, Source::from(self.source.clone())),
                 &mut buf
             )
             .ok();
@@ -1087,7 +1084,6 @@ impl VM {
     }
 
     fn runtime_error_with_help(&self, msg: String, help: String, span: SimpleSpan) -> String {
-        let src = std::fs::read_to_string(&self.source_path).unwrap_or_default();
         let filename = self.source_path.to_string_lossy().to_string();
 
         let mut buf: Vec<u8> = Vec::new();
@@ -1097,7 +1093,7 @@ impl VM {
             .with_help(help)
             .finish()
             .write(
-                (&filename, Source::from(src)),
+                (&filename, Source::from(self.source.clone())),
                 &mut buf
             )
             .ok();

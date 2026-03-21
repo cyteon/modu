@@ -279,6 +279,15 @@ impl Value {
             (Value::Float(a), Value::Float(b)) => Ok(Value::Float(a * b)),
             (Value::Int(a), Value::Float(b)) => Ok(Value::Float(*a as f64 * b)),
             (Value::Float(a), Value::Int(b)) => Ok(Value::Float(a * *b as f64)),
+
+            (Value::String(s), Value::Int(n)) => {
+                if *n < 0 {
+                    Err("cannot multiply string by negative integer".to_string())
+                } else {
+                    Ok(Value::String(s.repeat(*n as usize)))
+                }
+            }
+
             _ => Err(format!("cannot multiply {} and {}", self.type_name(), other.type_name())),
         }
     }
