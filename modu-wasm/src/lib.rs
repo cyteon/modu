@@ -27,14 +27,16 @@ pub fn eval_modu(code: &str) -> String {
         let mut compiler = modu::compiler::compiler::Compiler::new();
 
         if let Err(e) = compiler.compile_program(ast.clone().unwrap()) {
-            println!("{}: {}", "Compilation error".red(), e);
+            let mut output = OUTPUT.lock().unwrap();
+            output.push_str(&format!("{}: {}\n", "Compilation error".red(), e));
             return;
         }
 
         let mut vm = modu::vm::vm::VM::new(compiler.chunks);
 
         if let Err(e) = vm.run(0) {
-            println!("{}", e);
+            let mut output = OUTPUT.lock().unwrap();
+            output.push_str(&format!("{}\n", e));
             return;
         }
     }));

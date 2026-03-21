@@ -15,7 +15,7 @@ It is designed to be easy to learn and use like python, but fast and efficient l
 With streamlined error messages for easy debugging
 
 Code examples: https://modu.cyteon.dev/examples \
-Documentation: https://modu.cyteon.dev/docs/quickstart
+Documentation: https://modu.cyteon.dev/tour/contents
 
 ![image](https://github.com/user-attachments/assets/601b9bcc-1fb7-4eb9-9669-101de6660384)
 
