@@ -22,6 +22,9 @@
 (number) @number
 (comment) @comment
 
+(break_stmt) @keyword
+(continue_stmt) @keyword
+
 (fn_stmt
   name: (identifier) @function)
 
@@ -60,6 +63,7 @@
   "-="
   "*="
   "/="
+  "%="
   "!"
 ] @operator
  
