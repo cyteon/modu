@@ -1,0 +1,4 @@
+name = "Modu"
+grammar = "modu"
+path_suffixes = ["modu"]
+line_comments = ["// "]

@@ -1,0 +1,11 @@
+id = "modu-syntax"
+name = "Modu Syntax Highlighting"
+version = "1.0.0"
+schema_version = 1
+authors = ["Cyteon <me@cyteon.dev>"]
+description = "Syntax highlighting for modu files"
+repository = "https://github.com/cyteon/modu"
+
+[grammars.modu]
+repository = "https://github.com/cyteon/modu"
+path = "extensions/zed/languages/modu/"
