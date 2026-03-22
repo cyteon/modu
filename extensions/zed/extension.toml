@@ -7,6 +7,5 @@ description = "Syntax highlighting for modu files"
 repository = "https://github.com/cyteon/modu"
 
 [grammars.modu]
-repository = "https://github.com/cyteon/modu"
-rev = "f34862007fd00a395b7992e3147cedc92916ec04"
-path = "extensions/zed/grammars/modu"
+repository = "https://github.com/cyteon/tree-sitter-modu"
+rev = "660f60ea6e506a7e939c725d0f63b3a3f4bebde5"
