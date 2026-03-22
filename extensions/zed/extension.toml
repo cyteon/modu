@@ -8,4 +8,5 @@ repository = "https://github.com/cyteon/modu"
 
 [grammars.modu]
 repository = "https://github.com/cyteon/modu"
-path = "extensions/zed/languages/modu/"
+rev = "f34862007fd00a395b7992e3147cedc92916ec04"
+path = "extensions/zed/grammars/modu"
