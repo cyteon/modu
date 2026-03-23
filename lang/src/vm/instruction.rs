@@ -7,6 +7,7 @@ pub enum Instruction {
     Swap,
     Rotate3,
 
+    BitAnd, BitOr, BitXor, BitShl, BitShr, BitNot,
     Add, Sub, Mul, Div, Mod, Pow, Neg,
     Eq, Neq, Gt, Lt, Gte, Lte,
     In, NotIn, Not,

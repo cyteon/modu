@@ -10,6 +10,7 @@ module.exports = grammar({
         _statement: ($) =>
             choice(
                 $.let_stmt,
+                $.const_stmt,
                 $.assign_stmt,
                 $.fn_stmt,
                 $.if_stmt,
@@ -26,6 +27,8 @@ module.exports = grammar({
         
         let_stmt: ($) => 
             seq("let", $.identifier, "=", $._expression),
+        const_stmt: ($) =>
+            seq("const", $.identifier, "=", $._expression),
         assign_stmt: ($) =>
             seq($.identifier, choice("=", "+=", "-=", "*=", "/=", "%="), $._expression),
         fn_stmt: ($) => 
@@ -96,15 +99,16 @@ module.exports = grammar({
             ),
         
         unary_expr: ($) =>
-            seq(choice("!", "-"), $._expression),
+            seq(choice("!", "-", "~"), $._expression),
     
         binary_expr: ($) =>
             choice(
                 prec.left(1, seq($._expression, choice("and", "or"), $._expression)),
                 prec.left(2, seq($._expression, choice("==", "!=", "<", ">", "<=", ">="), $._expression)),
-                prec.left(3, seq($._expression, choice("+", "-"), $._expression)),
-                prec.left(4, seq($._expression, choice("*", "/", "%"), $._expression)),
-                prec.left(5, seq($._expression, "**", $._expression))
+                prec.left(3, seq($._expression, choice("&", "|", "^", "<<", ">>"), $._expression)),
+                prec.left(4, seq($._expression, choice("+", "-"), $._expression)),
+                prec.left(5, seq($._expression, choice("*", "/", "%"), $._expression)),
+                prec.left(6, seq($._expression, "**", $._expression))
             ),
         
         call_expr: ($) =>

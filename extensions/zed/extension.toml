@@ -8,4 +8,4 @@ repository = "https://github.com/cyteon/modu"
 
 [grammars.modu]
 repository = "https://github.com/cyteon/tree-sitter-modu"
-rev = "660f60ea6e506a7e939c725d0f63b3a3f4bebde5"
+rev = "4f09a0c8fa29e836876d3ae30ca1c6ddda00e567"

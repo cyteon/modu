@@ -37,6 +37,14 @@ pub enum Expr {
     Mod(Box<Spanned<Expr>>, Box<Spanned<Expr>>),
     Pow(Box<Spanned<Expr>>, Box<Spanned<Expr>>),
 
+    BitAnd(Box<Spanned<Expr>>, Box<Spanned<Expr>>),
+    BitOr(Box<Spanned<Expr>>, Box<Spanned<Expr>>),
+    BitXor(Box<Spanned<Expr>>, Box<Spanned<Expr>>),
+    BitShl(Box<Spanned<Expr>>, Box<Spanned<Expr>>),
+    BitShr(Box<Spanned<Expr>>, Box<Spanned<Expr>>),
+    BitNot(Box<Spanned<Expr>>),
+
+
     Let {
         name: String,
         value: Box<Spanned<Expr>>,
