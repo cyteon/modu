@@ -66,6 +66,8 @@
   "%="
   "!"
 ] @operator
+
+["&" "|" "^" "~" "<<" ">>"] @operator
  
 ["(" ")" "[" "]" "{" "}"] @punctuation.bracket
 ["," "." ":"] @punctuation.delimiter
