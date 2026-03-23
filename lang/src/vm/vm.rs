@@ -211,13 +211,6 @@ impl VM {
                     self.stack.push(Value::Bool(!b.contains(&a)?));
                 }
 
-                Instruction::Or => {
-                    let b = self.stack.pop().unwrap_or(Value::Null);
-                    let a = self.stack.pop().unwrap_or(Value::Null);
-
-                    self.stack.push(Value::Bool(a.truthy() || b.truthy()));
-                }
-
                 Instruction::Not => {
                     let a = self.stack.pop().unwrap_or(Value::Null);
 

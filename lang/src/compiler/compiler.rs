@@ -355,18 +355,30 @@ impl Compiler {
 
             Expr::And(a, b) => {
                 self.compile_expr(*a.clone())?;
+                let false_jump = self.emit_jump(Instruction::JumpIfFalse(0), span);
                 
-                let skip = self.emit_jump(Instruction::JumpIfFalse(0), span);
-                self.emit(Instruction::Pop, span);
-
                 self.compile_expr(*b.clone())?;
-                self.patch_jump(skip);
+                let end_jump = self.emit_jump(Instruction::Jump(0), span);
+
+                self.patch_jump(false_jump);
+                let idx = self.add_constant(Value::Bool(false));
+                self.emit(Instruction::Push(idx), span);
+
+                self.patch_jump(end_jump);
             }
 
             Expr::Or(a, b) => {
                 self.compile_expr(*a.clone())?;
+                let true_jump = self.emit_jump(Instruction::JumpIfFalse(0), span);
+
+                let idx = self.add_constant(Value::Bool(true));
+                self.emit(Instruction::Push(idx), span);
+                let end_jump = self.emit_jump(Instruction::Jump(0), span);
+
+                self.patch_jump(true_jump);
                 self.compile_expr(*b.clone())?;
-                self.emit(Instruction::Or, span);
+
+                self.patch_jump(end_jump);
             }
 
             Expr::Not(v) => {

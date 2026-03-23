@@ -13,3 +13,22 @@ fn check(v) {
 check(5);
 check(-3);
 check(0);
+
+fn expensive() {
+    error("expensive() should not run :(");
+    return false;
+}
+
+if false and expensive() {
+    
+} else {
+    print("didnt run expensive");
+}
+
+if false or true {
+    print("false or true");
+}
+
+if true or expensive() {
+    print("didnt run expensive");
+}
