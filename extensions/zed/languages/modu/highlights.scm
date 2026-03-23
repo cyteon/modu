@@ -1,5 +1,6 @@
 [
   "let"
+  "const"
   "fn"
   "return"
   "if"
