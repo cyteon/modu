@@ -305,6 +305,41 @@ impl Compiler {
                 self.emit(Instruction::Pow, span);
             }
 
+            Expr::BitAnd(a, b) => {
+                self.compile_expr(*a.clone())?;
+                self.compile_expr(*b.clone())?;
+                self.emit(Instruction::BitAnd, span);
+            }
+
+            Expr::BitOr(a, b) => {
+                self.compile_expr(*a.clone())?;
+                self.compile_expr(*b.clone())?;
+                self.emit(Instruction::BitOr, span);
+            }
+
+            Expr::BitXor(a, b) => {
+                self.compile_expr(*a.clone())?;
+                self.compile_expr(*b.clone())?;
+                self.emit(Instruction::BitXor, span);
+            }
+
+            Expr::BitShl(a, b) => {
+                self.compile_expr(*a.clone())?;
+                self.compile_expr(*b.clone())?;
+                self.emit(Instruction::BitShl, span);
+            }
+
+            Expr::BitShr(a, b) => {
+                self.compile_expr(*a.clone())?;
+                self.compile_expr(*b.clone())?;
+                self.emit(Instruction::BitShr, span);
+            },
+
+            Expr::BitNot(a) => {
+                self.compile_expr(*a.clone())?;
+                self.emit(Instruction::BitNot, span);
+            }
+
             Expr::Equal(a, b) => {
                 self.compile_expr(*a.clone())?;
                 self.compile_expr(*b.clone())?;

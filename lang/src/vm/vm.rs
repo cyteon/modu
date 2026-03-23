@@ -155,6 +155,65 @@ impl VM {
                     self.stack.push(a.r#mod(&b).map_err(|e| self.runtime_error(format!("{}", e), span))?);
                 }
 
+                Instruction::BitAnd => {
+                    let b = self.stack.pop().unwrap_or(Value::Null);
+                    let a = self.stack.pop().unwrap_or(Value::Null);
+
+                    match (a, b) {
+                        (Value::Int(a), Value::Int(b)) => self.stack.push(Value::Int(a & b)),
+                        (a, b) => return Err(self.runtime_error("bitwise AND only takes ints".to_string(), span)),
+                    }
+                }
+
+                Instruction::BitOr => {
+                    let b = self.stack.pop().unwrap_or(Value::Null);
+                    let a = self.stack.pop().unwrap_or(Value::Null);
+
+                    match (a, b) {
+                        (Value::Int(a), Value::Int(b)) => self.stack.push(Value::Int(a | b)),
+                        (a, b) => return Err(self.runtime_error("bitwise OR only takes ints".to_string(), span)),
+                    }
+                }
+
+                Instruction::BitXor => {
+                    let b = self.stack.pop().unwrap_or(Value::Null);
+                    let a = self.stack.pop().unwrap_or(Value::Null);
+
+                    match (a, b) {
+                        (Value::Int(a), Value::Int(b)) => self.stack.push(Value::Int(a ^ b)),
+                        (a, b) => return Err(self.runtime_error("bitwise XOR only takes ints".to_string(), span)),
+                    }
+                }
+
+                Instruction::BitShl => {
+                    let b = self.stack.pop().unwrap_or(Value::Null);
+                    let a = self.stack.pop().unwrap_or(Value::Null);
+
+                    match (a, b) {
+                        (Value::Int(a), Value::Int(b)) => self.stack.push(Value::Int(a << b)),
+                        (a, b) => return Err(self.runtime_error("bitwise left shift only takes ints".to_string(), span)),
+                    }
+                }
+
+                Instruction::BitShr => {
+                    let b = self.stack.pop().unwrap_or(Value::Null);
+                    let a = self.stack.pop().unwrap_or(Value::Null);
+
+                    match (a, b) {
+                        (Value::Int(a), Value::Int(b)) => self.stack.push(Value::Int(a >> b)),
+                        (a, b) => return Err(self.runtime_error("bitwise right shift only takes ints".to_string(), span)),
+                    }
+                }
+
+                Instruction::BitNot => {
+                    let a = self.stack.pop().unwrap_or(Value::Null);
+
+                    match a {
+                        Value::Int(a) => self.stack.push(Value::Int(!a)),
+                        a => return Err(self.runtime_error("bitwise NOT only takes a int".to_string(), span)),
+                    }
+                }
+
                 Instruction::Eq => {
                     let b = self.stack.pop().unwrap_or(Value::Null);
                     let a = self.stack.pop().unwrap_or(Value::Null);

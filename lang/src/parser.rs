@@ -140,6 +140,7 @@ fn parser<'src>() -> impl Parser<
         let unary = choice((
             select! { (Token::Minus, span) => (Token::Minus, span) },
             select! { (Token::Not, span) => (Token::Not, span) },
+            select! { (Token::BitNot, span) => (Token::BitNot, span) }
         ))
             .repeated()
             .collect::<Vec<(Token, Span)>>()
@@ -150,6 +151,7 @@ fn parser<'src>() -> impl Parser<
                         node: match op {
                             Token::Minus => Expr::Neg(Box::new(expr.clone())),
                             Token::Not => Expr::Not(Box::new(expr.clone())),
+                            Token::BitNot => Expr::BitNot(Box::new(expr.clone())),
                             _ => unreachable!(),
                         },
                         span: Span::from(op_span.start..expr.span.end),
@@ -161,7 +163,58 @@ fn parser<'src>() -> impl Parser<
             .boxed()
             .labelled("unary expression");
         
-        let power = unary.clone()
+        let shift = unary.clone()
+            .foldl(
+                choice((
+                    select! { (Token::BitShl, span) => span }.then(unary.clone()).map(|(span, right)| (Token::BitShl, span, right)),
+                    select! { (Token::BitShr, span) => span }.then(unary.clone()).map(|(span, right)| (Token::BitShr, span, right)),
+                )).repeated(),
+                |left: SpannedExpr, (op, _span, right): (Token, Span, SpannedExpr)| SpannedExpr {
+                    node: match op {
+                        Token::BitShl => Expr::BitShl(Box::new(left.clone()), Box::new(right.clone())),
+                        Token::BitShr => Expr::BitShr(Box::new(left.clone()), Box::new(right.clone())),
+                        _ => unreachable!(),
+                    },
+                    span: Span::from(left.span.start..right.span.end),
+                }
+            )
+            .boxed()
+            .labelled("shift expression");
+        
+        let and = shift.clone()
+            .foldl(
+                select! { (Token::BitAnd, span) => span }.then(shift.clone()).repeated(),
+                |left: SpannedExpr, (_span, right): (Span, SpannedExpr)| SpannedExpr {
+                    node: Expr::BitAnd(Box::new(left.clone()), Box::new(right.clone())),
+                    span: Span::from(left.span.start..right.span.end),
+                }
+            )
+            .boxed()
+            .labelled("bitwise AND expression");
+        
+        let or = and.clone()
+            .foldl(
+                select! { (Token::BitOr, span) => span }.then(and.clone()).repeated(),
+                |left: SpannedExpr, (_span, right): (Span, SpannedExpr)| SpannedExpr {
+                    node: Expr::BitOr(Box::new(left.clone()), Box::new(right.clone())),
+                    span: Span::from(left.span.start..right.span.end),
+                }
+            )
+            .boxed()
+            .labelled("bitwise OR expression");
+        
+        let xor = or.clone()
+            .foldl(
+                select! { (Token::BitXor, span) => span }.then(or.clone()).repeated(),
+                |left: SpannedExpr, (_span, right): (Span, SpannedExpr)| SpannedExpr {
+                    node: Expr::BitXor(Box::new(left.clone()), Box::new(right.clone())),
+                    span: Span::from(left.span.start..right.span.end),
+                }
+            )
+            .boxed()
+            .labelled("bitwise XOR expression");
+
+        let power = xor.clone()
            .separated_by(select! { (Token::Pow, _span) => () })
             .at_least(1)
             .collect::<Vec<SpannedExpr>>()

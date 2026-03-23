@@ -200,6 +200,24 @@ pub enum Token {
     #[token(">=")]
     GreaterThanOrEqual,
 
+    #[token("~")]
+    BitNot,
+
+    #[token("<<")]
+    BitShl,
+
+    #[token(">>")]
+    BitShr,
+
+    #[token("&")]
+    BitAnd,
+
+    #[token("|")]
+    BitOr,
+
+    #[token("^")]
+    BitXor,
+
     #[regex(r"[ \t\n\f\r]+", logos::skip)]
     Whitespace,
 

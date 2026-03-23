@@ -72,6 +72,10 @@
 					"match": "\\+|-|\\*|\\/|%|\\*\\*"
 				},
 				{
+					"name": "keyword.operator.bitwise.modu",
+					"match": "<<|>>|[&|^~]"
+				},
+				{
 					"name": "keyword.operator.comparison.modu",
 					"match": "\\==|!=|<=|>=|<|>|!"
 				},

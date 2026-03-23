@@ -24,6 +24,11 @@ fn basic_print() {
 }
 
 #[test]
+fn bit_ops() {
+    run_test("bit_ops");
+}
+
+#[test]
 fn comparisons() {
     run_test("comparisons");
 }
