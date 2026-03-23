@@ -50,6 +50,11 @@ pub enum Expr {
         value: Box<Spanned<Expr>>,
     },
 
+    Const {
+        name: String,
+        value: Box<Spanned<Expr>>,
+    },
+
     Assign {
         target: Box<Spanned<Expr>>,
         value: Box<Spanned<Expr>>,

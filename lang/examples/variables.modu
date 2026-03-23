@@ -21,7 +21,10 @@ e["test"]["key"] *= 2;
 e.test2 = 2;
 print(e);
 
-doesnt_exist = 5;
+const A = 1;
+A += 1;
+
+print(A);
 
 // Expected Output:
 //
