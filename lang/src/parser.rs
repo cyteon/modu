@@ -310,6 +310,17 @@ fn parser<'src>() -> impl Parser<
             })
             .labelled("let statement");
         
+        let const_stmt = select! { (Token::Const, span) => span }
+            .then(select! { (Token::Identifier(name), _) => name }.labelled("constant name"))
+            .then_ignore(select! { (Token::Assign, _) => () })
+            .then(expr.clone().labelled("an expression after '='"))
+            .then(select! { (Token::Semicolon, span) => span }.labelled("semicolon"))
+            .map(|(((start, name), value), end): (((Span, String), SpannedExpr), Span)| SpannedExpr {
+                node: Expr::Const { name, value: Box::new(value) },
+                span: Span::from(start.start..end.end),
+            })
+            .labelled("const statement");
+        
         let assign_stmt = expr.clone().labelled("target")
             .then(
                 choice((
@@ -499,6 +510,7 @@ fn parser<'src>() -> impl Parser<
                 
         choice((
             let_stmt,
+            const_stmt,
             assign_stmt,
             fn_stmt,
             class_stmt,

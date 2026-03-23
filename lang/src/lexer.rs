@@ -36,6 +36,9 @@ pub enum Token {
     #[token("let")]
     Let,
 
+    #[token("const")]
+    Const,
+
     #[token("=")]
     Assign,
 
