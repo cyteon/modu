@@ -8,6 +8,7 @@ use crate::ast::{SpannedExpr, Expr, AssignOp};
 use super::scope::{ScopeStack, Variable};
 
 pub struct Compiler {
+    pub global_consts: Vec<String>,
     pub chunks: Vec<Chunk>,
     pub offset: usize,
     scope: ScopeStack,
@@ -19,6 +20,7 @@ pub struct Compiler {
 impl Compiler {
     pub fn new() -> Self {
         Self {
+            global_consts: Vec::new(),
             chunks: vec![Chunk::new("main")],
             offset: 0,
             scope: ScopeStack::new(),
@@ -108,6 +110,18 @@ impl Compiler {
                 self.store_variable(name, span);
             }
 
+            Expr::Const { name, value } => {
+                self.compile_expr(*value.clone())?;
+                
+                if self.scope.in_function() {
+                    let slot = self.scope.define_const(name);
+                    self.emit(Instruction::StoreLocal(slot), span);
+                } else {
+                    self.global_consts.push(name.clone());
+                    self.emit(Instruction::StoreGlobal(name.to_string()), span);
+                }
+            }
+
             Expr::Identifier(name) => {
                 match self.scope.resolve(name) {
                     Variable::Local(index) => {
@@ -121,6 +135,12 @@ impl Compiler {
             }
 
             Expr::Assign { target, value, operator } => {
+                if let Expr::Identifier(name) = &target.node {
+                    if self.scope.is_const(name) || self.global_consts.contains(name) {
+                        return Err(format!("cannot assign to constant '{}'", name));
+                    }
+                }
+
                 match &target.node {
                     Expr::Identifier(name) => {
                         let var = self.scope.resolve(name);
