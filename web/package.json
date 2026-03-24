@@ -30,6 +30,6 @@
 		"codemirror": "^6.0.2",
 		"lucide-svelte": "^0.468.0",
 		"marked": "^17.0.5",
-		"modu-wasm": "^3.2.0"
+		"modu-wasm": "^3.3.0"
 	}
 }
