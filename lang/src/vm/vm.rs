@@ -10,7 +10,6 @@ use crate::compiler::scope::Variable;
 
 pub struct ErrorHandler {
     catch_ip: usize,
-    chunk_id: usize,
     stack_depth: usize,
     frame_depth: usize
 }
@@ -133,42 +132,78 @@ impl VM {
                     let b = self.stack.pop().unwrap_or(Value::Null);
                     let a = self.stack.pop().unwrap_or(Value::Null);
 
-                    self.stack.push(a.add(&b).map_err(|e| self.runtime_error(format!("{}", e), span))?);
+                    match a.add(&b) {
+                        Ok(v) => self.stack.push(v),
+                        Err(e) => {
+                            self.handle_error(format!("{}", e), span)?;
+                            continue;
+                        }
+                    }
                 }
 
                 Instruction::Sub => {
                     let b = self.stack.pop().unwrap_or(Value::Null);
                     let a = self.stack.pop().unwrap_or(Value::Null);
 
-                    self.stack.push(a.sub(&b).map_err(|e| self.runtime_error(format!("{}", e), span))?);
+                    match a.sub(&b) {
+                        Ok(v) => self.stack.push(v),
+                        Err(e) => {
+                            self.handle_error(format!("{}", e), span)?;
+                            continue;
+                        }
+                    }
                 }
 
                 Instruction::Mul => {
                     let b = self.stack.pop().unwrap_or(Value::Null);
                     let a = self.stack.pop().unwrap_or(Value::Null);
 
-                    self.stack.push(a.mul(&b).map_err(|e| self.runtime_error(format!("{}", e), span))?);
+                    match a.mul(&b) {
+                        Ok(v) => self.stack.push(v),
+                        Err(e) => {
+                            self.handle_error(format!("{}", e), span)?;
+                            continue;
+                        }
+                    }
                 }
 
                 Instruction::Div => {
                     let b = self.stack.pop().unwrap_or(Value::Null);
                     let a = self.stack.pop().unwrap_or(Value::Null);
 
-                    self.stack.push(a.div(&b).map_err(|e| self.runtime_error(format!("{}", e), span))?);
+                    match a.div(&b) {
+                        Ok(v) => self.stack.push(v),
+                        Err(e) => {
+                            self.handle_error(format!("{}", e), span)?;
+                            continue;
+                        }
+                    }
                 }
 
                 Instruction::Pow => {
                     let b = self.stack.pop().unwrap_or(Value::Null);
                     let a = self.stack.pop().unwrap_or(Value::Null);
 
-                    self.stack.push(a.pow(&b).map_err(|e| self.runtime_error(format!("{}", e), span))?);
+                    match a.pow(&b) {
+                        Ok(v) => self.stack.push(v),
+                        Err(e) => {
+                            self.handle_error(format!("{}", e), span)?;
+                            continue;
+                        }
+                    }
                 }
 
                 Instruction::Mod => {
                     let b = self.stack.pop().unwrap_or(Value::Null);
                     let a = self.stack.pop().unwrap_or(Value::Null);
 
-                    self.stack.push(a.r#mod(&b).map_err(|e| self.runtime_error(format!("{}", e), span))?);
+                    match a.r#mod(&b) {
+                        Ok(v) => self.stack.push(v),
+                        Err(e) => {
+                            self.handle_error(format!("{}", e), span)?;
+                            continue;
+                        }
+                    }
                 }
 
                 Instruction::BitAnd => {
@@ -177,7 +212,11 @@ impl VM {
 
                     match (a, b) {
                         (Value::Int(a), Value::Int(b)) => self.stack.push(Value::Int(a & b)),
-                        (a, b) => return Err(self.runtime_error("bitwise AND only takes ints".to_string(), span)),
+
+                        (_, _) => {
+                            self.handle_error("bitwise AND only takes ints".to_string(), span)?;
+                            continue;
+                        }
                     }
                 }
 
@@ -187,7 +226,11 @@ impl VM {
 
                     match (a, b) {
                         (Value::Int(a), Value::Int(b)) => self.stack.push(Value::Int(a | b)),
-                        (a, b) => return Err(self.runtime_error("bitwise OR only takes ints".to_string(), span)),
+
+                        (_, _) => {
+                            self.handle_error("bitwise OR only takes ints".to_string(), span)?;
+                            continue;
+                        }
                     }
                 }
 
@@ -197,7 +240,11 @@ impl VM {
 
                     match (a, b) {
                         (Value::Int(a), Value::Int(b)) => self.stack.push(Value::Int(a ^ b)),
-                        (a, b) => return Err(self.runtime_error("bitwise XOR only takes ints".to_string(), span)),
+
+                        (_, _) => {
+                            self.handle_error("bitwise XOR only takes ints".to_string(), span)?;
+                            continue;
+                        }
                     }
                 }
 
@@ -207,7 +254,11 @@ impl VM {
 
                     match (a, b) {
                         (Value::Int(a), Value::Int(b)) => self.stack.push(Value::Int(a << b)),
-                        (a, b) => return Err(self.runtime_error("bitwise left shift only takes ints".to_string(), span)),
+
+                        (_, _) => {
+                            self.handle_error("bitwise left shift only takes ints".to_string(), span)?;
+                            continue;
+                        }
                     }
                 }
 
@@ -217,7 +268,11 @@ impl VM {
 
                     match (a, b) {
                         (Value::Int(a), Value::Int(b)) => self.stack.push(Value::Int(a >> b)),
-                        (a, b) => return Err(self.runtime_error("bitwise right shift only takes ints".to_string(), span)),
+                        
+                        (_, _) => {
+                            self.handle_error("bitwise right shift only takes ints".to_string(), span)?;
+                            continue;
+                        }
                     }
                 }
 
@@ -226,7 +281,11 @@ impl VM {
 
                     match a {
                         Value::Int(a) => self.stack.push(Value::Int(!a)),
-                        a => return Err(self.runtime_error("bitwise NOT only takes a int".to_string(), span)),
+                        
+                        _ => {
+                            self.handle_error("bitwise NOT only takes ints".to_string(), span)?;
+                            continue;
+                        }
                     }
                 }
 
@@ -296,7 +355,8 @@ impl VM {
                     let callee = self.stack[self.stack.len() - 1 - argc].clone();
 
                     if self.frames.len() >= FRAMES_MAX {
-                        return Err(self.runtime_error("stack overflow".to_string(), span));
+                        self.handle_error("stack overflow".to_string(), span)?;
+                        continue;
                     }
 
                     match callee {
@@ -313,14 +373,16 @@ impl VM {
                                         continue;
                                     }
 
-                                    return Err(self.runtime_error(format!("error calling {}(): {}", func.name, e), span));
+                                    self.handle_error(format!("error calling {}(): {}", func.name, e), span)?;
+                                    continue;
                                 }
                             }
                         }
 
                         Value::Function { chunk_id, arity } => {
                             if arity != *argc {
-                                return Err(self.runtime_error(format!("expected {} arguments but got {}", arity, argc), span));
+                                self.handle_error(format!("expected {} arguments but got {}", arity, argc), span)?;
+                                continue;
                             }
 
                             let base = self.stack.len() - argc;
@@ -349,7 +411,8 @@ impl VM {
 
                             if let Some(Value::Function { chunk_id, arity }) = methods.get("init") {
                                 if *argc != *arity {
-                                    return Err(self.runtime_error(format!("{}.init() expected {} arguments but got {}", name, arity, argc), span));
+                                    self.handle_error(format!("{}.init() expected {} arguments but got {}", name, arity, argc), span)?;
+                                    continue;
                                 }
 
                                 let base = self.stack.len();
@@ -372,7 +435,8 @@ impl VM {
                                 });
                             } else {
                                 if *argc != 0 {
-                                    return Err(self.runtime_error(format!("{} has no init method, but got {} arguments", name, argc), span));
+                                    self.handle_error(format!("{} has no init method, but got {} arguments", name, argc), span)?;
+                                    continue;
                                 }
 
                                 self.stack.push(instance);
@@ -380,7 +444,8 @@ impl VM {
                         }
 
                         _ => {
-                            return Err(self.runtime_error(format!("{} is not callable", callee.type_name()), span));
+                            self.handle_error(format!("{} is not callable", callee.type_name()), span)?;
+                            continue;
                         }
                     }
                 }
@@ -389,13 +454,15 @@ impl VM {
                     let callee = self.stack[self.stack.len() - 1 - argc].clone();
 
                     if self.frames.len() >= FRAMES_MAX {
-                        return Err(self.runtime_error("stack overflow".to_string(), span));
+                        self.handle_error("stack overflow".to_string(), span)?;
+                        continue;
                     }
 
                     match callee {
                         Value::Function { chunk_id, arity } => {
                             if arity != *argc {
-                                return Err(self.runtime_error(format!("expected {} arguments but got {}", arity, argc), span));
+                                self.handle_error(format!("expected {} arguments but got {}", arity, argc), span)?;
+                                continue;
                             }
 
                             let base = self.stack.len() - argc;
@@ -415,7 +482,8 @@ impl VM {
 
                         Value::InstanceFn { instance, chunk_id, arity } => {
                             if arity != *argc {
-                                return Err(self.runtime_error(format!("expected {} arguments but got {}", arity, argc), span));
+                                self.handle_error(format!("expected {} arguments but got {}", arity, argc), span)?;
+                                continue;
                             }
 
                             let args: Vec<Value> = self.stack.drain(self.stack.len() - argc..).collect();
@@ -467,7 +535,11 @@ impl VM {
 
                                     self.stack.push(result.0);
                                 }
-                                Err(e) => return Err(self.runtime_error(format!("error calling {}(): {}", func.name, e), span)),
+
+                                Err(e) => {
+                                    self.handle_error(format!("error calling {}(): {}", func.name, e), span)?;
+                                    continue;
+                                }
                             }
                         }
 
@@ -482,7 +554,8 @@ impl VM {
 
                             if let Some(Value::Function { chunk_id, arity }) = methods.get("init") {
                                 if *argc != *arity {
-                                    return Err(self.runtime_error(format!("{}.init() expected {} arguments but got {}", name, arity, argc), span));
+                                    self.handle_error(format!("{}.init() expected {} arguments but got {}", name, arity, argc), span)?;
+                                    continue;
                                 }
 
                                 let base = self.stack.len();
@@ -505,7 +578,8 @@ impl VM {
                                 });
                             } else {
                                 if *argc != 0 {
-                                    return Err(self.runtime_error(format!("{} has no init method, but got {} arguments", name, argc), span));
+                                    self.handle_error(format!("{} has no init method, but got {} arguments", name, argc), span)?;
+                                    continue;
                                 }
 
                                 self.stack.push(instance);
@@ -519,7 +593,10 @@ impl VM {
 
                             match (func.func)(args) {
                                 Ok(result) => self.stack.push(result),
-                                Err(e) => return Err(self.runtime_error(format!("error calling {}(): {}", func.name, e), span)),
+                                Err(e) => {
+                                    self.handle_error(format!("error calling {}(): {}", func.name, e), span)?;
+                                    continue;
+                                },
                             }
                         }
 
@@ -530,11 +607,17 @@ impl VM {
 
                             match crate::stdlib::ffi::call_ffi(lib_idx, &func_name, args) {
                                 Ok(result) => self.stack.push(result),
-                                Err(e) => return Err(self.runtime_error(format!("error calling {} from FFI: {}", func_name, e), span)),
+                                Err(e) => {
+                                    self.handle_error(format!("error calling {}(): {}", func_name, e), span)?;
+                                    continue;
+                                },
                             }
                         }
 
-                        _ => return Err(self.runtime_error(format!("{} is not callable", callee.type_name()), span)),
+                        _ => {
+                            self.handle_error(format!("{} is not callable", callee.type_name()), span)?;
+                            continue;
+                        },
                     }
                 }
 
@@ -588,7 +671,10 @@ impl VM {
 
                         let key = match key {
                             Value::String(s) => s,
-                            _ => return Err(self.runtime_error(format!("object property keys must be strings, got {}", key.type_name()), span)),
+                            _ => {
+                                self.handle_error(format!("object property keys must be strings, got {}", key.type_name()), span)?;
+                                continue;
+                            }
                         };
 
                         properties.insert(key, value);
@@ -606,7 +692,8 @@ impl VM {
                             match index {
                                 Value::Int(i) => {
                                     if i < 0 || (i as usize) >= elements.len() {
-                                        return Err(self.runtime_error("index is out of bounds".to_string(), span));
+                                        self.handle_error("index is out of bounds".to_string(), span)?;
+                                        continue;
                                     } else {
                                         self.stack.push(elements[i as usize].clone());
                                     }
@@ -616,24 +703,33 @@ impl VM {
                                     let end = if inclusive { end + 1 } else { end };
 
                                     if start < 0 || (start as usize) >= elements.len() {
-                                        return Err(self.runtime_error("start is out of bounds".to_string(), span));
+                                        self.handle_error("start is out of bounds".to_string(), span)?;
+                                        continue;
                                     }
 
                                     if end < 0 || (end as usize) > elements.len() {
-                                        return Err(self.runtime_error("end is out of bounds".to_string(), span));
+                                        self.handle_error("end is out of bounds".to_string(), span)?;
+                                        continue;
                                     }
 
                                     self.stack.push(Value::Array(elements[(start as usize)..(end as usize)].to_vec()));
                                 }
 
-                                _ => return Err(self.runtime_error(format!("expected int index for array but got {}", index.type_name()), span)),
+                                _ => {
+                                    self.handle_error(format!("expected int index for array but got {}", index.type_name()), span)?;
+                                    continue;
+                                }
                             }
                         }
 
                         Value::Object(properties) => {
                             let key = match index {
                                 Value::String(s) => s,
-                                _ => return Err(self.runtime_error(format!("expected string index for object but got {}", index.type_name()), span)),
+                                
+                                _ => {
+                                    self.handle_error(format!("expected string index for object but got {}", index.type_name()), span)?;
+                                    continue;
+                                }
                             };
 
                             let value = properties.get(&key).cloned().unwrap_or(Value::Null);
@@ -644,7 +740,8 @@ impl VM {
                             match index {
                                 Value::Int(i) => {
                                     if i < 0 || (i as usize) >= s.len() {
-                                        return Err(self.runtime_error("index is out of bounds".to_string(), span));
+                                        self.handle_error("index is out of bounds".to_string(), span)?;
+                                        continue;
                                     }
                                     
                                     self.stack.push(Value::String(s.chars().nth(i as usize).unwrap().to_string()));
@@ -654,21 +751,29 @@ impl VM {
                                     let end = if inclusive { end + 1 } else { end };
 
                                     if start < 0 || (start as usize) >= s.len() {
-                                        return Err(self.runtime_error("start is out of bounds".to_string(), span));
+                                        self.handle_error("start is out of bounds".to_string(), span)?;
+                                        continue;
                                     }
 
                                     if end < 0 || (end as usize) > s.len() {
-                                        return Err(self.runtime_error("end is out of bounds".to_string(), span));
+                                        self.handle_error("end is out of bounds".to_string(), span)?;
+                                        continue;
                                     }
 
                                     self.stack.push(Value::String(s[(start as usize)..(end as usize)].to_string()));
-                                } 
+                                }
 
-                                _ => return Err(self.runtime_error(format!("expected int index for string but got {}", index.type_name()), span)),
+                                _ => {
+                                    self.handle_error(format!("expected int index for string but got {}", index.type_name()), span)?;
+                                    continue;
+                                }
                             }
                         }
 
-                        _ => return Err(self.runtime_error(format!("cannot index {} with {}", target.type_name(), index.type_name()), span)),
+                        _ => {
+                            self.handle_error(format!("cannot index {} with {}", target.type_name(), index.type_name()), span)?;
+                            continue;
+                        }
                     }
                 }
 
@@ -680,7 +785,8 @@ impl VM {
                     let result = match (target, index) {
                         (Value::Array(mut elements), Value::Int(i)) => {
                             if i < 0 || (i as usize) >= elements.len() {
-                                return Err(self.runtime_error("index is out of bounds".to_string(), span));
+                                self.handle_error("index is out of bounds".to_string(), span)?;
+                                continue;
                             }
 
                             elements[i as usize] = value;
@@ -692,7 +798,10 @@ impl VM {
                             Value::Object(properties)
                         }
 
-                        (t, i) => return Err(self.runtime_error(format!("cannot index {} with {}", t.type_name(), i.type_name()), span)),
+                        (t, i) => {
+                            self.handle_error(format!("cannot index {} with {}", t.type_name(), i.type_name()), span)?;
+                            continue;
+                        }
                     };
                     
                     self.stack.push(result);
@@ -722,7 +831,8 @@ impl VM {
                                                     span
                                                 ));
                                             } else {
-                                                return Err(self.runtime_error(format!("undefined property '{}' on object", name), span));
+                                                self.handle_error(format!("undefined property '{}' on object", name), span)?;
+                                                continue;
                                             }
                                         }
                                     };
@@ -746,7 +856,8 @@ impl VM {
                                         ));
                                     }
 
-                                    return Err(self.runtime_error(format!("undefined property '{}' on string", name), span));
+                                    self.handle_error(format!("undefined property '{}' on string", name), span)?;
+                                    continue;
                                 }
                             };
 
@@ -767,7 +878,8 @@ impl VM {
                                         ));
                                     }
 
-                                    return Err(self.runtime_error(format!("undefined property '{}' on int", name), span));
+                                    self.handle_error(format!("undefined property '{}' on int", name), span)?;
+                                    continue;
                                 }
                             };
 
@@ -788,7 +900,8 @@ impl VM {
                                         ));
                                     }
 
-                                    return Err(self.runtime_error(format!("undefined property '{}' on float", name), span));
+                                    self.handle_error(format!("undefined property '{}' on float", name), span)?;
+                                    continue;
                                 }
                             };
 
@@ -809,7 +922,8 @@ impl VM {
                                         ));
                                     }
 
-                                    return Err(self.runtime_error(format!("undefined property '{}' on array", name), span));
+                                    self.handle_error(format!("undefined property '{}' on array", name), span)?;
+                                    continue;
                                 }
                             };
 
@@ -844,7 +958,8 @@ impl VM {
                                         span
                                     ));
                                 } else {
-                                    return Err(self.runtime_error(format!("undefined property '{}' on instance of {}", name, class_name), span));
+                                    self.handle_error(format!("undefined property '{}' on instance of {}", name, class_name), span)?;
+                                    continue;
                                 }
                             }
                         }
@@ -855,7 +970,10 @@ impl VM {
                             self.stack.push(Value::FFIFunc(idx, name.clone()));
                         }
 
-                        _ => return Err(self.runtime_error(format!("cannot get property '{}' of {}", name, target.type_name()), span)),
+                        _ => {
+                            self.handle_error(format!("cannot get property '{}' of {}", name, target.type_name()), span)?;
+                            continue;
+                        }
                     }
                 }
 
@@ -868,7 +986,8 @@ impl VM {
                             let fns = crate::natives::object::list_fns();
 
                             if fns.contains(name) {
-                                return Err(self.runtime_error(format!("'{}' is a read-only property on object", name), span));
+                                self.handle_error(format!("'{}' is a read-only property on object", name), span)?;
+                                continue;
                             }
 
                             properties.insert(name.clone(), value);
@@ -880,7 +999,10 @@ impl VM {
                             Value::Instance { class_name, properties }
                         }
 
-                        t => return Err(self.runtime_error(format!("cannot set property '{}' of {}", name, t.type_name()), span)),
+                        t => {
+                            self.handle_error(format!("cannot set property '{}' of {}", name, t.type_name()), span)?;
+                            continue;
+                        }
                     };
 
                     self.stack.push(result);
@@ -899,7 +1021,10 @@ impl VM {
                             }
                         }
 
-                        _ => return Err(self.runtime_error("ranges can only be created from ints".to_string(), span)),
+                        _ => {
+                            self.handle_error("ranges can only be created from ints".to_string(), span)?;
+                            continue;
+                        }
                     }
                 }
 
@@ -914,7 +1039,11 @@ impl VM {
                         Value::Range { start, end, inclusive } => {
                             let index = match index {
                                 Value::Int(i) => i,
-                                _ => return Err(format!("expected int index for range but got {}", index.type_name())),
+
+                                _ => {
+                                    self.handle_error(format!("expected int index for range but got {}", index.type_name()), span)?;
+                                    continue;
+                                }
                             };
 
                             let next = start + index;
@@ -932,7 +1061,10 @@ impl VM {
                         Value::Array(elements) => {
                             let index = match index {
                                 Value::Int(i) => i,
-                                _ => return Err(format!("expected int index for array but got {}", index.type_name())),
+                                _ => {
+                                    self.handle_error(format!("expected int index for array but got {}", index.type_name()), span)?;
+                                    continue;
+                                }
                             };
 
                             if index < 0 || (index as usize) >= elements.len() {
@@ -1060,7 +1192,6 @@ impl VM {
                 Instruction::SetupTry(ip) => {
                     self.error_handlers.push(ErrorHandler {
                         catch_ip: *ip,
-                        chunk_id: frame.chunk_id,
                         stack_depth: self.stack.len(),
                         frame_depth: self.frames.len(),
                     });
@@ -1098,7 +1229,8 @@ impl VM {
                                 ));
                             }
 
-                            return Err(self.runtime_error(format!("undefined variable '{}'", name), span));
+                            self.handle_error(format!("undefined variable '{}'", name), span)?;
+                            continue;
                         },
                     };
 
