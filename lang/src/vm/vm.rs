@@ -817,6 +817,7 @@ impl VM {
                                     self.stack.pop();
                                     self.stack.push(v.clone());
                                 }
+
                                 None => {
                                     let method = match crate::natives::object::get_fn(name.to_string()) {
                                         Some(m) => m,
@@ -825,11 +826,13 @@ impl VM {
                                             let closest = find_closest(name.clone(), props);
 
                                             if let Some(closest) = closest {
-                                                return Err(self.runtime_error_with_help(
+                                                self.handle_error_with_help(
                                                     format!("undefined property '{}' on object", name), 
                                                     format!("did you maybe mean: '{}'?", closest.green()),
                                                     span
-                                                ));
+                                                )?;
+
+                                                continue;
                                             } else {
                                                 self.handle_error(format!("undefined property '{}' on object", name), span)?;
                                                 continue;
@@ -849,11 +852,13 @@ impl VM {
                                     let closest = find_closest(name.clone(), crate::natives::string::list_fns().into_iter());
 
                                     if let Some(closest) = closest {
-                                        return Err(self.runtime_error_with_help(
+                                        self.handle_error_with_help(
                                             format!("undefined property '{}' on string", name), 
                                             format!("did you maybe mean: '{}'?", closest.green()),
                                             span
-                                        ));
+                                        )?;
+
+                                        continue;
                                     }
 
                                     self.handle_error(format!("undefined property '{}' on string", name), span)?;
@@ -871,11 +876,13 @@ impl VM {
                                     let closest = find_closest(name.clone(), crate::natives::int::list_fns().into_iter());
 
                                     if let Some(closest) = closest {
-                                        return Err(self.runtime_error_with_help(
+                                        self.handle_error_with_help(
                                             format!("undefined property '{}' on int", name), 
                                             format!("did you maybe mean: '{}'?", closest.green()),
                                             span
-                                        ));
+                                        )?;
+
+                                        continue;
                                     }
 
                                     self.handle_error(format!("undefined property '{}' on int", name), span)?;
@@ -893,11 +900,13 @@ impl VM {
                                     let closest = find_closest(name.clone(), crate::natives::float::list_fns().into_iter());
 
                                     if let Some(closest) = closest {
-                                        return Err(self.runtime_error_with_help(
+                                        self.handle_error_with_help(
                                             format!("undefined property '{}' on float", name), 
                                             format!("did you maybe mean: '{}'?", closest.green()),
                                             span
-                                        ));
+                                        )?;
+
+                                        continue;
                                     }
 
                                     self.handle_error(format!("undefined property '{}' on float", name), span)?;
@@ -915,11 +924,13 @@ impl VM {
                                     let closest = find_closest(name.clone(), crate::natives::array::list_fns().into_iter());
 
                                     if let Some(closest) = closest {
-                                        return Err(self.runtime_error_with_help(
+                                        self.handle_error_with_help(
                                             format!("undefined property '{}' on array", name), 
                                             format!("did you maybe mean: '{}'?", closest.green()),
                                             span
-                                        ));
+                                        )?;
+
+                                        continue;
                                     }
 
                                     self.handle_error(format!("undefined property '{}' on array", name), span)?;
@@ -952,11 +963,13 @@ impl VM {
                                 let closest = find_closest(name.clone(), properties.keys().cloned());
 
                                 if let Some(closest) = closest {
-                                    return Err(self.runtime_error_with_help(
+                                    self.handle_error_with_help(
                                         format!("undefined property '{}' on instance of {}", name, class_name), 
                                         format!("did you maybe mean: '{}'?", closest.green()),
                                         span
-                                    ));
+                                    )?;
+
+                                    continue;
                                 } else {
                                     self.handle_error(format!("undefined property '{}' on instance of {}", name, class_name), span)?;
                                     continue;
@@ -1077,7 +1090,10 @@ impl VM {
                             }
                         }
 
-                        _ => return Err(format!("{} is not iterable", iter.type_name())),
+                        _ => {
+                            self.handle_error(format!("{} is not iterable", iter.type_name()), span)?;
+                            continue;
+                        }
                     }
                 }
 
@@ -1102,7 +1118,8 @@ impl VM {
                                 self.globals.insert(path.clone(), module);
                             }
                         } else {
-                            return Err(format!("unknown stdlib module '{}'", path));
+                            self.handle_error(format!("unknown stdlib module '{}'", path), span)?;
+                            continue;
                         }
                     } else {
                         let current_dir = self.source_path
@@ -1146,7 +1163,8 @@ impl VM {
                         let ast = crate::parser::parse(&source, &resolved.display().to_string());
 
                         if ast.is_err() {
-                            return Err(format!("failed to parse package"));
+                            self.handle_error("failed to parse package".to_string(), span)?;
+                            continue;
                         }
                         
                         let mut compiler = crate::compiler::compiler::Compiler::new();
@@ -1222,11 +1240,12 @@ impl VM {
                             let closest = find_closest(name.clone(), self.globals.keys().cloned());
 
                             if let Some(closest) = closest {
-                                return Err(self.runtime_error_with_help(
+                                self.handle_error_with_help(
                                     format!("undefined variable '{}'", name), 
                                     format!("did you maybe mean: '{}'?", closest.green()),
                                     span
-                                ));
+                                )?;
+                                continue;
                             }
 
                             self.handle_error(format!("undefined variable '{}'", name), span)?;
@@ -1344,7 +1363,7 @@ impl VM {
 
             Ok(())
         } else {
-            Err(self.runtime_error(msg, span))
+            Err(self.runtime_error_with_help(msg, help, span))
         }
     }
 }

@@ -3,3 +3,10 @@ try {
 } catch e {
     print("error: " + e);
 }
+
+try {
+    let obj = { "test": 1 };
+    print(obj.testt);
+} catch e {
+    print("error: " + e);
+}
