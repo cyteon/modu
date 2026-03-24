@@ -1,0 +1,19 @@
+try {
+    print(abc);
+} catch e {
+    print("error handled: " + e); // undefined variable 'abc'
+}
+
+try {
+    let obj = { "test": 1 };
+    print(obj.testt);
+} catch e {
+    print("error handled: " + e); // undefined property 'testt' on object
+}
+
+try {
+    let arr = ["test", false, 5];
+    print(arr.sort());
+} catch e {
+    print("error handled: " + e); // error calling sort(): partial_cmp failed for values '5' and 'false'
+}

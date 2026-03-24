@@ -8,6 +8,7 @@
 - [Functions](functions)
 - [Type Conversion](type-conversion)
 - [Classes](classes)
+- [Error Handling](error-handling)
 - [Bitwise Operations](bitwise-ops)
 
 ### Types

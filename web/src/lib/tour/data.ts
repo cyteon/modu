@@ -7,7 +7,7 @@ let pages = [
     },
     {
         title: "Basics",
-        lessons: ["variables", "functions", "type-conversion", "classes", "bitwise-ops"]
+        lessons: ["variables", "functions", "type-conversion", "classes", "error-handling", "bitwise-ops"]
     },
     {
         title: "Types",

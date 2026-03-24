@@ -44,6 +44,11 @@ fn encoding() {
 }
 
 #[test]
+fn error_handling() {
+    run_test("error_handling");
+}
+
+#[test]
 fn http() {
     run_test("http");
 }

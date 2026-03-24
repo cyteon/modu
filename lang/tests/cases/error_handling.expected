@@ -1,0 +1,3 @@
+error handled: undefined variable 'abc'
+error handled: undefined property 'testt' on object
+error handled: error calling sort(): partial_cmp failed for values '5' and 'false'

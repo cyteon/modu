@@ -46,7 +46,8 @@ export default StreamLanguage.define({
             const keywords = [
                 "let", "fn", "class", "import",
                 "if", "else", "for", "while", "loop", "in",
-                "return", "break", "continue", "const"
+                "return", "break", "continue", "const",
+                "try", "catch"
             ];
  
             if (keywords.includes(word)) return "keyword";
