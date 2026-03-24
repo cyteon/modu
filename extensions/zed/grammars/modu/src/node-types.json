@@ -368,6 +368,73 @@
     "fields": {}
   },
   {
+    "type": "const_stmt",
+    "named": true,
+    "fields": {},
+    "children": {
+      "multiple": true,
+      "required": true,
+      "types": [
+        {
+          "type": "array_literal",
+          "named": true
+        },
+        {
+          "type": "binary_expr",
+          "named": true
+        },
+        {
+          "type": "boolean",
+          "named": true
+        },
+        {
+          "type": "call_expr",
+          "named": true
+        },
+        {
+          "type": "identifier",
+          "named": true
+        },
+        {
+          "type": "index_expr",
+          "named": true
+        },
+        {
+          "type": "null",
+          "named": true
+        },
+        {
+          "type": "number",
+          "named": true
+        },
+        {
+          "type": "object_literal",
+          "named": true
+        },
+        {
+          "type": "parens_expr",
+          "named": true
+        },
+        {
+          "type": "property_expr",
+          "named": true
+        },
+        {
+          "type": "self",
+          "named": true
+        },
+        {
+          "type": "string",
+          "named": true
+        },
+        {
+          "type": "unary_expr",
+          "named": true
+        }
+      ]
+    }
+  },
+  {
     "type": "fn_stmt",
     "named": true,
     "fields": {
@@ -412,6 +479,10 @@
         },
         {
           "type": "class_decl",
+          "named": true
+        },
+        {
+          "type": "const_stmt",
           "named": true
         },
         {
@@ -480,6 +551,10 @@
         },
         {
           "type": "string",
+          "named": true
+        },
+        {
+          "type": "try_stmt",
           "named": true
         },
         {
@@ -541,6 +616,10 @@
           "named": true
         },
         {
+          "type": "const_stmt",
+          "named": true
+        },
+        {
           "type": "continue_stmt",
           "named": true
         },
@@ -606,6 +685,10 @@
         },
         {
           "type": "string",
+          "named": true
+        },
+        {
+          "type": "try_stmt",
           "named": true
         },
         {
@@ -656,6 +739,10 @@
           "named": true
         },
         {
+          "type": "const_stmt",
+          "named": true
+        },
+        {
           "type": "continue_stmt",
           "named": true
         },
@@ -721,6 +808,10 @@
         },
         {
           "type": "string",
+          "named": true
+        },
+        {
+          "type": "try_stmt",
           "named": true
         },
         {
@@ -924,6 +1015,10 @@
           "named": true
         },
         {
+          "type": "const_stmt",
+          "named": true
+        },
+        {
           "type": "continue_stmt",
           "named": true
         },
@@ -989,6 +1084,10 @@
         },
         {
           "type": "string",
+          "named": true
+        },
+        {
+          "type": "try_stmt",
           "named": true
         },
         {
@@ -1174,6 +1273,10 @@
           "named": true
         },
         {
+          "type": "const_stmt",
+          "named": true
+        },
+        {
           "type": "continue_stmt",
           "named": true
         },
@@ -1239,6 +1342,10 @@
         },
         {
           "type": "string",
+          "named": true
+        },
+        {
+          "type": "try_stmt",
           "named": true
         },
         {
@@ -1403,6 +1510,129 @@
     "fields": {}
   },
   {
+    "type": "try_stmt",
+    "named": true,
+    "fields": {},
+    "children": {
+      "multiple": true,
+      "required": true,
+      "types": [
+        {
+          "type": "array_literal",
+          "named": true
+        },
+        {
+          "type": "assign_stmt",
+          "named": true
+        },
+        {
+          "type": "binary_expr",
+          "named": true
+        },
+        {
+          "type": "boolean",
+          "named": true
+        },
+        {
+          "type": "break_stmt",
+          "named": true
+        },
+        {
+          "type": "call_expr",
+          "named": true
+        },
+        {
+          "type": "class_decl",
+          "named": true
+        },
+        {
+          "type": "const_stmt",
+          "named": true
+        },
+        {
+          "type": "continue_stmt",
+          "named": true
+        },
+        {
+          "type": "fn_stmt",
+          "named": true
+        },
+        {
+          "type": "for_stmt",
+          "named": true
+        },
+        {
+          "type": "identifier",
+          "named": true
+        },
+        {
+          "type": "if_stmt",
+          "named": true
+        },
+        {
+          "type": "import_stmt",
+          "named": true
+        },
+        {
+          "type": "index_expr",
+          "named": true
+        },
+        {
+          "type": "let_stmt",
+          "named": true
+        },
+        {
+          "type": "loop_stmt",
+          "named": true
+        },
+        {
+          "type": "null",
+          "named": true
+        },
+        {
+          "type": "number",
+          "named": true
+        },
+        {
+          "type": "object_literal",
+          "named": true
+        },
+        {
+          "type": "parens_expr",
+          "named": true
+        },
+        {
+          "type": "property_expr",
+          "named": true
+        },
+        {
+          "type": "return_stmt",
+          "named": true
+        },
+        {
+          "type": "self",
+          "named": true
+        },
+        {
+          "type": "string",
+          "named": true
+        },
+        {
+          "type": "try_stmt",
+          "named": true
+        },
+        {
+          "type": "unary_expr",
+          "named": true
+        },
+        {
+          "type": "while_stmt",
+          "named": true
+        }
+      ]
+    }
+  },
+  {
     "type": "unary_expr",
     "named": true,
     "fields": {},
@@ -1506,6 +1736,10 @@
           "named": true
         },
         {
+          "type": "const_stmt",
+          "named": true
+        },
+        {
           "type": "continue_stmt",
           "named": true
         },
@@ -1571,6 +1805,10 @@
         },
         {
           "type": "string",
+          "named": true
+        },
+        {
+          "type": "try_stmt",
           "named": true
         },
         {
@@ -1733,7 +1971,15 @@
     "named": true
   },
   {
+    "type": "catch",
+    "named": false
+  },
+  {
     "type": "class",
+    "named": false
+  },
+  {
+    "type": "const",
     "named": false
   },
   {
@@ -1802,6 +2048,10 @@
   },
   {
     "type": "true",
+    "named": false
+  },
+  {
+    "type": "try",
     "named": false
   },
   {

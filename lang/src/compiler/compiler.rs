@@ -702,6 +702,41 @@ impl Compiler {
                 self.emit(Instruction::Push(index), span);
                 self.store_variable(name, span);
             }
+
+            Expr::Try { try_block, catch_block, catch_var } => {
+                self.scope.push_scope();
+
+                let mut var_slot = 0;
+                if let Some(var) = catch_var {
+                    var_slot = self.scope.define_local(&var);
+                }
+                
+                let setup = self.emit_jump(Instruction::SetupTry(0), span);
+
+                self.compile_expr(*try_block.clone())?;
+                if !Self::block_is_void(&try_block.node) {
+                    self.emit(Instruction::Pop, span);
+                }
+
+                self.emit(Instruction::EndTry, span);
+                let jump_end = self.emit_jump(Instruction::Jump(0), span);
+
+                self.patch_jump(setup);
+
+                if let Some(_) = catch_var {
+                    self.emit(Instruction::StoreLocal(var_slot), span);
+                }
+
+                self.compile_expr(*catch_block.clone())?;
+                if !Self::block_is_void(&catch_block.node) {
+                    self.emit(Instruction::Pop, span);
+                }
+
+                self.patch_jump(jump_end);
+                self.emit(Instruction::PushNull, span);
+
+                self.scope.pop_scope();
+            }
         }
 
         Ok(())

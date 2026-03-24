@@ -139,5 +139,11 @@ pub enum Expr {
     Class {
         name: String,
         methods: Vec<Spanned<Expr>>,
+    },
+
+    Try {
+        try_block: Box<Spanned<Expr>>,
+        catch_block: Box<Spanned<Expr>>,
+        catch_var: Option<String>,
     }
 }

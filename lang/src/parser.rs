@@ -560,6 +560,36 @@ fn parser<'src>() -> impl Parser<
                 }
             })
             .labelled("import statement");
+        
+        let try_catch_stmt = select! { (Token::Try, span) => span }
+            .then(block.clone().labelled("try block"))
+            .then(
+                select! { (Token::Catch, span) => span }
+                    .then(
+                        select! { (Token::Identifier(name), _) => name }.or_not()
+                    )
+                    .then(block.clone().labelled("catch block"))
+                    .or_not()
+            )
+            .map(|((start, try_block), catch): ((Span, SpannedExpr), Option<((Span, Option<String>), SpannedExpr)>)| {
+                let (catch_var, catch_block) = match catch {
+                    Some(((_, var), block)) => (var, block),
+                    None => (None, SpannedExpr {
+                        node: Expr::Block(vec![]),
+                        span: start.clone(),
+                    }),
+                };
+
+                SpannedExpr {
+                    node: Expr::Try {
+                        try_block: Box::new(try_block.clone()),
+                        catch_block: Box::new(catch_block.clone()),
+                        catch_var,
+                    },
+                    span: Span::from(start.start..try_block.span.end),
+                }
+            })
+            .labelled("try-catch statement");
                 
         choice((
             let_stmt,
@@ -575,6 +605,7 @@ fn parser<'src>() -> impl Parser<
             return_stmt,
             block,
             expr_stmt,
+            try_catch_stmt,
         )).boxed().labelled("statement")
     });
 

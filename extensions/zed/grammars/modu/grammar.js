@@ -22,6 +22,7 @@ module.exports = grammar({
                 $.break_stmt,
                 $.continue_stmt,
                 $.import_stmt,
+                $.try_stmt,
                 $._expression,
             ),
         
@@ -55,6 +56,9 @@ module.exports = grammar({
             "continue",
         import_stmt: ($) =>
             seq("import", $.string, optional(seq("as", $.identifier))),
+        try_stmt: ($) =>
+            seq("try", $._block, "catch", $.identifier, $._block),
+
 
         _block: ($) => seq("{", repeat($._statement), "}"),
 

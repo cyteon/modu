@@ -134,6 +134,12 @@ pub enum Token {
     #[token("or")]
     Or,
 
+    #[token("try")]
+    Try,
+
+    #[token("catch")]
+    Catch,
+
     #[token("!")]
     Not,
 

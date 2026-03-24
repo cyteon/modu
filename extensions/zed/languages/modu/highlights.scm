@@ -14,6 +14,8 @@
   "in"
   "and"
   "or"
+  "try"
+  "catch"
 ] @keyword
 
 (boolean) @constant.builtin

@@ -19,6 +19,10 @@
         },
         {
           "type": "SYMBOL",
+          "name": "const_stmt"
+        },
+        {
+          "type": "SYMBOL",
           "name": "assign_stmt"
         },
         {
@@ -63,6 +67,10 @@
         },
         {
           "type": "SYMBOL",
+          "name": "try_stmt"
+        },
+        {
+          "type": "SYMBOL",
           "name": "_expression"
         }
       ]
@@ -73,6 +81,27 @@
         {
           "type": "STRING",
           "value": "let"
+        },
+        {
+          "type": "SYMBOL",
+          "name": "identifier"
+        },
+        {
+          "type": "STRING",
+          "value": "="
+        },
+        {
+          "type": "SYMBOL",
+          "name": "_expression"
+        }
+      ]
+    },
+    "const_stmt": {
+      "type": "SEQ",
+      "members": [
+        {
+          "type": "STRING",
+          "value": "const"
         },
         {
           "type": "SYMBOL",
@@ -426,6 +455,31 @@
               "type": "BLANK"
             }
           ]
+        }
+      ]
+    },
+    "try_stmt": {
+      "type": "SEQ",
+      "members": [
+        {
+          "type": "STRING",
+          "value": "try"
+        },
+        {
+          "type": "SYMBOL",
+          "name": "_block"
+        },
+        {
+          "type": "STRING",
+          "value": "catch"
+        },
+        {
+          "type": "SYMBOL",
+          "name": "identifier"
+        },
+        {
+          "type": "SYMBOL",
+          "name": "_block"
         }
       ]
     },

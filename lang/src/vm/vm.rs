@@ -8,6 +8,13 @@ use super::value::Value;
 use super::instruction::Instruction;
 use crate::compiler::scope::Variable;
 
+pub struct ErrorHandler {
+    catch_ip: usize,
+    chunk_id: usize,
+    stack_depth: usize,
+    frame_depth: usize
+}
+
 pub struct CallFrame {
     chunk_id: usize,
     ip: usize,
@@ -17,11 +24,12 @@ pub struct CallFrame {
 
 pub struct VM {
     pub chunks: Vec<Chunk>,
-    pub stack: Vec<Value>,
-    pub frames: Vec<CallFrame>,
+    stack: Vec<Value>,
+    frames: Vec<CallFrame>,
     pub globals: HashMap<String, Value>,
-    pub source_path: std::path::PathBuf,
-    pub source: String,
+    source_path: std::path::PathBuf,
+    source: String,
+    error_handlers: Vec<ErrorHandler>
 }
 
 const STACK_MAX: usize = 2048;
@@ -55,6 +63,7 @@ impl VM {
             globals: HashMap::new(),
             source_path,
             source,
+            error_handlers: Vec::new(),
         };
 
         for func in crate::functions::get_functions() {
@@ -110,7 +119,14 @@ impl VM {
 
                 Instruction::Neg => {
                     let a = self.stack.pop().unwrap_or(Value::Null);
-                    self.stack.push(a.neg().map_err(|e| self.runtime_error(format!("{}", e), span))?);
+
+                    match a.neg() {
+                        Ok(v) => self.stack.push(v),
+                        Err(e) => {
+                            self.handle_error(format!("{}", e), span)?;
+                            continue;
+                        }
+                    }
                 }
 
                 Instruction::Add => {
@@ -293,7 +309,8 @@ impl VM {
                                 Err(e) => {
                                     // this isnt great lmfao but it works ig
                                     if func.name == "error" && !e.contains("error() takes exactly one argument") {
-                                        return Err(self.runtime_error(format!("{}", e), span));
+                                        self.handle_error(format!("{}", e), span)?;
+                                        continue;
                                     }
 
                                     return Err(self.runtime_error(format!("error calling {}(): {}", func.name, e), span));
@@ -1040,6 +1057,19 @@ impl VM {
                     }
                 }
 
+                Instruction::SetupTry(ip) => {
+                    self.error_handlers.push(ErrorHandler {
+                        catch_ip: *ip,
+                        chunk_id: frame.chunk_id,
+                        stack_depth: self.stack.len(),
+                        frame_depth: self.frames.len(),
+                    });
+                }
+
+                Instruction::EndTry => {
+                    self.error_handlers.pop();
+                }
+
                 Instruction::Pop => {
                     self.stack.pop();
                 }
@@ -1144,6 +1174,46 @@ impl VM {
             .ok();
         
         String::from_utf8_lossy(&buf).to_string()
+    }
+
+    fn handle_error(&mut self, msg: String, span: SimpleSpan) -> Result<(), String> {
+        if let Some(handler) = self.error_handlers.pop() {
+            self.stack.truncate(handler.stack_depth);
+
+            while self.frames.len() > handler.frame_depth {
+                self.frames.pop();
+            }
+
+            if let Some(frame) = self.frames.last_mut() {
+                frame.ip = handler.catch_ip;
+            }
+
+            self.stack.push(Value::String(msg));
+
+            Ok(())
+        } else {
+            Err(self.runtime_error(msg, span))
+        }
+    }
+
+    fn handle_error_with_help(&mut self, msg: String, help: String, span: SimpleSpan) -> Result<(), String> {
+        if let Some(handler) = self.error_handlers.pop() {
+            self.stack.truncate(handler.stack_depth);
+
+            while self.frames.len() > handler.frame_depth {
+                self.frames.pop();
+            }
+
+            if let Some(frame) = self.frames.last_mut() {
+                frame.ip = handler.catch_ip;
+            }
+
+            self.stack.push(Value::String(msg));
+
+            Ok(())
+        } else {
+            Err(self.runtime_error(msg, span))
+        }
     }
 }
 

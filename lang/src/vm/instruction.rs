@@ -20,6 +20,9 @@ pub enum Instruction {
     Jump(usize),
     JumpIfFalse(usize),
 
+    SetupTry(usize), // jumps to usize if smth went wrong
+    EndTry,
+
     Call(usize),
     CallMethod { argc: usize, target_local: Option<usize>, target_global: Option<String> },
     Return,

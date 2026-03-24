@@ -1,0 +1,5 @@
+try {
+    error("test");
+} catch e {
+    print("error: " + e);
+}
