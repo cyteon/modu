@@ -31,6 +31,9 @@ pub enum Instruction {
     MakeObject(usize),
     MakeRange { inclusive: bool },
 
+    Extend,
+    GetSuper(String),
+
     GetProperty(String),
     SetProperty(String),
     IndexGet,

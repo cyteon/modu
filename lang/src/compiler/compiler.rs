@@ -214,10 +214,14 @@ impl Compiler {
                 if let Expr::PropertyAccess { object, property: _ } = &callee.node {
                     let (target_local, target_global) = match &object.node {
                         Expr::Identifier(name) => {
-                            match self.scope.resolve(name) {
-                                Variable::Local(index) => (Some(index), None),
-                                Variable::Global(_) => (None, Some(name.to_string())),
-                            }
+                            if name == "super" {
+                                (Some(0), None)
+                            } else {
+                                match self.scope.resolve(name) {
+                                    Variable::Local(index) => (Some(index), None),
+                                    Variable::Global(_) => (None, Some(name.to_string())),
+                                }
+                            } 
                         }
 
                         _ => (None, None),
@@ -230,10 +234,14 @@ impl Compiler {
             }
 
             Expr::PropertyAccess { object, property } => {
-                self.compile_expr(*object.clone())?;
-                self.emit(Instruction::GetProperty(property.clone()), span);
+                if matches!(&object.node, Expr::Identifier(n) if n == "super") {
+                    self.emit(Instruction::LoadLocal(0), span);
+                    self.emit(Instruction::GetSuper(property.clone()), span);
+                } else {
+                    self.compile_expr(*object.clone())?;
+                    self.emit(Instruction::GetProperty(property.clone()), span);
+                }
             }
-
 
             Expr::IndexAccess { object, index } => {
                 self.compile_expr(*object.clone())?;
@@ -655,7 +663,7 @@ impl Compiler {
                 self.emit(Instruction::Import { path: name.clone(), alias: alias.clone() }, span);
             }
 
-            Expr::Class { name, methods } => {
+            Expr::Class { name, methods, parent } => {
                 let mut methods_map = HashMap::new();
 
                 for f in methods {
@@ -696,10 +704,19 @@ impl Compiler {
                     }
                 }
 
-                let class_value = Value::Class { name: name.clone(), methods: methods_map };
+                let class_value = Value::Class { name: name.clone(), methods: methods_map, parent_methods: HashMap::new() };
                 let index = self.add_constant(class_value);
-
                 self.emit(Instruction::Push(index), span);
+
+                if let Some(name) = parent {
+                    match self.scope.resolve(&name) {
+                        Variable::Local(index) => self.emit(Instruction::LoadLocal(index), span),
+                        Variable::Global(name) => self.emit(Instruction::LoadGlobal(name), span),
+                    }
+
+                    self.emit(Instruction::Extend, span);
+                }
+
                 self.store_variable(name, span);
             }
 

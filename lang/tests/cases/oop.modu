@@ -21,3 +21,20 @@ counter.value = -1;
 counter.dec();
 
 print(counter.value);
+
+class xCounter extends Counter {
+    fn init(start, mult) {
+        super.init(start);
+        self.mult = mult;
+    }
+
+    fn mul() {
+        self.value *= self.mult;
+    }
+}
+
+let xc = xCounter(8, 2);
+print(xc.value);
+
+xc.mul();
+print(xc.value);

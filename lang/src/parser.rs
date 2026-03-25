@@ -35,6 +35,8 @@ fn parser<'src>() -> impl Parser<
             (Token::String(name), span) => SpannedExpr { node: Expr::String(name), span },
             (Token::Identifier(name), span) => SpannedExpr { node: Expr::Identifier(name), span },
             (Token::Bool(b), span) => SpannedExpr { node: Expr::Bool(b), span },
+            (Token::Super, span) => SpannedExpr { node: Expr::Identifier("super".to_string()), span },
+
             (Token::Null, span) => SpannedExpr { node: Expr::Null, span },
             (Token::Break, span) => SpannedExpr { node: Expr::Break, span },
             (Token::Continue, span) => SpannedExpr { node: Expr::Continue, span },
@@ -437,12 +439,19 @@ fn parser<'src>() -> impl Parser<
         let class_stmt = select! { (Token::Class, span) => span }
             .then(select! { (Token::Identifier(name), _) => name }.labelled("class name"))
             .then(
+                select! { (Token::Extends, _) }
+                .ignore_then(
+                    select! { (Token::Identifier(name), _) => name }
+                )
+                .or_not()
+            )
+            .then(
                 select! { (Token::LBrace, span) => span }
                     .then(fn_stmt.clone().repeated().collect::<Vec<_>>())
                     .then(select! { (Token::RBrace, span) => span })
             )
-            .map(|((start, name), ((_lbrace, methods), end)): ((Span, String), ((Span, Vec<SpannedExpr>), Span))| SpannedExpr {
-                node: Expr::Class { name, methods },
+            .map(|(((start, name), parent), ((_lbrace, methods), end)): (((Span, String), Option<String>), ((Span, Vec<SpannedExpr>), Span))| SpannedExpr {
+                node: Expr::Class { name, methods, parent },
                 span: Span::from(start.start..end.end),
             })
             .labelled("class declaration");

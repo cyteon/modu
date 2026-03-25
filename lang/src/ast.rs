@@ -25,6 +25,7 @@ pub enum Expr {
     Identifier(String),
     Bool(bool),
     Return(Box<Spanned<Expr>>),
+    
     Null,
     Break,
     Continue,
@@ -139,6 +140,7 @@ pub enum Expr {
     Class {
         name: String,
         methods: Vec<Spanned<Expr>>,
+        parent: Option<String>,
     },
 
     Try {

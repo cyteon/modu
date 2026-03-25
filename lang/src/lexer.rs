@@ -98,6 +98,12 @@ pub enum Token {
     #[token("class")]
     Class,
 
+    #[token("extends")]
+    Extends,
+
+    #[token("super")]
+    Super,
+
     #[token("import")]
     Import,
 

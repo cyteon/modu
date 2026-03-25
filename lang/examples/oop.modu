@@ -34,3 +34,30 @@ print(counter.get());
 counter.reset();
 counter.decrement();
 print(counter.value);
+
+print("\n---\n");
+
+class xCounter extends Counter {
+    fn init(start, mult) {
+        super.init(start);
+        print(super.init);
+
+        self.mult = mult;
+    }
+
+    fn mul() {
+        self.value *= self.mult;
+    }
+
+    fn div() {
+        self.value /= self.mult;
+    }
+}
+
+let xc = xCounter(8, 2);
+print(xc.value);
+
+xc.mul();
+xc.increment();
+
+print(xc.value);

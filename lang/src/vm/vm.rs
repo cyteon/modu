@@ -400,13 +400,14 @@ impl VM {
                             });
                         }
 
-                        Value::Class { name, methods } => {
+                        Value::Class { name, methods, parent_methods } => {
                             let args: Vec<Value> = self.stack.drain(self.stack.len() - argc..).collect();
                             self.stack.pop();
 
                             let instance = Value::Instance {
                                 class_name: name.clone(),
                                 properties: methods.clone(),
+                                parent_methods: parent_methods.clone()
                             };
 
                             if let Some(Value::Function { chunk_id, arity }) = methods.get("init") {
@@ -543,13 +544,14 @@ impl VM {
                             }
                         }
 
-                        Value::Class { name, methods } => {
+                        Value::Class { name, methods, parent_methods } => {
                             let args: Vec<Value> = self.stack.drain(self.stack.len() - argc..).collect();
                             self.stack.pop();
 
                             let instance = Value::Instance {
                                 class_name: name.clone(),
                                 properties: methods.clone(),
+                                parent_methods: parent_methods.clone()
                             };
 
                             if let Some(Value::Function { chunk_id, arity }) = methods.get("init") {
@@ -635,8 +637,12 @@ impl VM {
                         if matches!(ns, Value::Instance { .. }) {
                             match target {
                                 Variable::Local(slot) => {
-                                    if *slot < self.stack.len() {
-                                        self.stack[*slot] = ns;
+                                    let caller_base = self.frames.last()
+                                        .map(|f| f.base)
+                                        .unwrap_or(0);
+
+                                    if caller_base + *slot < self.stack.len() {
+                                        self.stack[caller_base + *slot] = ns;
                                     }
                                 }
 
@@ -941,7 +947,7 @@ impl VM {
                             self.stack.push(Value::NativeFn(method));
                         }
 
-                        Value::Instance { class_name, properties } => {
+                        Value::Instance { class_name, properties, .. } => {
                             if let Some(v) = properties.get(name) {
                                 match v {
                                     Value::Function { chunk_id, arity } => {
@@ -1007,9 +1013,9 @@ impl VM {
                             Value::Object(properties)
                         }
 
-                        Value::Instance { class_name, mut properties } => {
+                        Value::Instance { class_name, mut properties, parent_methods } => {
                             properties.insert(name.clone(), value);
-                            Value::Instance { class_name, properties }
+                            Value::Instance { class_name, properties, parent_methods }
                         }
 
                         t => {
@@ -1219,6 +1225,52 @@ impl VM {
                     self.error_handlers.pop();
                 }
 
+                Instruction::Extend => {
+                    let parent = self.stack.pop().unwrap_or(Value::Null);
+                    let child = self.stack.pop().unwrap_or(Value::Null);
+
+                    match (child, parent) {
+                        (Value::Class { name, mut methods, .. }, Value::Class { methods: parent_methods, .. }) => {
+                            let saved_methods = parent_methods.clone();
+
+                            for (k, v) in parent_methods {
+                                methods.entry(k).or_insert(v);
+                            }
+
+                            self.stack.push(Value::Class { name, methods, parent_methods: saved_methods });
+                        }
+
+                        (_, _) => {
+                            self.handle_error("class can only extend a class".to_string(), span)?;
+                            continue;
+                        }
+                    }
+                }
+
+                Instruction::GetSuper(name) => {
+                    let inst = self.stack.pop().unwrap_or(Value::Null);
+
+                    match inst.clone() {
+                        Value::Instance { parent_methods, .. } => {
+                            if let Some(Value::Function { chunk_id, arity }) = parent_methods.get(name) {
+                                self.stack.push(Value::InstanceFn {
+                                    instance: Box::new(inst),
+                                    chunk_id: *chunk_id,
+                                    arity: *arity,
+                                });
+                            } else {
+                                self.handle_error(format!("super has no method '{}'", name), span)?;
+                                continue;
+                            }
+                        }
+
+                        _ => {
+                            self.handle_error("super cannot be used outside of a class".to_string(), span)?;
+                            continue;
+                        }
+                    }
+                }
+
                 Instruction::Pop => {
                     self.stack.pop();
                 }
@@ -1380,14 +1432,16 @@ fn remap(value: Value, offset: usize) -> Value {
             elems.into_iter().map(|v| remap(v, offset)).collect()
         ),
 
-        Value::Class { name, methods } => Value::Class { 
+        Value::Class { name, methods, parent_methods } => Value::Class { 
             name, 
-            methods: methods.into_iter().map(|(k, v)| (k, remap(v, offset))).collect() 
+            methods: methods.into_iter().map(|(k, v)| (k, remap(v, offset))).collect(),
+            parent_methods: parent_methods.into_iter().map(|(k, v)| (k, remap(v, offset))).collect()
         },
 
-        Value::Instance { class_name, properties } => Value::Instance { 
+        Value::Instance { class_name, properties, parent_methods } => Value::Instance { 
             class_name, 
-            properties: properties.into_iter().map(|(k, v)| (k, remap(v, offset))).collect() 
+            properties: properties.into_iter().map(|(k, v)| (k, remap(v, offset))).collect(),
+            parent_methods: parent_methods.into_iter().map(|(k, v)| (k, remap(v, offset))).collect()
         },
 
         Value::InstanceFn { instance, chunk_id, arity } => Value::InstanceFn { 
