@@ -16,11 +16,14 @@
   "or"
   "try"
   "catch"
+  "extends"
 ] @keyword
+
+(self) @variable.special
+(super) @variable.special
 
 (boolean) @constant.builtin
 (null) @constant.builtin
-(self) @variable.special
 (string) @string
 (number) @number
 (comment) @comment
