@@ -437,12 +437,19 @@ fn parser<'src>() -> impl Parser<
         let class_stmt = select! { (Token::Class, span) => span }
             .then(select! { (Token::Identifier(name), _) => name }.labelled("class name"))
             .then(
+                select! { (Token::Extends, _) }
+                .ignore_then(
+                    select! { (Token::Identifier(name), _) => name }
+                )
+                .or_not()
+            )
+            .then(
                 select! { (Token::LBrace, span) => span }
                     .then(fn_stmt.clone().repeated().collect::<Vec<_>>())
                     .then(select! { (Token::RBrace, span) => span })
             )
-            .map(|((start, name), ((_lbrace, methods), end)): ((Span, String), ((Span, Vec<SpannedExpr>), Span))| SpannedExpr {
-                node: Expr::Class { name, methods },
+            .map(|(((start, name), parent), ((_lbrace, methods), end)): (((Span, String), Option<String>), ((Span, Vec<SpannedExpr>), Span))| SpannedExpr {
+                node: Expr::Class { name, methods, parent },
                 span: Span::from(start.start..end.end),
             })
             .labelled("class declaration");

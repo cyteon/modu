@@ -234,7 +234,6 @@ impl Compiler {
                 self.emit(Instruction::GetProperty(property.clone()), span);
             }
 
-
             Expr::IndexAccess { object, index } => {
                 self.compile_expr(*object.clone())?;
                 self.compile_expr(*index.clone())?;
@@ -655,7 +654,7 @@ impl Compiler {
                 self.emit(Instruction::Import { path: name.clone(), alias: alias.clone() }, span);
             }
 
-            Expr::Class { name, methods } => {
+            Expr::Class { name, methods, parent } => {
                 let mut methods_map = HashMap::new();
 
                 for f in methods {
@@ -698,8 +697,17 @@ impl Compiler {
 
                 let class_value = Value::Class { name: name.clone(), methods: methods_map };
                 let index = self.add_constant(class_value);
-
                 self.emit(Instruction::Push(index), span);
+
+                if let Some(name) = parent {
+                    match self.scope.resolve(&name) {
+                        Variable::Local(index) => self.emit(Instruction::LoadLocal(index), span),
+                        Variable::Global(name) => self.emit(Instruction::LoadGlobal(name), span),
+                    }
+
+                    self.emit(Instruction::Extend, span);
+                }
+
                 self.store_variable(name, span);
             }
 

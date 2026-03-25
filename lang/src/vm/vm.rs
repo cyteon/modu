@@ -1219,6 +1219,26 @@ impl VM {
                     self.error_handlers.pop();
                 }
 
+                Instruction::Extend => {
+                    let parent = self.stack.pop().unwrap_or(Value::Null);
+                    let child = self.stack.pop().unwrap_or(Value::Null);
+
+                    match (child, parent) {
+                        (Value::Class { name, mut methods }, Value::Class { methods: parent_methods, .. }) => {
+                            for (k, v) in parent_methods {
+                                methods.entry(k).or_insert(v);
+                            }
+
+                            self.stack.push(Value::Class { name, methods });
+                        }
+
+                        (_, _) => {
+                            self.handle_error("class can only extend a class".to_string(), span)?;
+                            continue;
+                        }
+                    }
+                }
+
                 Instruction::Pop => {
                     self.stack.pop();
                 }

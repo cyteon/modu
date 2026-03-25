@@ -139,6 +139,7 @@ pub enum Expr {
     Class {
         name: String,
         methods: Vec<Spanned<Expr>>,
+        parent: Option<String>,
     },
 
     Try {
