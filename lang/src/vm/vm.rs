@@ -637,8 +637,12 @@ impl VM {
                         if matches!(ns, Value::Instance { .. }) {
                             match target {
                                 Variable::Local(slot) => {
-                                    if *slot < self.stack.len() {
-                                        self.stack[*slot] = ns;
+                                    let caller_base = self.frames.last()
+                                        .map(|f| f.base)
+                                        .unwrap_or(0);
+
+                                    if caller_base + *slot < self.stack.len() {
+                                        self.stack[caller_base + *slot] = ns;
                                     }
                                 }
 

@@ -214,10 +214,14 @@ impl Compiler {
                 if let Expr::PropertyAccess { object, property: _ } = &callee.node {
                     let (target_local, target_global) = match &object.node {
                         Expr::Identifier(name) => {
-                            match self.scope.resolve(name) {
-                                Variable::Local(index) => (Some(index), None),
-                                Variable::Global(_) => (None, Some(name.to_string())),
-                            }
+                            if name == "super" {
+                                (Some(0), None)
+                            } else {
+                                match self.scope.resolve(name) {
+                                    Variable::Local(index) => (Some(index), None),
+                                    Variable::Global(_) => (None, Some(name.to_string())),
+                                }
+                            } 
                         }
 
                         _ => (None, None),
