@@ -230,8 +230,13 @@ impl Compiler {
             }
 
             Expr::PropertyAccess { object, property } => {
-                self.compile_expr(*object.clone())?;
-                self.emit(Instruction::GetProperty(property.clone()), span);
+                if matches!(&object.node, Expr::Identifier(n) if n == "super") {
+                    self.emit(Instruction::LoadLocal(0), span);
+                    self.emit(Instruction::GetSuper(property.clone()), span);
+                } else {
+                    self.compile_expr(*object.clone())?;
+                    self.emit(Instruction::GetProperty(property.clone()), span);
+                }
             }
 
             Expr::IndexAccess { object, index } => {
@@ -695,7 +700,7 @@ impl Compiler {
                     }
                 }
 
-                let class_value = Value::Class { name: name.clone(), methods: methods_map };
+                let class_value = Value::Class { name: name.clone(), methods: methods_map, parent_methods: HashMap::new() };
                 let index = self.add_constant(class_value);
                 self.emit(Instruction::Push(index), span);
 

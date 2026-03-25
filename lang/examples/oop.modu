@@ -39,8 +39,9 @@ print("\n---\n");
 
 class xCounter extends Counter {
     fn init(start, mult) {
-        //super.init(start); TODO: add super
-        self.value = start;
+        super.init(start);
+        print(super.init);
+
         self.mult = mult;
     }
 

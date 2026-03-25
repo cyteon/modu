@@ -27,11 +27,13 @@ pub enum Value {
     Class {
         name: String,
         methods: HashMap<String, Value>,
+        parent_methods: HashMap<String, Value>,
     },
 
     Instance {
         class_name: String,
         properties: HashMap<String, Value>,
+        parent_methods: HashMap<String, Value>,
     },
 
     InstanceFn {
@@ -94,11 +96,15 @@ impl PartialEq for Value {
             (Value::Function { chunk_id: a_id, arity: a_arity }, Value::Function { chunk_id: b_id, arity: b_arity }) => a_id == b_id && a_arity == b_arity,
             (Value::NativeFn(a), Value::NativeFn(b)) => a.name == b.name,
             (Value::BuiltinFn(a), Value::BuiltinFn(b)) => a.name == b.name,
-            (Value::Class { name: a_name, methods: a_methods }, Value::Class { name: b_name, methods: b_methods }) => a_name == b_name && a_methods == b_methods,
 
             (
-                Value::Instance { class_name: a_class, properties: a_props },
-                Value::Instance { class_name: b_class, properties: b_props }
+                Value::Class { name: a_name, methods: a_methods, .. },
+                Value::Class { name: b_name, methods: b_methods, .. }
+            ) => a_name == b_name && a_methods == b_methods,
+
+            (
+                Value::Instance { class_name: a_class, properties: a_props, .. },
+                Value::Instance { class_name: b_class, properties: b_props, .. }
             ) => a_class == b_class && a_props == b_props,
 
             (

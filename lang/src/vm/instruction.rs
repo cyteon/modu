@@ -30,7 +30,9 @@ pub enum Instruction {
     MakeArray(usize),
     MakeObject(usize),
     MakeRange { inclusive: bool },
+
     Extend,
+    GetSuper(String),
 
     GetProperty(String),
     SetProperty(String),

@@ -35,6 +35,8 @@ fn parser<'src>() -> impl Parser<
             (Token::String(name), span) => SpannedExpr { node: Expr::String(name), span },
             (Token::Identifier(name), span) => SpannedExpr { node: Expr::Identifier(name), span },
             (Token::Bool(b), span) => SpannedExpr { node: Expr::Bool(b), span },
+            (Token::Super, span) => SpannedExpr { node: Expr::Identifier("super".to_string()), span },
+
             (Token::Null, span) => SpannedExpr { node: Expr::Null, span },
             (Token::Break, span) => SpannedExpr { node: Expr::Break, span },
             (Token::Continue, span) => SpannedExpr { node: Expr::Continue, span },
