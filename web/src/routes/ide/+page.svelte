@@ -102,7 +102,7 @@
         <p class="ml-2 mt-auto">{moduVersion ? `v${moduVersion}` : "loading..."}</p>
 
         <div class="ml-auto my-auto">
-            <a href="docs" class="text-lg">docs</a>
+            <a href="/tour/contents" class="text-lg">docs</a>
         </div>
 
         <div class="ml-auto flex">
