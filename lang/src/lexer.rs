@@ -1,5 +1,5 @@
-use logos::Logos;
 use chumsky::span::SimpleSpan;
+use logos::Logos;
 
 pub type Span = SimpleSpan;
 
@@ -166,7 +166,7 @@ pub enum Token {
 
     #[token("%")]
     Mod,
-    
+
     #[token("+")]
     Plus,
 

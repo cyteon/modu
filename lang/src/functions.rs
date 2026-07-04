@@ -11,7 +11,10 @@ unsafe extern "C" {
 }
 
 fn builtin(name: &str, func: fn(Vec<Value>) -> Result<Value, String>) -> BuiltinFn {
-    BuiltinFn { name: name.to_string(), func }
+    BuiltinFn {
+        name: name.to_string(),
+        func,
+    }
 }
 
 pub fn get_functions() -> Vec<BuiltinFn> {
@@ -83,41 +86,52 @@ fn input(args: Vec<Value>) -> Result<Value, String> {
 
 fn int(args: Vec<Value>) -> Result<Value, String> {
     if args.len() != 1 {
-        return Err(format!("int() takes exactly one argument ({} given)", args.len()));
+        return Err(format!(
+            "int() takes exactly one argument ({} given)",
+            args.len()
+        ));
     }
 
     match &args[0] {
         Value::Int(i) => Ok(Value::Int(*i)),
         Value::Float(f) => Ok(Value::Int(*f as i64)),
         Value::Bool(b) => Ok(Value::Int(if *b { 1 } else { 0 })),
-        Value::String(s) => s.parse::<i64>()
+        Value::String(s) => s
+            .parse::<i64>()
             .map(|i| Value::Int(i as i64))
             .map_err(|_| format!("cannot convert '{}' to int", s)),
-        
+
         _ => Err(format!("cannot convert {} to int", args[0].type_name())),
     }
 }
 
 fn float(args: Vec<Value>) -> Result<Value, String> {
     if args.len() != 1 {
-        return Err(format!("float() takes exactly one argument ({} given)", args.len()));
+        return Err(format!(
+            "float() takes exactly one argument ({} given)",
+            args.len()
+        ));
     }
 
     match &args[0] {
         Value::Float(f) => Ok(Value::Float(*f)),
         Value::Int(i) => Ok(Value::Float(*i as f64)),
         Value::Bool(b) => Ok(Value::Float(if *b { 1.0 } else { 0.0 })),
-        Value::String(s) => s.parse::<f64>()
+        Value::String(s) => s
+            .parse::<f64>()
             .map(|f| Value::Float(f))
             .map_err(|_| format!("cannot convert '{}' to float", s)),
-        
+
         _ => Err(format!("cannot convert {} to float", args[0].type_name())),
     }
 }
 
 fn str(args: Vec<Value>) -> Result<Value, String> {
     if args.len() != 1 {
-        return Err(format!("str() takes exactly one argument ({} given)", args.len()));
+        return Err(format!(
+            "str() takes exactly one argument ({} given)",
+            args.len()
+        ));
     }
 
     Ok(Value::String(format!("{}", args[0])))
@@ -125,7 +139,10 @@ fn str(args: Vec<Value>) -> Result<Value, String> {
 
 fn bool(args: Vec<Value>) -> Result<Value, String> {
     if args.len() != 1 {
-        return Err(format!("bool() takes exactly one argument ({} given)", args.len()));
+        return Err(format!(
+            "bool() takes exactly one argument ({} given)",
+            args.len()
+        ));
     }
 
     Ok(Value::Bool(args[0].truthy()))
@@ -133,7 +150,10 @@ fn bool(args: Vec<Value>) -> Result<Value, String> {
 
 fn r#type(args: Vec<Value>) -> Result<Value, String> {
     if args.len() != 1 {
-        return Err(format!("type() takes exactly one argument ({} given)", args.len()));
+        return Err(format!(
+            "type() takes exactly one argument ({} given)",
+            args.len()
+        ));
     }
 
     Ok(Value::String(args[0].type_name().to_string()))
@@ -145,16 +165,27 @@ fn exit(args: Vec<Value>) -> Result<Value, String> {
     } else if args.len() == 1 {
         match &args[0] {
             Value::Int(i) => std::process::exit(*i as i32),
-            _ => return Err(format!("exit() argument must be an int, got {}", args[0].type_name())),
+            _ => {
+                return Err(format!(
+                    "exit() argument must be an int, got {}",
+                    args[0].type_name()
+                ));
+            }
         }
     } else {
-        return Err(format!("exit() takes at most one argument ({} given)", args.len()));
+        return Err(format!(
+            "exit() takes at most one argument ({} given)",
+            args.len()
+        ));
     }
 }
 
 fn error(args: Vec<Value>) -> Result<Value, String> {
     if args.len() != 1 {
-        return Err(format!("error() takes exactly one argument ({} given)", args.len()));
+        return Err(format!(
+            "error() takes exactly one argument ({} given)",
+            args.len()
+        ));
     }
 
     Err(format!("{}", args[0]))
@@ -162,7 +193,10 @@ fn error(args: Vec<Value>) -> Result<Value, String> {
 
 fn assert(args: Vec<Value>) -> Result<Value, String> {
     if args.len() != 1 {
-        return Err(format!("assert() takes exactly one argument ({} given)", args.len()));
+        return Err(format!(
+            "assert() takes exactly one argument ({} given)",
+            args.len()
+        ));
     }
 
     if !args[0].truthy() {

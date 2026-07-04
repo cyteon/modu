@@ -27,12 +27,20 @@ pub fn list_fns() -> Vec<String> {
 
 pub fn get(this: Value, args: Vec<Value>) -> Result<(Value, Option<Value>), String> {
     if args.len() != 1 {
-        return Err(format!("<object>.get() takes exactly one argument ({} given)", args.len()));
+        return Err(format!(
+            "<object>.get() takes exactly one argument ({} given)",
+            args.len()
+        ));
     }
 
     let key = match &args[0] {
         Value::String(s) => s,
-        _ => return Err(format!("<object>.get() key must be a string, got {}", args[0].type_name())),
+        _ => {
+            return Err(format!(
+                "<object>.get() key must be a string, got {}",
+                args[0].type_name()
+            ));
+        }
     };
 
     match this {
@@ -43,12 +51,20 @@ pub fn get(this: Value, args: Vec<Value>) -> Result<(Value, Option<Value>), Stri
 
 pub fn set(this: Value, args: Vec<Value>) -> Result<(Value, Option<Value>), String> {
     if args.len() != 2 {
-        return Err(format!("<object>.set() takes exactly two arguments ({} given)", args.len()));
+        return Err(format!(
+            "<object>.set() takes exactly two arguments ({} given)",
+            args.len()
+        ));
     }
 
     let key = match &args[0] {
         Value::String(s) => s,
-        _ => return Err(format!("<object>.set() key must be a string, got {}", args[0].type_name())),
+        _ => {
+            return Err(format!(
+                "<object>.set() key must be a string, got {}",
+                args[0].type_name()
+            ));
+        }
     };
 
     match this {
@@ -63,12 +79,20 @@ pub fn set(this: Value, args: Vec<Value>) -> Result<(Value, Option<Value>), Stri
 
 pub fn has(this: Value, args: Vec<Value>) -> Result<(Value, Option<Value>), String> {
     if args.len() != 1 {
-        return Err(format!("<object>.has() takes exactly one argument ({} given)", args.len()));
+        return Err(format!(
+            "<object>.has() takes exactly one argument ({} given)",
+            args.len()
+        ));
     }
 
     let key = match &args[0] {
         Value::String(s) => s,
-        _ => return Err(format!("<object>.has() key must be a string, got {}", args[0].type_name())),
+        _ => {
+            return Err(format!(
+                "<object>.has() key must be a string, got {}",
+                args[0].type_name()
+            ));
+        }
     };
 
     match this {
@@ -79,12 +103,20 @@ pub fn has(this: Value, args: Vec<Value>) -> Result<(Value, Option<Value>), Stri
 
 pub fn delete(this: Value, args: Vec<Value>) -> Result<(Value, Option<Value>), String> {
     if args.len() != 1 {
-        return Err(format!("<object>.delete() takes exactly one argument ({} given)", args.len()));
+        return Err(format!(
+            "<object>.delete() takes exactly one argument ({} given)",
+            args.len()
+        ));
     }
 
     let key = match &args[0] {
         Value::String(s) => s,
-        _ => return Err(format!("<object>.delete() key must be a string, got {}", args[0].type_name())),
+        _ => {
+            return Err(format!(
+                "<object>.delete() key must be a string, got {}",
+                args[0].type_name()
+            ));
+        }
     };
 
     match this {
@@ -99,7 +131,10 @@ pub fn delete(this: Value, args: Vec<Value>) -> Result<(Value, Option<Value>), S
 
 pub fn stringify(this: Value, args: Vec<Value>) -> Result<(Value, Option<Value>), String> {
     if !args.is_empty() {
-        return Err(format!("<object>.stringify() takes no arguments ({} given)", args.len()));
+        return Err(format!(
+            "<object>.stringify() takes no arguments ({} given)",
+            args.len()
+        ));
     }
 
     match this {
@@ -111,7 +146,7 @@ pub fn stringify(this: Value, args: Vec<Value>) -> Result<(Value, Option<Value>)
                     _ => parts.push(format!("\"{}\": {}", k, v)),
                 }
             }
-            
+
             Ok((Value::String(format!("{{ {} }}", parts.join(", "))), None))
         }
         _ => unreachable!(),
@@ -120,7 +155,10 @@ pub fn stringify(this: Value, args: Vec<Value>) -> Result<(Value, Option<Value>)
 
 pub fn keys(this: Value, args: Vec<Value>) -> Result<(Value, Option<Value>), String> {
     if !args.is_empty() {
-        return Err(format!("<object>.keys() takes no arguments ({} given)", args.len()));
+        return Err(format!(
+            "<object>.keys() takes no arguments ({} given)",
+            args.len()
+        ));
     }
 
     match this {
@@ -135,7 +173,10 @@ pub fn keys(this: Value, args: Vec<Value>) -> Result<(Value, Option<Value>), Str
 
 pub fn values(this: Value, args: Vec<Value>) -> Result<(Value, Option<Value>), String> {
     if !args.is_empty() {
-        return Err(format!("<object>.values() takes no arguments ({} given)", args.len()));
+        return Err(format!(
+            "<object>.values() takes no arguments ({} given)",
+            args.len()
+        ));
     }
 
     match this {

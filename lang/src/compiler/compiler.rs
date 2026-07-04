@@ -1,11 +1,11 @@
 use chumsky::span::SimpleSpan;
 use std::collections::HashMap;
 
+use super::scope::{ScopeStack, Variable};
+use crate::ast::{AssignOp, Expr, SpannedExpr};
 use crate::vm::chunk::Chunk;
 use crate::vm::instruction::Instruction;
 use crate::vm::value::Value;
-use crate::ast::{SpannedExpr, Expr, AssignOp};
-use super::scope::{ScopeStack, Variable};
 
 pub struct Compiler {
     pub global_consts: Vec<String>,
@@ -33,10 +33,7 @@ impl Compiler {
     fn is_void(expr: &Expr) -> bool {
         matches!(
             expr,
-            Expr::Let { .. }
-            | Expr::Assign { .. }
-            | Expr::Function { .. }
-            | Expr::Import { .. }
+            Expr::Let { .. } | Expr::Assign { .. } | Expr::Function { .. } | Expr::Import { .. }
         )
     }
 
@@ -112,7 +109,7 @@ impl Compiler {
 
             Expr::Const { name, value } => {
                 self.compile_expr(*value.clone())?;
-                
+
                 if self.scope.in_function() {
                     let slot = self.scope.define_const(name);
                     self.emit(Instruction::StoreLocal(slot), span);
@@ -122,19 +119,21 @@ impl Compiler {
                 }
             }
 
-            Expr::Identifier(name) => {
-                match self.scope.resolve(name) {
-                    Variable::Local(index) => {
-                        self.emit(Instruction::LoadLocal(index), span);
-                    }
-
-                    Variable::Global(_) => {
-                        self.emit(Instruction::LoadGlobal(name.to_string()), span);
-                    }
+            Expr::Identifier(name) => match self.scope.resolve(name) {
+                Variable::Local(index) => {
+                    self.emit(Instruction::LoadLocal(index), span);
                 }
-            }
 
-            Expr::Assign { target, value, operator } => {
+                Variable::Global(_) => {
+                    self.emit(Instruction::LoadGlobal(name.to_string()), span);
+                }
+            },
+
+            Expr::Assign {
+                target,
+                value,
+                operator,
+            } => {
                 if let Expr::Identifier(name) = &target.node {
                     if self.scope.is_const(name) || self.global_consts.contains(name) {
                         return Err(format!("cannot assign to constant '{}'", name));
@@ -159,12 +158,22 @@ impl Compiler {
                             self.compile_expr(*value.clone())?;
 
                             match op {
-                                AssignOp::Add => { self.emit(Instruction::Add, span); }
-                                AssignOp::Sub => { self.emit(Instruction::Sub, span); }
-                                AssignOp::Mul => { self.emit(Instruction::Mul, span); }
-                                AssignOp::Div => { self.emit(Instruction::Div, span); }
-                                AssignOp::Mod => { self.emit(Instruction::Mod, span); }
-                            }  
+                                AssignOp::Add => {
+                                    self.emit(Instruction::Add, span);
+                                }
+                                AssignOp::Sub => {
+                                    self.emit(Instruction::Sub, span);
+                                }
+                                AssignOp::Mul => {
+                                    self.emit(Instruction::Mul, span);
+                                }
+                                AssignOp::Div => {
+                                    self.emit(Instruction::Div, span);
+                                }
+                                AssignOp::Mod => {
+                                    self.emit(Instruction::Mod, span);
+                                }
+                            }
                         } else {
                             self.compile_expr(*value.clone())?;
                         }
@@ -186,11 +195,21 @@ impl Compiler {
                             self.compile_expr(*value.clone())?;
 
                             match op {
-                                AssignOp::Add => { self.emit(Instruction::Add, span); }
-                                AssignOp::Sub => { self.emit(Instruction::Sub, span); }
-                                AssignOp::Mul => { self.emit(Instruction::Mul, span); }
-                                AssignOp::Div => { self.emit(Instruction::Div, span); }
-                                AssignOp::Mod => { self.emit(Instruction::Mod, span); }
+                                AssignOp::Add => {
+                                    self.emit(Instruction::Add, span);
+                                }
+                                AssignOp::Sub => {
+                                    self.emit(Instruction::Sub, span);
+                                }
+                                AssignOp::Mul => {
+                                    self.emit(Instruction::Mul, span);
+                                }
+                                AssignOp::Div => {
+                                    self.emit(Instruction::Div, span);
+                                }
+                                AssignOp::Mod => {
+                                    self.emit(Instruction::Mod, span);
+                                }
                             }
                         } else {
                             self.compile_expr(*value.clone())?;
@@ -211,7 +230,11 @@ impl Compiler {
                     self.compile_expr(arg.clone())?;
                 }
 
-                if let Expr::PropertyAccess { object, property: _ } = &callee.node {
+                if let Expr::PropertyAccess {
+                    object,
+                    property: _,
+                } = &callee.node
+                {
                     let (target_local, target_global) = match &object.node {
                         Expr::Identifier(name) => {
                             if name == "super" {
@@ -221,13 +244,20 @@ impl Compiler {
                                     Variable::Local(index) => (Some(index), None),
                                     Variable::Global(_) => (None, Some(name.to_string())),
                                 }
-                            } 
+                            }
                         }
 
                         _ => (None, None),
                     };
 
-                    self.emit(Instruction::CallMethod { argc, target_local, target_global, }, span);
+                    self.emit(
+                        Instruction::CallMethod {
+                            argc,
+                            target_local,
+                            target_global,
+                        },
+                        span,
+                    );
                 } else {
                     self.emit(Instruction::Call(argc), span);
                 }
@@ -287,7 +317,7 @@ impl Compiler {
 
                 self.emit(Instruction::MakeObject(properties.len()), span);
             }
-            
+
             Expr::Null => {
                 self.emit(Instruction::PushNull, span);
             }
@@ -361,7 +391,7 @@ impl Compiler {
                 self.compile_expr(*a.clone())?;
                 self.compile_expr(*b.clone())?;
                 self.emit(Instruction::BitShr, span);
-            },
+            }
 
             Expr::BitNot(a) => {
                 self.compile_expr(*a.clone())?;
@@ -419,7 +449,7 @@ impl Compiler {
             Expr::And(a, b) => {
                 self.compile_expr(*a.clone())?;
                 let false_jump = self.emit_jump(Instruction::JumpIfFalse(0), span);
-                
+
                 self.compile_expr(*b.clone())?;
                 let end_jump = self.emit_jump(Instruction::Jump(0), span);
 
@@ -470,12 +500,15 @@ impl Compiler {
 
                 self.current_chunk = saved_chunk;
 
-                let fn_value = Value::Function { chunk_id, arity: args.len() };
+                let fn_value = Value::Function {
+                    chunk_id,
+                    arity: args.len(),
+                };
                 let index = self.add_constant(fn_value);
 
                 self.emit(Instruction::Push(index), span);
                 self.store_variable(name, span);
-            },
+            }
 
             Expr::InfiniteLoop { body } => {
                 let start = self.chunks[self.current_chunk].instructions.len();
@@ -535,7 +568,11 @@ impl Compiler {
                 self.emit(Instruction::MakeRange { inclusive: true }, span);
             }
 
-            Expr::ForLoop { iterator_name, iterator_range, body } => {
+            Expr::ForLoop {
+                iterator_name,
+                iterator_range,
+                body,
+            } => {
                 self.scope.push_scope();
 
                 self.compile_expr(*iterator_range.clone())?;
@@ -556,14 +593,17 @@ impl Compiler {
                 self.break_patches.push(Vec::new());
                 self.continue_targets.push(start);
 
-                self.emit(Instruction::IterNext {
-                    slot_iter,
-                    slot_index,
-                    slot_var: var,
-                }, span);
+                self.emit(
+                    Instruction::IterNext {
+                        slot_iter,
+                        slot_index,
+                        slot_var: var,
+                    },
+                    span,
+                );
 
                 let exit = self.emit_jump(Instruction::JumpIfFalse(0), span);
-                
+
                 // body
                 self.compile_expr(*body.clone())?;
 
@@ -660,17 +700,33 @@ impl Compiler {
             }
 
             Expr::Import { name, alias } => {
-                self.emit(Instruction::Import { path: name.clone(), alias: alias.clone() }, span);
+                self.emit(
+                    Instruction::Import {
+                        path: name.clone(),
+                        alias: alias.clone(),
+                    },
+                    span,
+                );
             }
 
-            Expr::Class { name, methods, parent } => {
+            Expr::Class {
+                name,
+                methods,
+                parent,
+            } => {
                 let mut methods_map = HashMap::new();
 
                 for f in methods {
-                    if let Expr::Function { name: method_name, args, body } = &f.node {
+                    if let Expr::Function {
+                        name: method_name,
+                        args,
+                        body,
+                    } = &f.node
+                    {
                         let chunk_id = self.chunks.len() + self.offset;
-                        self.chunks.push(Chunk::new(&format!("{}::{}", name, method_name)));
-                        
+                        self.chunks
+                            .push(Chunk::new(&format!("{}::{}", name, method_name)));
+
                         let saved_chunk = self.current_chunk;
                         self.current_chunk = chunk_id;
 
@@ -696,15 +752,22 @@ impl Compiler {
                         self.current_chunk = saved_chunk;
 
                         methods_map.insert(
-                            method_name.clone(), 
-                            Value::Function { chunk_id, arity: args.len() }
+                            method_name.clone(),
+                            Value::Function {
+                                chunk_id,
+                                arity: args.len(),
+                            },
                         );
                     } else {
                         return Err("class body can only contain functions".to_string());
                     }
                 }
 
-                let class_value = Value::Class { name: name.clone(), methods: methods_map, parent_methods: HashMap::new() };
+                let class_value = Value::Class {
+                    name: name.clone(),
+                    methods: methods_map,
+                    parent_methods: HashMap::new(),
+                };
                 let index = self.add_constant(class_value);
                 self.emit(Instruction::Push(index), span);
 
@@ -720,14 +783,18 @@ impl Compiler {
                 self.store_variable(name, span);
             }
 
-            Expr::Try { try_block, catch_block, catch_var } => {
+            Expr::Try {
+                try_block,
+                catch_block,
+                catch_var,
+            } => {
                 self.scope.push_scope();
 
                 let mut var_slot = 0;
                 if let Some(var) = catch_var {
                     var_slot = self.scope.define_local(&var);
                 }
-                
+
                 let setup = self.emit_jump(Instruction::SetupTry(0), span);
 
                 self.compile_expr(*try_block.clone())?;
@@ -763,12 +830,10 @@ impl Compiler {
         let span = target.span;
 
         match &target.node {
-            Expr::Identifier(name) => {
-                match self.scope.resolve(name) {
-                    Variable::Local(slot) => self.emit(Instruction::StoreLocal(slot), span),
-                    Variable::Global(_) => self.emit(Instruction::StoreGlobal(name.clone()), span),
-                }
-            }
+            Expr::Identifier(name) => match self.scope.resolve(name) {
+                Variable::Local(slot) => self.emit(Instruction::StoreLocal(slot), span),
+                Variable::Global(_) => self.emit(Instruction::StoreGlobal(name.clone()), span),
+            },
 
             Expr::IndexAccess { object, index } => {
                 self.compile_expr(*object.clone())?;
@@ -777,13 +842,13 @@ impl Compiler {
                 self.emit(Instruction::IndexSet, span);
                 self.compile_assign(object)?;
             }
-    
+
             Expr::PropertyAccess { object, property } => {
                 self.compile_expr(*object.clone())?;
                 self.emit(Instruction::Swap, span);
                 self.emit(Instruction::SetProperty(property.clone()), span);
                 self.compile_assign(object)?;
-            },
+            }
 
             _ => return Err("invalid assignment target".to_string()),
         }

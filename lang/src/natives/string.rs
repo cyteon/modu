@@ -31,7 +31,10 @@ pub fn list_fns() -> Vec<String> {
 
 pub fn len(this: Value, args: Vec<Value>) -> Result<(Value, Option<Value>), String> {
     if !args.is_empty() {
-        return Err(format!("<string>.len() takes no arguments ({} given)", args.len()));
+        return Err(format!(
+            "<string>.len() takes no arguments ({} given)",
+            args.len()
+        ));
     }
 
     match this {
@@ -42,17 +45,28 @@ pub fn len(this: Value, args: Vec<Value>) -> Result<(Value, Option<Value>), Stri
 
 pub fn split(this: Value, args: Vec<Value>) -> Result<(Value, Option<Value>), String> {
     if args.len() != 1 {
-        return Err(format!("<string>.split() takes exactly one argument ({} given)", args.len()));
+        return Err(format!(
+            "<string>.split() takes exactly one argument ({} given)",
+            args.len()
+        ));
     }
 
     let sep = match &args[0] {
         Value::String(s) => s,
-        _ => return Err(format!("<string>.split() delimiter must be a string, got {}", args[0].type_name())),
+        _ => {
+            return Err(format!(
+                "<string>.split() delimiter must be a string, got {}",
+                args[0].type_name()
+            ));
+        }
     };
 
     match this {
         Value::String(s) => {
-            let parts = s.split(sep).map(|part| Value::String(part.to_string())).collect();
+            let parts = s
+                .split(sep)
+                .map(|part| Value::String(part.to_string()))
+                .collect();
             Ok((Value::Array(parts), None))
         }
 
@@ -62,17 +76,30 @@ pub fn split(this: Value, args: Vec<Value>) -> Result<(Value, Option<Value>), St
 
 pub fn replace(this: Value, args: Vec<Value>) -> Result<(Value, Option<Value>), String> {
     if args.len() != 2 {
-        return Err(format!("<string>.replace() takes exactly two arguments ({} given)", args.len()));
+        return Err(format!(
+            "<string>.replace() takes exactly two arguments ({} given)",
+            args.len()
+        ));
     }
 
     let old = match &args[0] {
         Value::String(s) => s,
-        _ => return Err(format!("<string>.replace() old value must be a string, got {}", args[0].type_name())),
+        _ => {
+            return Err(format!(
+                "<string>.replace() old value must be a string, got {}",
+                args[0].type_name()
+            ));
+        }
     };
 
     let new = match &args[1] {
         Value::String(s) => s,
-        _ => return Err(format!("<string>.replace() new value must be a string, got {}", args[1].type_name())),
+        _ => {
+            return Err(format!(
+                "<string>.replace() new value must be a string, got {}",
+                args[1].type_name()
+            ));
+        }
     };
 
     match this {
@@ -83,7 +110,10 @@ pub fn replace(this: Value, args: Vec<Value>) -> Result<(Value, Option<Value>), 
 
 pub fn trim(this: Value, args: Vec<Value>) -> Result<(Value, Option<Value>), String> {
     if !args.is_empty() {
-        return Err(format!("<string>.trim() takes no arguments ({} given)", args.len()));
+        return Err(format!(
+            "<string>.trim() takes no arguments ({} given)",
+            args.len()
+        ));
     }
 
     match this {
@@ -94,7 +124,10 @@ pub fn trim(this: Value, args: Vec<Value>) -> Result<(Value, Option<Value>), Str
 
 pub fn to_upper(this: Value, args: Vec<Value>) -> Result<(Value, Option<Value>), String> {
     if !args.is_empty() {
-        return Err(format!("<string>.to_upper() takes no arguments ({} given)", args.len()));
+        return Err(format!(
+            "<string>.to_upper() takes no arguments ({} given)",
+            args.len()
+        ));
     }
 
     match this {
@@ -105,7 +138,10 @@ pub fn to_upper(this: Value, args: Vec<Value>) -> Result<(Value, Option<Value>),
 
 pub fn to_lower(this: Value, args: Vec<Value>) -> Result<(Value, Option<Value>), String> {
     if !args.is_empty() {
-        return Err(format!("<string>.to_lower() takes no arguments ({} given)", args.len()));
+        return Err(format!(
+            "<string>.to_lower() takes no arguments ({} given)",
+            args.len()
+        ));
     }
 
     match this {
@@ -116,12 +152,20 @@ pub fn to_lower(this: Value, args: Vec<Value>) -> Result<(Value, Option<Value>),
 
 pub fn starts_with(this: Value, args: Vec<Value>) -> Result<(Value, Option<Value>), String> {
     if args.len() != 1 {
-        return Err(format!("<string>.starts_with() takes exactly one argument ({} given)", args.len()));
+        return Err(format!(
+            "<string>.starts_with() takes exactly one argument ({} given)",
+            args.len()
+        ));
     }
 
     let prefix = match &args[0] {
         Value::String(s) => s,
-        _ => return Err(format!("<string>.starts_with() prefix must be a string, got {}", args[0].type_name())),
+        _ => {
+            return Err(format!(
+                "<string>.starts_with() prefix must be a string, got {}",
+                args[0].type_name()
+            ));
+        }
     };
 
     match this {
@@ -132,12 +176,20 @@ pub fn starts_with(this: Value, args: Vec<Value>) -> Result<(Value, Option<Value
 
 pub fn ends_with(this: Value, args: Vec<Value>) -> Result<(Value, Option<Value>), String> {
     if args.len() != 1 {
-        return Err(format!("<string>.ends_with() takes exactly one argument ({} given)", args.len()));
+        return Err(format!(
+            "<string>.ends_with() takes exactly one argument ({} given)",
+            args.len()
+        ));
     }
 
     let suffix = match &args[0] {
         Value::String(s) => s,
-        _ => return Err(format!("<string>.ends_with() suffix must be a string, got {}", args[0].type_name())),
+        _ => {
+            return Err(format!(
+                "<string>.ends_with() suffix must be a string, got {}",
+                args[0].type_name()
+            ));
+        }
     };
 
     match this {
@@ -148,7 +200,10 @@ pub fn ends_with(this: Value, args: Vec<Value>) -> Result<(Value, Option<Value>)
 
 pub fn chars(this: Value, args: Vec<Value>) -> Result<(Value, Option<Value>), String> {
     if !args.is_empty() {
-        return Err(format!("<string>.chars() takes no arguments ({} given)", args.len()));
+        return Err(format!(
+            "<string>.chars() takes no arguments ({} given)",
+            args.len()
+        ));
     }
 
     match this {

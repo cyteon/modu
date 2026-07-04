@@ -3,12 +3,15 @@ use std::fs;
 use std::path::Path;
 
 fn run_test(name: &str) {
-    let dir = Path::new(env!("CARGO_MANIFEST_DIR")).join("tests").join("cases");
+    let dir = Path::new(env!("CARGO_MANIFEST_DIR"))
+        .join("tests")
+        .join("cases");
+
     let modu_file = dir.join(format!("{}.modu", name));
     let expected_file = dir.join(format!("{}.expected", name));
 
-    let expected_output = fs::read_to_string(&expected_file)
-        .expect("Failed to read expected output file");
+    let expected_output =
+        fs::read_to_string(&expected_file).expect("Failed to read expected output file");
 
     assert_cmd::cargo::cargo_bin_cmd!(env!("CARGO_PKG_NAME"))
         .arg("run")

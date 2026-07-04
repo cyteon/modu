@@ -1,6 +1,6 @@
-use chumsky::span::SimpleSpan;
-use super::value::Value;
 use super::instruction::Instruction;
+use super::value::Value;
+use chumsky::span::SimpleSpan;
 
 #[derive(Debug, Clone)]
 pub struct Chunk {
@@ -35,7 +35,7 @@ impl Chunk {
         match &mut self.instructions[jump] {
             Instruction::Jump(offset)
             | Instruction::JumpIfFalse(offset)
-            | Instruction::SetupTry(offset)  => {
+            | Instruction::SetupTry(offset) => {
                 *offset = target;
             }
 

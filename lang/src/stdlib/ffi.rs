@@ -1,22 +1,37 @@
-use std::collections::HashMap;
 use crate::vm::value::{BuiltinFn, Value};
+use std::collections::HashMap;
 
 pub fn object() -> Value {
     let mut methods = HashMap::new();
 
-    methods.insert("load".to_string(), Value::BuiltinFn(BuiltinFn::new("load", load)));
-    methods.insert("define".to_string(), Value::BuiltinFn(BuiltinFn::new("define", define)));
-    methods.insert("unload".to_string(), Value::BuiltinFn(BuiltinFn::new("unload", unload)));
+    methods.insert(
+        "load".to_string(),
+        Value::BuiltinFn(BuiltinFn::new("load", load)),
+    );
+    methods.insert(
+        "define".to_string(),
+        Value::BuiltinFn(BuiltinFn::new("define", define)),
+    );
+    methods.insert(
+        "unload".to_string(),
+        Value::BuiltinFn(BuiltinFn::new("unload", unload)),
+    );
 
-    methods.insert("suffix".to_string(), Value::String({
-        if cfg!(target_os = "windows") {
-            "dll"
-        } else if cfg!(target_os = "macos") {
-            "dylib"
-        } else {
-            "so"
-        }
-    }.to_string()));
+    methods.insert(
+        "suffix".to_string(),
+        Value::String(
+            {
+                if cfg!(target_os = "windows") {
+                    "dll"
+                } else if cfg!(target_os = "macos") {
+                    "dylib"
+                } else {
+                    "so"
+                }
+            }
+            .to_string(),
+        ),
+    );
 
     Value::Object(methods)
 }
@@ -37,12 +52,20 @@ thread_local! {
 
 fn load(args: Vec<Value>) -> Result<Value, String> {
     if args.len() != 1 {
-        return Err(format!("ffi.load() takes exactly one argument ({} given)", args.len()));
+        return Err(format!(
+            "ffi.load() takes exactly one argument ({} given)",
+            args.len()
+        ));
     }
 
     let path = match &args[0] {
         Value::String(s) => s,
-        _ => return Err(format!("ffi.load() argument must be a string, got {}", args[0].type_name())),
+        _ => {
+            return Err(format!(
+                "ffi.load() argument must be a string, got {}",
+                args[0].type_name()
+            ));
+        }
     };
 
     let lib = unsafe {
@@ -52,7 +75,10 @@ fn load(args: Vec<Value>) -> Result<Value, String> {
 
     let idx = LIBS.with(|libs| {
         let mut libs = libs.borrow_mut();
-        libs.push(Some(FFILib { lib, funcs: HashMap::new() }));
+        libs.push(Some(FFILib {
+            lib,
+            funcs: HashMap::new(),
+        }));
         libs.len() - 1
     });
 
@@ -61,65 +87,108 @@ fn load(args: Vec<Value>) -> Result<Value, String> {
 
 fn define(args: Vec<Value>) -> Result<Value, String> {
     if args.len() != 4 {
-        return Err(format!("ffi.define() takes exactly four arguments ({} given)", args.len()));
+        return Err(format!(
+            "ffi.define() takes exactly four arguments ({} given)",
+            args.len()
+        ));
     }
 
     let idx = match &args[0] {
         Value::FFILib(i) => *i,
-        _ => return Err(format!("ffi.define() first argument must be a library handle, got {}", args[0].type_name())),
+        _ => {
+            return Err(format!(
+                "ffi.define() first argument must be a library handle, got {}",
+                args[0].type_name()
+            ));
+        }
     };
-    
+
     let name = match &args[1] {
         Value::String(s) => s,
-        _ => return Err(format!("ffi.define() second argument must be a string, got {}", args[1].type_name())),
+        _ => {
+            return Err(format!(
+                "ffi.define() second argument must be a string, got {}",
+                args[1].type_name()
+            ));
+        }
     };
 
     let arg_types = match &args[2] {
-        Value::Array(arr) => arr.iter().map(|v| {
-            match v {
+        Value::Array(arr) => arr
+            .iter()
+            .map(|v| match v {
                 Value::String(s) => {
                     validate_type(s)?;
                     Ok(s.clone())
-                },
+                }
 
                 Value::Null => Ok("void".to_string()),
 
-                _ => Err(format!("ffi.define() third argument must be an array of strings, got {}", v.type_name())),
-            }
-        }).collect::<Result<Vec<String>, String>>()?,
+                _ => Err(format!(
+                    "ffi.define() third argument must be an array of strings, got {}",
+                    v.type_name()
+                )),
+            })
+            .collect::<Result<Vec<String>, String>>()?,
 
-        _ => return Err(format!("ffi.define() third argument must be an array of strings, got {}", args[2].type_name())),
+        _ => {
+            return Err(format!(
+                "ffi.define() third argument must be an array of strings, got {}",
+                args[2].type_name()
+            ));
+        }
     };
 
     let ret_type = match &args[3] {
         Value::String(s) => s.clone(),
         Value::Null => "void".to_string(),
-        _ => return Err(format!("ffi.define() fourth argument must be a string or null, got {}", args[3].type_name())),
+        _ => {
+            return Err(format!(
+                "ffi.define() fourth argument must be a string or null, got {}",
+                args[3].type_name()
+            ));
+        }
     };
 
     LIBS.with(|libs| {
         let mut libs = libs.borrow_mut();
-        let lib = libs[idx].as_mut()
+        let lib = libs[idx]
+            .as_mut()
             .ok_or_else(|| format!("invalid library handle: {}", idx))?;
-        
+
         unsafe {
-            lib.lib.get::<unsafe extern "C" fn()>(name.as_bytes())
+            lib.lib
+                .get::<unsafe extern "C" fn()>(name.as_bytes())
                 .map_err(|e| format!("ffi.define() failed to find symbol '{}': {}", name, e))?;
         }
 
-        lib.funcs.insert(name.clone(), FFISig { arg_types, ret_type });
+        lib.funcs.insert(
+            name.clone(),
+            FFISig {
+                arg_types,
+                ret_type,
+            },
+        );
         Ok(Value::Null)
     })
 }
 
 fn unload(args: Vec<Value>) -> Result<Value, String> {
     if args.len() != 1 {
-        return Err(format!("ffi.unload() takes exactly one argument ({} given)", args.len()));
+        return Err(format!(
+            "ffi.unload() takes exactly one argument ({} given)",
+            args.len()
+        ));
     }
 
     let lib_index = match &args[0] {
         Value::FFILib(i) => *i,
-        _ => return Err(format!("ffi.unload() argument must be a library handle, got {}", args[0].type_name())),
+        _ => {
+            return Err(format!(
+                "ffi.unload() argument must be a library handle, got {}",
+                args[0].type_name()
+            ));
+        }
     };
 
     LIBS.with(|libs| {
@@ -136,41 +205,57 @@ fn unload(args: Vec<Value>) -> Result<Value, String> {
 fn validate_type(t: &str) -> Result<(), String> {
     match t {
         "i64" | "i32" | "f64" | "f32" | "string" | "bool" | "void" => Ok(()),
-        _ => Err(format!("unsupported ffi type '{}', supported types: i64, i32, f64, f32, string, bool, void", t)),
+        _ => Err(format!(
+            "unsupported ffi type '{}', supported types: i64, i32, f64, f32, string, bool, void",
+            t
+        )),
     }
 }
 
 pub fn call_ffi(idx: usize, name: &str, args: Vec<Value>) -> Result<Value, String> {
     LIBS.with(|libs| {
         let libs = libs.borrow();
-        let lib = libs.get(idx)
-            .ok_or_else(|| format!("invalid library handle: {}", idx))?.as_ref()
+        let lib = libs
+            .get(idx)
+            .ok_or_else(|| format!("invalid library handle: {}", idx))?
+            .as_ref()
             .ok_or_else(|| format!("library at index {} has been unloaded", idx))?;
-        
-        let sig = lib.funcs.get(name)
+
+        let sig = lib
+            .funcs
+            .get(name)
             .ok_or_else(|| format!("function '{}' is not defined in library {}", name, idx))?;
-        
+
         if args.len() != sig.arg_types.len() {
-            return Err(format!("function '{}' expects {} arguments, got {}", name, sig.arg_types.len(), args.len()));
+            return Err(format!(
+                "function '{}' expects {} arguments, got {}",
+                name,
+                sig.arg_types.len(),
+                args.len()
+            ));
         }
 
-        let ffi_args: Vec<FFIArg> = args.iter()
+        let ffi_args: Vec<FFIArg> = args
+            .iter()
             .zip(&sig.arg_types)
             .map(|(v, t)| to_ffi_arg(v, t))
             .collect::<Result<_, _>>()?;
-        
-        let ffi_arg_types: Vec<libffi::middle::Type> = sig.arg_types.iter()
+
+        let ffi_arg_types: Vec<libffi::middle::Type> = sig
+            .arg_types
+            .iter()
             .map(|t| modu_to_ffi_type(t))
             .collect::<Result<_, _>>()?;
-        
+
         let ffi_ret_type = modu_to_ffi_type(&sig.ret_type)?;
         let cif = libffi::middle::Cif::new(ffi_arg_types, ffi_ret_type);
 
         let func_ptr = unsafe {
-            lib.lib.get::<unsafe extern "C" fn()>(name.as_bytes())
+            lib.lib
+                .get::<unsafe extern "C" fn()>(name.as_bytes())
                 .map_err(|e| format!("failed to get symbol '{}': {}", name, e))?
         };
-        
+
         let code_ptr = libffi::middle::CodePtr::from_fun(*func_ptr);
 
         let c_args: Vec<libffi::middle::Arg> = ffi_args.iter().map(|arg| arg.as_arg()).collect();
@@ -189,11 +274,14 @@ pub fn call_ffi(idx: usize, name: &str, args: Vec<Value>) -> Result<Value, Strin
                         Ok(Value::Null)
                     } else {
                         let c_str = std::ffi::CStr::from_ptr(ptr);
-                        c_str.to_str()
+                        c_str
+                            .to_str()
                             .map(|s| Value::String(s.to_string()))
-                            .map_err(|e| format!("failed to convert C string to Rust string: {}", e))
+                            .map_err(|e| {
+                                format!("failed to convert C string to Rust string: {}", e)
+                            })
                     }
-                },
+                }
 
                 "void" => {
                     cif.call::<()>(code_ptr, &c_args);
@@ -224,7 +312,10 @@ enum FFIArg {
     I32(i32),
     F64(f64),
     F32(f32),
-    CString { ptr: *const std::os::raw::c_char, _owner: std::ffi::CString },
+    CString {
+        ptr: *const std::os::raw::c_char,
+        _owner: std::ffi::CString,
+    },
 }
 
 impl FFIArg {
@@ -251,9 +342,16 @@ fn to_ffi_arg(value: &Value, t: &str) -> Result<FFIArg, String> {
             let c_string = std::ffi::CString::new(s.as_str())
                 .map_err(|e| format!("failed to convert string to C string: {}", e))?;
             let ptr = c_string.as_ptr();
-            Ok(FFIArg::CString { ptr, _owner: c_string })
-        },
-        
-        _ => Err(format!("cannot convert value of type {} to ffi type {}", value.type_name(), t)),
+            Ok(FFIArg::CString {
+                ptr,
+                _owner: c_string,
+            })
+        }
+
+        _ => Err(format!(
+            "cannot convert value of type {} to ffi type {}",
+            value.type_name(),
+            t
+        )),
     }
 }

@@ -17,19 +17,22 @@ pub fn get_fn(name: String) -> Option<NativeFn> {
 pub fn list_fns() -> Vec<String> {
     vec![
         "len".to_string(),
-        "push".to_string(), 
-        "pop".to_string(), 
+        "push".to_string(),
+        "pop".to_string(),
         "join".to_string(),
         "min".to_string(),
         "max".to_string(),
         "reverse".to_string(),
-        "sort".to_string()
+        "sort".to_string(),
     ]
 }
 
 pub fn len(this: Value, args: Vec<Value>) -> Result<(Value, Option<Value>), String> {
     if !args.is_empty() {
-        return Err(format!("<array>.len() takes no arguments ({} given)", args.len()));
+        return Err(format!(
+            "<array>.len() takes no arguments ({} given)",
+            args.len()
+        ));
     }
 
     match this {
@@ -40,7 +43,10 @@ pub fn len(this: Value, args: Vec<Value>) -> Result<(Value, Option<Value>), Stri
 
 pub fn push(this: Value, args: Vec<Value>) -> Result<(Value, Option<Value>), String> {
     if args.len() != 1 {
-        return Err(format!("<array>.push() takes exactly one argument ({} given)", args.len()));
+        return Err(format!(
+            "<array>.push() takes exactly one argument ({} given)",
+            args.len()
+        ));
     }
 
     match this {
@@ -55,7 +61,10 @@ pub fn push(this: Value, args: Vec<Value>) -> Result<(Value, Option<Value>), Str
 
 pub fn pop(this: Value, args: Vec<Value>) -> Result<(Value, Option<Value>), String> {
     if !args.is_empty() {
-        return Err(format!("<array>.pop() takes no arguments ({} given)", args.len()));
+        return Err(format!(
+            "<array>.pop() takes no arguments ({} given)",
+            args.len()
+        ));
     }
 
     match this {
@@ -70,17 +79,29 @@ pub fn pop(this: Value, args: Vec<Value>) -> Result<(Value, Option<Value>), Stri
 
 pub fn join(this: Value, args: Vec<Value>) -> Result<(Value, Option<Value>), String> {
     if args.len() != 1 {
-        return Err(format!("<array>.join() takes exactly one argument ({} given)", args.len()));
+        return Err(format!(
+            "<array>.join() takes exactly one argument ({} given)",
+            args.len()
+        ));
     }
 
     let sep = match &args[0] {
         Value::String(s) => s,
-        _ => return Err(format!("<array>.join() separator must be a string, got {}", args[0].type_name())),
+        _ => {
+            return Err(format!(
+                "<array>.join() separator must be a string, got {}",
+                args[0].type_name()
+            ));
+        }
     };
 
     match this {
         Value::Array(arr) => {
-            let joined = arr.iter().map(|v| format!("{}", v)).collect::<Vec<_>>().join(sep);
+            let joined = arr
+                .iter()
+                .map(|v| format!("{}", v))
+                .collect::<Vec<_>>()
+                .join(sep);
             Ok((Value::String(joined), None))
         }
 
@@ -90,7 +111,10 @@ pub fn join(this: Value, args: Vec<Value>) -> Result<(Value, Option<Value>), Str
 
 pub fn min(this: Value, args: Vec<Value>) -> Result<(Value, Option<Value>), String> {
     if !args.is_empty() {
-        return Err(format!("<array>.min() takes no arguments ({} given)", args.len()));
+        return Err(format!(
+            "<array>.min() takes no arguments ({} given)",
+            args.len()
+        ));
     }
 
     match this {
@@ -104,7 +128,13 @@ pub fn min(this: Value, args: Vec<Value>) -> Result<(Value, Option<Value>), Stri
             for v in &arr[1..] {
                 match v.partial_cmp(min_value) {
                     Some(std::cmp::Ordering::Less) => min_value = v,
-                    None => return Err(format!("cannot compare '{}' and '{}'", v.type_name(), min_value.type_name())),
+                    None => {
+                        return Err(format!(
+                            "cannot compare '{}' and '{}'",
+                            v.type_name(),
+                            min_value.type_name()
+                        ));
+                    }
                     _ => {}
                 }
             }
@@ -118,7 +148,10 @@ pub fn min(this: Value, args: Vec<Value>) -> Result<(Value, Option<Value>), Stri
 
 pub fn max(this: Value, args: Vec<Value>) -> Result<(Value, Option<Value>), String> {
     if !args.is_empty() {
-        return Err(format!("<array>.max() takes no arguments ({} given)", args.len()));
+        return Err(format!(
+            "<array>.max() takes no arguments ({} given)",
+            args.len()
+        ));
     }
 
     match this {
@@ -132,7 +165,13 @@ pub fn max(this: Value, args: Vec<Value>) -> Result<(Value, Option<Value>), Stri
             for v in &arr[1..] {
                 match v.partial_cmp(max_value) {
                     Some(std::cmp::Ordering::Greater) => max_value = v,
-                    None => return Err(format!("cannot compare '{}' and '{}'", v.type_name(), max_value.type_name())),
+                    None => {
+                        return Err(format!(
+                            "cannot compare '{}' and '{}'",
+                            v.type_name(),
+                            max_value.type_name()
+                        ));
+                    }
                     _ => {}
                 }
             }
@@ -146,7 +185,10 @@ pub fn max(this: Value, args: Vec<Value>) -> Result<(Value, Option<Value>), Stri
 
 pub fn reverse(this: Value, args: Vec<Value>) -> Result<(Value, Option<Value>), String> {
     if !args.is_empty() {
-        return Err(format!("<array>.reverse() takes no arguments ({} given)", args.len()));
+        return Err(format!(
+            "<array>.reverse() takes no arguments ({} given)",
+            args.len()
+        ));
     }
 
     match this {
@@ -162,7 +204,10 @@ pub fn reverse(this: Value, args: Vec<Value>) -> Result<(Value, Option<Value>), 
 
 pub fn sort(this: Value, args: Vec<Value>) -> Result<(Value, Option<Value>), String> {
     if !args.is_empty() {
-        return Err(format!("<array>.sort() takes no arguments ({} given)", args.len()));
+        return Err(format!(
+            "<array>.sort() takes no arguments ({} given)",
+            args.len()
+        ));
     }
 
     let mut err = None;
@@ -171,13 +216,11 @@ pub fn sort(this: Value, args: Vec<Value>) -> Result<(Value, Option<Value>), Str
         Value::Array(arr) => {
             let mut sorted = arr.clone();
 
-            sorted.sort_by(|a, b| {
-                match a.partial_cmp(b) {
-                    Some(ordering) => ordering,
-                    None => {
-                        err = Some(format!("partial_cmp failed for values '{}' and '{}'", a, b));
-                        std::cmp::Ordering::Equal
-                    }
+            sorted.sort_by(|a, b| match a.partial_cmp(b) {
+                Some(ordering) => ordering,
+                None => {
+                    err = Some(format!("partial_cmp failed for values '{}' and '{}'", a, b));
+                    std::cmp::Ordering::Equal
                 }
             });
 

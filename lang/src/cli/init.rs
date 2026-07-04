@@ -29,7 +29,7 @@ pub fn init() {
             return;
         }
     }
-    
+
     print!("Enter package name: ");
     std::io::stdout().flush().unwrap();
     std::io::stdin().read_line(&mut package_name).unwrap();
@@ -41,10 +41,13 @@ pub fn init() {
         return;
     }
 
-    if !package_name.chars().all(|c| c.is_alphanumeric() || c == '_') {
+    if !package_name
+        .chars()
+        .all(|c| c.is_alphanumeric() || c == '_')
+    {
         println!("Package name can only contain alphanumeric characters and underscores");
         return;
-    }    
+    }
 
     print!("Enter package version: ");
     std::io::stdout().flush().unwrap();
@@ -58,7 +61,9 @@ pub fn init() {
     print!("Enter description (optional): ");
     std::io::stdout().flush().unwrap();
     let mut package_description = String::new();
-    std::io::stdin().read_line(&mut package_description).unwrap();
+    std::io::stdin()
+        .read_line(&mut package_description)
+        .unwrap();
 
     print!("Is this a library? (y/N) ");
     std::io::stdout().flush().unwrap();
@@ -68,7 +73,14 @@ pub fn init() {
     let package_version = package_version.trim();
     let package_description = package_description.trim();
 
-    file.write_all(format!("[package]\nname = \"{}\"\nversion = \"{}\"\ndescription = \"{}\"\n", package_name, package_version, package_description).as_bytes()).unwrap();
+    file.write_all(
+        format!(
+            "[package]\nname = \"{}\"\nversion = \"{}\"\ndescription = \"{}\"\n",
+            package_name, package_version, package_description
+        )
+        .as_bytes(),
+    )
+    .unwrap();
 
     let mut file_name = "main.modu";
 
@@ -84,8 +96,12 @@ pub fn init() {
         .unwrap();
 
     if is_library.trim() == "y" {
-        main_file.write_all(b"fn hello() {\n    print(\"Hello, world!\");\n}").unwrap();
+        main_file
+            .write_all(b"fn hello() {\n    print(\"Hello, world!\");\n}")
+            .unwrap();
     } else {
-        main_file.write_all("print(\"Hello, world!\");".as_bytes()).unwrap();
+        main_file
+            .write_all("print(\"Hello, world!\");".as_bytes())
+            .unwrap();
     }
 }

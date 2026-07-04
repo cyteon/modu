@@ -1,5 +1,5 @@
-use std::collections::HashMap;
 use crate::lexer::Span;
+use std::collections::HashMap;
 
 pub type SpannedExpr = Spanned<Expr>;
 #[derive(Debug, Clone)]
@@ -25,7 +25,7 @@ pub enum Expr {
     Identifier(String),
     Bool(bool),
     Return(Box<Spanned<Expr>>),
-    
+
     Null,
     Break,
     Continue,
@@ -44,7 +44,6 @@ pub enum Expr {
     BitShl(Box<Spanned<Expr>>, Box<Spanned<Expr>>),
     BitShr(Box<Spanned<Expr>>, Box<Spanned<Expr>>),
     BitNot(Box<Spanned<Expr>>),
-
 
     Let {
         name: String,
@@ -124,7 +123,7 @@ pub enum Expr {
         start: Box<Spanned<Expr>>,
         end: Box<Spanned<Expr>>,
     },
-    
+
     Equal(Box<Spanned<Expr>>, Box<Spanned<Expr>>),
     NotEqual(Box<Spanned<Expr>>, Box<Spanned<Expr>>),
     LessThan(Box<Spanned<Expr>>, Box<Spanned<Expr>>),
@@ -147,5 +146,5 @@ pub enum Expr {
         try_block: Box<Spanned<Expr>>,
         catch_block: Box<Spanned<Expr>>,
         catch_var: Option<String>,
-    }
+    },
 }

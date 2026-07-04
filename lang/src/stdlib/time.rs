@@ -1,48 +1,90 @@
-use std::collections::HashMap;
-use chrono::{DateTime, Local, TimeZone};
 use crate::vm::value::{BuiltinFn, Value};
+use chrono::{DateTime, Local, TimeZone};
+use std::collections::HashMap;
 
 pub fn object() -> Value {
     let mut methods = HashMap::new();
 
-    methods.insert("parse".to_string(), Value::BuiltinFn(BuiltinFn::new("parse", parse)));
-    methods.insert("now_unix".to_string(), Value::BuiltinFn(BuiltinFn::new("now_unix", now_unix)));
-    methods.insert("now_unix_ms".to_string(), Value::BuiltinFn(BuiltinFn::new("now_unix_ms", now_unix_ms)));
-    methods.insert("now_utc".to_string(), Value::BuiltinFn(BuiltinFn::new("now_utc", now_utc)));
-    methods.insert("now_local".to_string(), Value::BuiltinFn(BuiltinFn::new("now_local", now_local)));
-    methods.insert("to_iso_8601".to_string(), Value::BuiltinFn(BuiltinFn::new("to_iso_8601", to_iso_8601)));
-    methods.insert("to_rfc_2822".to_string(), Value::BuiltinFn(BuiltinFn::new("to_rfc_2822", to_rfc_2822)));
-    methods.insert("to_local_date_time".to_string(), Value::BuiltinFn(BuiltinFn::new("to_local_date_time", to_local_date_time)));
-    methods.insert("to_utc_date_time".to_string(), Value::BuiltinFn(BuiltinFn::new("to_utc_date_time", to_utc_date_time)));
-    methods.insert("sleep".to_string(), Value::BuiltinFn(BuiltinFn::new("sleep", sleep)));
+    methods.insert(
+        "parse".to_string(),
+        Value::BuiltinFn(BuiltinFn::new("parse", parse)),
+    );
+    methods.insert(
+        "now_unix".to_string(),
+        Value::BuiltinFn(BuiltinFn::new("now_unix", now_unix)),
+    );
+    methods.insert(
+        "now_unix_ms".to_string(),
+        Value::BuiltinFn(BuiltinFn::new("now_unix_ms", now_unix_ms)),
+    );
+    methods.insert(
+        "now_utc".to_string(),
+        Value::BuiltinFn(BuiltinFn::new("now_utc", now_utc)),
+    );
+    methods.insert(
+        "now_local".to_string(),
+        Value::BuiltinFn(BuiltinFn::new("now_local", now_local)),
+    );
+    methods.insert(
+        "to_iso_8601".to_string(),
+        Value::BuiltinFn(BuiltinFn::new("to_iso_8601", to_iso_8601)),
+    );
+    methods.insert(
+        "to_rfc_2822".to_string(),
+        Value::BuiltinFn(BuiltinFn::new("to_rfc_2822", to_rfc_2822)),
+    );
+    methods.insert(
+        "to_local_date_time".to_string(),
+        Value::BuiltinFn(BuiltinFn::new("to_local_date_time", to_local_date_time)),
+    );
+    methods.insert(
+        "to_utc_date_time".to_string(),
+        Value::BuiltinFn(BuiltinFn::new("to_utc_date_time", to_utc_date_time)),
+    );
+    methods.insert(
+        "sleep".to_string(),
+        Value::BuiltinFn(BuiltinFn::new("sleep", sleep)),
+    );
 
     Value::Object(methods)
 }
 
 fn parse(args: Vec<Value>) -> Result<Value, String> {
     if args.len() != 1 {
-        return Err(format!("time.parse() takes exactly one argument ({} given)", args.len()));
+        return Err(format!(
+            "time.parse() takes exactly one argument ({} given)",
+            args.len()
+        ));
     }
 
     let input = match &args[0] {
         Value::String(s) => s,
-        _ => return Err(format!("time.parse() argument must be a string, got {}", args[0].type_name())),
+        _ => {
+            return Err(format!(
+                "time.parse() argument must be a string, got {}",
+                args[0].type_name()
+            ));
+        }
     };
 
     match DateTime::parse_from_rfc3339(input) {
         Ok(dt) => Ok(Value::Int(dt.timestamp())),
-        Err(_) => {
-            match DateTime::parse_from_rfc2822(input) {
-                Ok(dt) => Ok(Value::Int(dt.timestamp())),
-                Err(_) => Err(format!("time.parse() failed to parse date string: '{}'", input)),
-            }
-        }
+        Err(_) => match DateTime::parse_from_rfc2822(input) {
+            Ok(dt) => Ok(Value::Int(dt.timestamp())),
+            Err(_) => Err(format!(
+                "time.parse() failed to parse date string: '{}'",
+                input
+            )),
+        },
     }
 }
 
 fn now_unix(args: Vec<Value>) -> Result<Value, String> {
     if !args.is_empty() {
-        return Err(format!("time.now_unix() takes no arguments ({} given)", args.len()));
+        return Err(format!(
+            "time.now_unix() takes no arguments ({} given)",
+            args.len()
+        ));
     }
 
     let unix_time = Local::now().timestamp();
@@ -52,7 +94,10 @@ fn now_unix(args: Vec<Value>) -> Result<Value, String> {
 
 fn now_unix_ms(args: Vec<Value>) -> Result<Value, String> {
     if !args.is_empty() {
-        return Err(format!("time.now_unix_ms() takes no arguments ({} given)", args.len()));
+        return Err(format!(
+            "time.now_unix_ms() takes no arguments ({} given)",
+            args.len()
+        ));
     }
 
     let unix_time_ms = Local::now().timestamp_millis();
@@ -62,7 +107,10 @@ fn now_unix_ms(args: Vec<Value>) -> Result<Value, String> {
 
 fn now_utc(args: Vec<Value>) -> Result<Value, String> {
     if !args.is_empty() {
-        return Err(format!("time.now_utc() takes no arguments ({} given)", args.len()));
+        return Err(format!(
+            "time.now_utc() takes no arguments ({} given)",
+            args.len()
+        ));
     }
 
     let utc_time: DateTime<chrono::Utc> = chrono::Utc::now();
@@ -72,7 +120,10 @@ fn now_utc(args: Vec<Value>) -> Result<Value, String> {
 
 fn now_local(args: Vec<Value>) -> Result<Value, String> {
     if !args.is_empty() {
-        return Err(format!("time.now_local() takes no arguments ({} given)", args.len()));
+        return Err(format!(
+            "time.now_local() takes no arguments ({} given)",
+            args.len()
+        ));
     }
 
     let local_time: DateTime<Local> = Local::now();
@@ -82,15 +133,26 @@ fn now_local(args: Vec<Value>) -> Result<Value, String> {
 
 fn to_iso_8601(args: Vec<Value>) -> Result<Value, String> {
     if args.len() != 1 {
-        return Err(format!("time.to_iso_8601() takes exactly one argument ({} given)", args.len()));
+        return Err(format!(
+            "time.to_iso_8601() takes exactly one argument ({} given)",
+            args.len()
+        ));
     }
 
     let timestamp = match &args[0] {
         Value::Int(i) => *i,
-        _ => return Err(format!("time.to_iso_8601() argument must be an integer timestamp, got {}", args[0].type_name())),
+        _ => {
+            return Err(format!(
+                "time.to_iso_8601() argument must be an integer timestamp, got {}",
+                args[0].type_name()
+            ));
+        }
     };
 
-    let lt = Local.timestamp_opt(timestamp, 0).single().ok_or_else(|| format!("invalid timestamp: {}", timestamp))?;
+    let lt = Local
+        .timestamp_opt(timestamp, 0)
+        .single()
+        .ok_or_else(|| format!("invalid timestamp: {}", timestamp))?;
     let dt = DateTime::<Local>::from(lt);
 
     Ok(Value::String(dt.to_rfc3339()))
@@ -98,15 +160,26 @@ fn to_iso_8601(args: Vec<Value>) -> Result<Value, String> {
 
 fn to_rfc_2822(args: Vec<Value>) -> Result<Value, String> {
     if args.len() != 1 {
-        return Err(format!("time.to_rfc_2822() takes exactly one argument ({} given)", args.len()));
+        return Err(format!(
+            "time.to_rfc_2822() takes exactly one argument ({} given)",
+            args.len()
+        ));
     }
 
     let timestamp = match &args[0] {
         Value::Int(i) => *i,
-        _ => return Err(format!("time.to_rfc_2822() argument must be an integer timestamp, got {}", args[0].type_name())),
+        _ => {
+            return Err(format!(
+                "time.to_rfc_2822() argument must be an integer timestamp, got {}",
+                args[0].type_name()
+            ));
+        }
     };
 
-    let lt = Local.timestamp_opt(timestamp, 0).single().ok_or_else(|| format!("invalid timestamp: {}", timestamp))?;
+    let lt = Local
+        .timestamp_opt(timestamp, 0)
+        .single()
+        .ok_or_else(|| format!("invalid timestamp: {}", timestamp))?;
     let dt = DateTime::<Local>::from(lt);
 
     Ok(Value::String(dt.to_rfc2822()))
@@ -114,15 +187,26 @@ fn to_rfc_2822(args: Vec<Value>) -> Result<Value, String> {
 
 fn to_local_date_time(args: Vec<Value>) -> Result<Value, String> {
     if args.len() != 1 {
-        return Err(format!("time.to_local_date_time() takes exactly one argument ({} given)", args.len()));
+        return Err(format!(
+            "time.to_local_date_time() takes exactly one argument ({} given)",
+            args.len()
+        ));
     }
 
     let timestamp = match &args[0] {
         Value::Int(i) => *i,
-        _ => return Err(format!("time.to_local_date_time() argument must be an integer timestamp, got {}", args[0].type_name())),
+        _ => {
+            return Err(format!(
+                "time.to_local_date_time() argument must be an integer timestamp, got {}",
+                args[0].type_name()
+            ));
+        }
     };
 
-    let lt = Local.timestamp_opt(timestamp, 0).single().ok_or_else(|| format!("invalid timestamp: {}", timestamp))?;
+    let lt = Local
+        .timestamp_opt(timestamp, 0)
+        .single()
+        .ok_or_else(|| format!("invalid timestamp: {}", timestamp))?;
     let dt = DateTime::<Local>::from(lt);
 
     Ok(Value::String(dt.to_string()))
@@ -130,15 +214,26 @@ fn to_local_date_time(args: Vec<Value>) -> Result<Value, String> {
 
 fn to_utc_date_time(args: Vec<Value>) -> Result<Value, String> {
     if args.len() != 1 {
-        return Err(format!("time.to_utc_date_time() takes exactly one argument ({} given)", args.len()));
+        return Err(format!(
+            "time.to_utc_date_time() takes exactly one argument ({} given)",
+            args.len()
+        ));
     }
 
     let timestamp = match &args[0] {
         Value::Int(i) => *i,
-        _ => return Err(format!("time.to_utc_date_time() argument must be an integer timestamp, got {}", args[0].type_name())),
+        _ => {
+            return Err(format!(
+                "time.to_utc_date_time() argument must be an integer timestamp, got {}",
+                args[0].type_name()
+            ));
+        }
     };
 
-    let lt = chrono::Utc.timestamp_opt(timestamp, 0).single().ok_or_else(|| format!("invalid timestamp: {}", timestamp))?;
+    let lt = chrono::Utc
+        .timestamp_opt(timestamp, 0)
+        .single()
+        .ok_or_else(|| format!("invalid timestamp: {}", timestamp))?;
     let dt = DateTime::<chrono::Utc>::from(lt);
 
     Ok(Value::String(dt.to_string()))
@@ -146,12 +241,20 @@ fn to_utc_date_time(args: Vec<Value>) -> Result<Value, String> {
 
 fn sleep(args: Vec<Value>) -> Result<Value, String> {
     if args.len() != 1 {
-        return Err(format!("time.sleep() takes exactly one argument ({} given)", args.len()));
+        return Err(format!(
+            "time.sleep() takes exactly one argument ({} given)",
+            args.len()
+        ));
     }
 
     let duration_ms = match &args[0] {
         Value::Int(i) => *i,
-        _ => return Err(format!("time.sleep() argument must be an integer duration in milliseconds, got {}", args[0].type_name())),
+        _ => {
+            return Err(format!(
+                "time.sleep() argument must be an integer duration in milliseconds, got {}",
+                args[0].type_name()
+            ));
+        }
     };
 
     std::thread::sleep(std::time::Duration::from_millis(duration_ms as u64));

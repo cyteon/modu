@@ -5,7 +5,13 @@ use toml;
 fn install_package(backend: &str, name: &str, version: &str) -> Result<serde_json::Value, String> {
     let client = reqwest::blocking::Client::new();
 
-    let response = client.get(&format!("{}/api/v1/packages/{}/{}?isDownload=true", backend, name, version)).send().unwrap();
+    let response = client
+        .get(&format!(
+            "{}/api/v1/packages/{}/{}?isDownload=true",
+            backend, name, version
+        ))
+        .send()
+        .unwrap();
 
     if response.status().as_u16() != 200 {
         let text = response.text().unwrap();
@@ -17,13 +23,25 @@ fn install_package(backend: &str, name: &str, version: &str) -> Result<serde_jso
 
     let package = response.json::<serde_json::Value>().unwrap();
 
-    println!("Installing package {}@{}", name, package["version"].as_str().unwrap());
-    println!("> {}", match package["description"].as_str() {
-        Some(description) => description,
-        None => "No description"
-    });
+    println!(
+        "Installing package {}@{}",
+        name,
+        package["version"].as_str().unwrap()
+    );
+    println!(
+        "> {}",
+        match package["description"].as_str() {
+            Some(description) => description,
+            None => "No description",
+        }
+    );
 
-    let zip = client.get(package["zipUrl"].as_str().unwrap()).send().unwrap().bytes().unwrap();
+    let zip = client
+        .get(package["zipUrl"].as_str().unwrap())
+        .send()
+        .unwrap()
+        .bytes()
+        .unwrap();
 
     let mut archive = zip::ZipArchive::new(std::io::Cursor::new(zip)).unwrap();
 
@@ -51,18 +69,19 @@ fn install_package(backend: &str, name: &str, version: &str) -> Result<serde_jso
             }
 
             #[cfg(windows)]
-            let path = (".modu/packages/".to_string() + name + "/" + file.name()).replace("/", "\\");
+            let path =
+                (".modu/packages/".to_string() + name + "/" + file.name()).replace("/", "\\");
 
             #[cfg(not(windows))]
-            let path = (".modu/packages/".to_string() + name + "/" + file.name()).replace("\\", "/");
+            let path =
+                (".modu/packages/".to_string() + name + "/" + file.name()).replace("\\", "/");
 
             let mut out = std::fs::File::create(path).unwrap();
             std::io::copy(&mut file, &mut out).unwrap();
-            
         } else {
             #[cfg(windows)]
             let path = path.replace("/", "\\");
-            
+
             #[cfg(not(windows))]
             let path = path.replace("\\", "/");
 
@@ -71,7 +90,7 @@ fn install_package(backend: &str, name: &str, version: &str) -> Result<serde_jso
         }
     }
 
-    Ok(package) 
+    Ok(package)
 }
 
 pub fn install() {
@@ -94,8 +113,14 @@ pub fn install() {
         Some(dependencies) => dependencies.as_table_mut().unwrap(),
 
         None => {
-            toml.insert("dependencies".to_string(), toml::Value::Table(toml::value::Table::new()));
-            toml.get_mut("dependencies").unwrap().as_table_mut().unwrap()
+            toml.insert(
+                "dependencies".to_string(),
+                toml::Value::Table(toml::value::Table::new()),
+            );
+            toml.get_mut("dependencies")
+                .unwrap()
+                .as_table_mut()
+                .unwrap()
         }
     };
 
@@ -120,15 +145,18 @@ pub fn install() {
 
     if config_file.is_ok() {
         let mut config_file_content = String::new();
-        config_file.unwrap().read_to_string(&mut config_file_content).unwrap();
-        
+        config_file
+            .unwrap()
+            .read_to_string(&mut config_file_content)
+            .unwrap();
+
         if config_file_content.len() > 0 {
             let config_toml = toml::from_str::<toml::Value>(&config_file_content).unwrap();
             let table = config_toml.as_table().unwrap();
 
             backend_url = match table.get("backend") {
                 Some(backend) => backend.to_string().replace("\"", ""),
-                None => backend_url
+                None => backend_url,
             };
         }
     }
@@ -140,7 +168,7 @@ pub fn install() {
             match install_package(&backend_url, name, version.as_str().unwrap()) {
                 Ok(_) => {
                     println!("Package {} installed\n", name);
-                },
+                }
                 Err(_) => {
                     println!("Failed to install package {}", name);
                 }
@@ -151,10 +179,10 @@ pub fn install() {
     }
 
     let name = &(args[2].clone().split("@").collect::<Vec<&str>>()[0].to_string());
-    
+
     let version = match args[2].clone().split("@").collect::<Vec<&str>>().len() {
         1 => "latest".to_string(),
-        _ => args[2].clone().split("@").collect::<Vec<&str>>()[1].to_string()
+        _ => args[2].clone().split("@").collect::<Vec<&str>>()[1].to_string(),
     };
 
     let package = match install_package(&backend_url, name, &version) {
@@ -165,10 +193,14 @@ pub fn install() {
         }
     };
 
-    dependencies.insert(name.clone(), toml::Value::String(package["version"].as_str().unwrap().to_string()));
+    dependencies.insert(
+        name.clone(),
+        toml::Value::String(package["version"].as_str().unwrap().to_string()),
+    );
 
     let mut file = std::fs::File::create("project.toml").unwrap();
-    file.write_all(toml::to_string(&toml).unwrap().as_bytes()).unwrap();
+    file.write_all(toml::to_string(&toml).unwrap().as_bytes())
+        .unwrap();
 
     println!("Package {} installed", name);
 }

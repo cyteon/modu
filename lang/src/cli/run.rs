@@ -1,12 +1,12 @@
-use colored::Colorize;
 use crate::parser::parse;
+use colored::Colorize;
 
 pub fn run() {
     let args = std::env::args().collect::<Vec<String>>();
-    
+
     let file: String;
     let file_path: String;
-    
+
     if args.len() < 3 || (args[2].as_str().contains("--") && args.len() == 3) {
         let main_path = std::path::Path::new("main.modu");
         if main_path.exists() {
@@ -59,10 +59,17 @@ pub fn run() {
         let mut string = String::new();
 
         for (i, chunk) in compiler.chunks.iter().enumerate() {
-            string.push_str(&format!("=== chunk[{}] \"{}\" ({} locals) ===\n", i, chunk.name, chunk.locals_count));
+            string.push_str(&format!(
+                "=== chunk[{}] \"{}\" ({} locals) ===\n",
+                i, chunk.name, chunk.locals_count
+            ));
 
             for (j, instruction) in chunk.instructions.iter().enumerate() {
-                let span = chunk.spans.get(j).map(|s| format!("[{}-{}]", s.start, s.end)).unwrap_or_default();
+                let span = chunk
+                    .spans
+                    .get(j)
+                    .map(|s| format!("[{}-{}]", s.start, s.end))
+                    .unwrap_or_default();
                 string.push_str(&format!("\t{:04} {}: {:?}\n", j, span, instruction));
             }
 
@@ -79,9 +86,7 @@ pub fn run() {
             }
         }
 
-        bytecode_file
-            .write_all(string.as_bytes())
-            .unwrap();
+        bytecode_file.write_all(string.as_bytes()).unwrap();
     }
 
     let source_path = std::path::PathBuf::from(&args[2])

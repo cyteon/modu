@@ -1,11 +1,10 @@
-
-use rustyline::highlight::{Highlighter, CmdKind};
-use rustyline::error::ReadlineError;
-use rustyline::{Editor, history::DefaultHistory, Helper, Completer, Hinter, Validator};
-use regex::Regex;
-use colored::Colorize;
-use std::collections::HashMap;
 use crate::parser::parse;
+use colored::Colorize;
+use regex::Regex;
+use rustyline::error::ReadlineError;
+use rustyline::highlight::{CmdKind, Highlighter};
+use rustyline::{Completer, Editor, Helper, Hinter, Validator, history::DefaultHistory};
+use std::collections::HashMap;
 
 #[derive(Completer, Helper, Hinter, Validator)]
 pub struct Syntax {
@@ -38,37 +37,55 @@ impl Highlighter for Syntax {
     fn highlight<'l>(&self, line: &'l str, _pos: usize) -> std::borrow::Cow<'l, str> {
         let mut result = line.to_string();
 
-        result = self.keyword_re.replace_all(&result, |caps: &regex::Captures| {
-            format!("\x1b[1m{}\x1b[0m", caps[0].magenta()) // bug that with .bold().magenta() it didnt work, but this works
-        }).to_string();
+        result = self
+            .keyword_re
+            .replace_all(&result, |caps: &regex::Captures| {
+                format!("\x1b[1m{}\x1b[0m", caps[0].magenta()) // bug that with .bold().magenta() it didnt work, but this works
+            })
+            .to_string();
 
-        result = self.number_re.replace_all(&result, |caps: &regex::Captures| {
-            caps[0].yellow().to_string()
-        }).to_string();
+        result = self
+            .number_re
+            .replace_all(&result, |caps: &regex::Captures| {
+                caps[0].yellow().to_string()
+            })
+            .to_string();
 
-        result = self.boolean_re.replace_all(&result, |caps: &regex::Captures| {
-            caps[0].red().to_string()
-        }).to_string();
+        result = self
+            .boolean_re
+            .replace_all(&result, |caps: &regex::Captures| caps[0].red().to_string())
+            .to_string();
 
-        result = self.function_re.replace_all(&result, |caps: &regex::Captures| {
-            format!("{}{}", caps[1].blue().to_string(), &caps[2])
-        }).to_string();
+        result = self
+            .function_re
+            .replace_all(&result, |caps: &regex::Captures| {
+                format!("{}{}", caps[1].blue().to_string(), &caps[2])
+            })
+            .to_string();
 
-        result = self.comment_re.replace_all(&result, |caps: &regex::Captures| {
-            caps[0].dimmed().to_string()
-        }).to_string();
+        result = self
+            .comment_re
+            .replace_all(&result, |caps: &regex::Captures| {
+                caps[0].dimmed().to_string()
+            })
+            .to_string();
 
-        result = self.compare_re.replace_all(&result, |caps: &regex::Captures| {
-            caps[0].cyan().to_string()
-        }).to_string();
+        result = self
+            .compare_re
+            .replace_all(&result, |caps: &regex::Captures| caps[0].cyan().to_string())
+            .to_string();
 
-        result = self.math_re.replace_all(&result, |caps: &regex::Captures| {
-            caps[0].cyan().to_string()
-        }).to_string();
+        result = self
+            .math_re
+            .replace_all(&result, |caps: &regex::Captures| caps[0].cyan().to_string())
+            .to_string();
 
-        result = self.string_re.replace_all(&result, |caps: &regex::Captures| {
-            caps[0].green().to_string()
-        }).to_string();
+        result = self
+            .string_re
+            .replace_all(&result, |caps: &regex::Captures| {
+                caps[0].green().to_string()
+            })
+            .to_string();
 
         std::borrow::Cow::Owned(result)
     }
@@ -116,16 +133,17 @@ pub fn repl() {
                 }
 
                 rl.add_history_entry(line.as_str()).unwrap();
-                
+
                 open_functions += line.chars().filter(|&c| c == '{').count();
-                open_functions = open_functions.saturating_sub(line.chars().filter(|&c| c == '}').count());
+                open_functions =
+                    open_functions.saturating_sub(line.chars().filter(|&c| c == '}').count());
 
                 buffer.push_str(&line);
                 buffer.push('\n');
 
                 if open_functions == 0 {
                     let ast = parse(&buffer, "<repl>");
-        
+
                     if let Err(_) = ast {
                         buffer.clear();
                         continue;
@@ -133,7 +151,7 @@ pub fn repl() {
 
                     let mut compiler = crate::compiler::compiler::Compiler::new();
                     compiler.offset = persistent_chunks.len();
-                    
+
                     if let Err(e) = compiler.compile_program(ast.clone().unwrap()) {
                         println!("{}: {}", "Compilation error".red(), e);
                         buffer.clear();
@@ -143,7 +161,11 @@ pub fn repl() {
                     let mut all_chunks = persistent_chunks.clone();
                     all_chunks.extend(compiler.chunks.into_iter());
 
-                    let mut vm = crate::vm::vm::VM::new(all_chunks.clone(), std::path::PathBuf::from("<repl>"), buffer.clone());
+                    let mut vm = crate::vm::vm::VM::new(
+                        all_chunks.clone(),
+                        std::path::PathBuf::from("<repl>"),
+                        buffer.clone(),
+                    );
                     vm.globals = globals.clone();
 
                     buffer.clear();

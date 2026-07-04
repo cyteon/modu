@@ -1,17 +1,17 @@
+use ariadne::{Color, Label, Report, ReportKind, Source};
 use chumsky::span::SimpleSpan;
-use ariadne::{Report, ReportKind, Label, Source, Color};
-use std::collections::HashMap;
 use colored::Colorize;
+use std::collections::HashMap;
 
 use super::chunk::Chunk;
-use super::value::Value;
 use super::instruction::Instruction;
+use super::value::Value;
 use crate::compiler::scope::Variable;
 
 pub struct ErrorHandler {
     catch_ip: usize,
     stack_depth: usize,
-    frame_depth: usize
+    frame_depth: usize,
 }
 
 pub struct CallFrame {
@@ -28,7 +28,7 @@ pub struct VM {
     pub globals: HashMap<String, Value>,
     source_path: std::path::PathBuf,
     source: String,
-    error_handlers: Vec<ErrorHandler>
+    error_handlers: Vec<ErrorHandler>,
 }
 
 const STACK_MAX: usize = 2048;
@@ -45,12 +45,8 @@ fn find_closest(name: String, options: impl Iterator<Item = String>) -> Option<S
         .iter()
         .map(|c| (c.clone(), strsim::jaro_winkler(&name, c)))
         .max_by(|a, b| a.1.partial_cmp(&b.1).unwrap())?;
-    
-    if score > 0.75 {
-        Some(best)
-    } else {
-        None
-    }
+
+    if score > 0.75 { Some(best) } else { None }
 }
 
 impl VM {
@@ -88,7 +84,7 @@ impl VM {
 
         self.execute()
     }
-    
+
     fn execute(&mut self) -> Result<(), String> {
         loop {
             let frame = self.frames.last_mut().unwrap();
@@ -102,11 +98,15 @@ impl VM {
             }
 
             let instruction = &self.chunks[frame.chunk_id].instructions[frame.ip].clone();
-            let span = self.chunks[frame.chunk_id].spans.get(frame.ip).cloned().unwrap_or(SimpleSpan::from(0..0));
+            let span = self.chunks[frame.chunk_id]
+                .spans
+                .get(frame.ip)
+                .cloned()
+                .unwrap_or(SimpleSpan::from(0..0));
 
             frame.ip += 1;
 
-            match instruction { 
+            match instruction {
                 Instruction::Push(i) => {
                     let v = self.chunks[frame.chunk_id].constants[*i].clone();
                     self.stack.push(v);
@@ -256,7 +256,10 @@ impl VM {
                         (Value::Int(a), Value::Int(b)) => self.stack.push(Value::Int(a << b)),
 
                         (_, _) => {
-                            self.handle_error("bitwise left shift only takes ints".to_string(), span)?;
+                            self.handle_error(
+                                "bitwise left shift only takes ints".to_string(),
+                                span,
+                            )?;
                             continue;
                         }
                     }
@@ -268,9 +271,12 @@ impl VM {
 
                     match (a, b) {
                         (Value::Int(a), Value::Int(b)) => self.stack.push(Value::Int(a >> b)),
-                        
+
                         (_, _) => {
-                            self.handle_error("bitwise right shift only takes ints".to_string(), span)?;
+                            self.handle_error(
+                                "bitwise right shift only takes ints".to_string(),
+                                span,
+                            )?;
                             continue;
                         }
                     }
@@ -281,7 +287,7 @@ impl VM {
 
                     match a {
                         Value::Int(a) => self.stack.push(Value::Int(!a)),
-                        
+
                         _ => {
                             self.handle_error("bitwise NOT only takes ints".to_string(), span)?;
                             continue;
@@ -361,19 +367,25 @@ impl VM {
 
                     match callee {
                         Value::BuiltinFn(func) => {
-                            let args: Vec<Value> = self.stack.drain(self.stack.len() - argc..).collect();
+                            let args: Vec<Value> =
+                                self.stack.drain(self.stack.len() - argc..).collect();
                             self.stack.pop();
 
                             match (func.func)(args) {
                                 Ok(result) => self.stack.push(result),
                                 Err(e) => {
                                     // this isnt great lmfao but it works ig
-                                    if func.name == "error" && !e.contains("error() takes exactly one argument") {
+                                    if func.name == "error"
+                                        && !e.contains("error() takes exactly one argument")
+                                    {
                                         self.handle_error(format!("{}", e), span)?;
                                         continue;
                                     }
 
-                                    self.handle_error(format!("error calling {}(): {}", func.name, e), span)?;
+                                    self.handle_error(
+                                        format!("error calling {}(): {}", func.name, e),
+                                        span,
+                                    )?;
                                     continue;
                                 }
                             }
@@ -381,17 +393,21 @@ impl VM {
 
                         Value::Function { chunk_id, arity } => {
                             if arity != *argc {
-                                self.handle_error(format!("expected {} arguments but got {}", arity, argc), span)?;
+                                self.handle_error(
+                                    format!("expected {} arguments but got {}", arity, argc),
+                                    span,
+                                )?;
                                 continue;
                             }
 
                             let base = self.stack.len() - argc;
 
-                            let extra_locals = self.chunks[chunk_id].locals_count.saturating_sub(*argc);
+                            let extra_locals =
+                                self.chunks[chunk_id].locals_count.saturating_sub(*argc);
                             for _ in 0..extra_locals {
                                 self.stack.push(Value::Null);
                             }
-                            
+
                             self.frames.push(CallFrame {
                                 chunk_id,
                                 ip: 0,
@@ -400,22 +416,33 @@ impl VM {
                             });
                         }
 
-                        Value::Class { name, methods, parent_methods } => {
-                            let args: Vec<Value> = self.stack.drain(self.stack.len() - argc..).collect();
+                        Value::Class {
+                            name,
+                            methods,
+                            parent_methods,
+                        } => {
+                            let args: Vec<Value> =
+                                self.stack.drain(self.stack.len() - argc..).collect();
                             self.stack.pop();
 
                             let instance = Value::Instance {
                                 class_name: name.clone(),
                                 properties: methods.clone(),
-                                parent_methods: parent_methods.clone()
+                                parent_methods: parent_methods.clone(),
                             };
 
                             if let Some(Value::Function { chunk_id, arity }) = methods.get("init") {
                                 if *argc != *arity {
-                                    self.handle_error(format!("{}.init() expected {} arguments but got {}", name, arity, argc), span)?;
+                                    self.handle_error(
+                                        format!(
+                                            "{}.init() expected {} arguments but got {}",
+                                            name, arity, argc
+                                        ),
+                                        span,
+                                    )?;
                                     continue;
                                 }
-                                
+
                                 self.stack.push(Value::Null);
 
                                 let base = self.stack.len();
@@ -425,7 +452,9 @@ impl VM {
                                     self.stack.push(arg);
                                 }
 
-                                let extra_locals = self.chunks[*chunk_id].locals_count.saturating_sub(*argc + 1);
+                                let extra_locals = self.chunks[*chunk_id]
+                                    .locals_count
+                                    .saturating_sub(*argc + 1);
                                 for _ in 0..extra_locals {
                                     self.stack.push(Value::Null);
                                 }
@@ -438,7 +467,13 @@ impl VM {
                                 });
                             } else {
                                 if *argc != 0 {
-                                    self.handle_error(format!("{} has no init method, but got {} arguments", name, argc), span)?;
+                                    self.handle_error(
+                                        format!(
+                                            "{} has no init method, but got {} arguments",
+                                            name, argc
+                                        ),
+                                        span,
+                                    )?;
                                     continue;
                                 }
 
@@ -447,13 +482,20 @@ impl VM {
                         }
 
                         _ => {
-                            self.handle_error(format!("{} is not callable", callee.type_name()), span)?;
+                            self.handle_error(
+                                format!("{} is not callable", callee.type_name()),
+                                span,
+                            )?;
                             continue;
                         }
                     }
                 }
 
-                Instruction::CallMethod { argc, target_local, target_global } => {
+                Instruction::CallMethod {
+                    argc,
+                    target_local,
+                    target_global,
+                } => {
                     let callee = self.stack[self.stack.len() - 1 - argc].clone();
 
                     if self.frames.len() >= FRAMES_MAX {
@@ -464,17 +506,21 @@ impl VM {
                     match callee {
                         Value::Function { chunk_id, arity } => {
                             if arity != *argc {
-                                self.handle_error(format!("expected {} arguments but got {}", arity, argc), span)?;
+                                self.handle_error(
+                                    format!("expected {} arguments but got {}", arity, argc),
+                                    span,
+                                )?;
                                 continue;
                             }
 
                             let base = self.stack.len() - argc;
 
-                            let extra_locals = self.chunks[chunk_id].locals_count.saturating_sub(*argc);
+                            let extra_locals =
+                                self.chunks[chunk_id].locals_count.saturating_sub(*argc);
                             for _ in 0..extra_locals {
                                 self.stack.push(Value::Null);
                             }
-                            
+
                             self.frames.push(CallFrame {
                                 chunk_id,
                                 ip: 0,
@@ -483,13 +529,21 @@ impl VM {
                             });
                         }
 
-                        Value::InstanceFn { instance, chunk_id, arity } => {
+                        Value::InstanceFn {
+                            instance,
+                            chunk_id,
+                            arity,
+                        } => {
                             if arity != *argc {
-                                self.handle_error(format!("expected {} arguments but got {}", arity, argc), span)?;
+                                self.handle_error(
+                                    format!("expected {} arguments but got {}", arity, argc),
+                                    span,
+                                )?;
                                 continue;
                             }
 
-                            let args: Vec<Value> = self.stack.drain(self.stack.len() - argc..).collect();
+                            let args: Vec<Value> =
+                                self.stack.drain(self.stack.len() - argc..).collect();
                             self.stack.pop();
 
                             self.stack.push(Value::Null);
@@ -499,7 +553,8 @@ impl VM {
                                 self.stack.push(arg);
                             }
 
-                            let extra_locals = self.chunks[chunk_id].locals_count.saturating_sub(*argc + 1);
+                            let extra_locals =
+                                self.chunks[chunk_id].locals_count.saturating_sub(*argc + 1);
                             for _ in 0..extra_locals {
                                 self.stack.push(Value::Null);
                             }
@@ -516,7 +571,7 @@ impl VM {
                                 chunk_id,
                                 ip: 0,
                                 base,
-                                self_target
+                                self_target,
                             });
                         }
 
@@ -540,28 +595,42 @@ impl VM {
                                 }
 
                                 Err(e) => {
-                                    self.handle_error(format!("error calling {}(): {}", func.name, e), span)?;
+                                    self.handle_error(
+                                        format!("error calling {}(): {}", func.name, e),
+                                        span,
+                                    )?;
                                     continue;
                                 }
                             }
                         }
 
-                        Value::Class { name, methods, parent_methods } => {
-                            let args: Vec<Value> = self.stack.drain(self.stack.len() - argc..).collect();
+                        Value::Class {
+                            name,
+                            methods,
+                            parent_methods,
+                        } => {
+                            let args: Vec<Value> =
+                                self.stack.drain(self.stack.len() - argc..).collect();
                             self.stack.pop();
 
                             let instance = Value::Instance {
                                 class_name: name.clone(),
                                 properties: methods.clone(),
-                                parent_methods: parent_methods.clone()
+                                parent_methods: parent_methods.clone(),
                             };
 
                             if let Some(Value::Function { chunk_id, arity }) = methods.get("init") {
                                 if *argc != *arity {
-                                    self.handle_error(format!("{}.init() expected {} arguments but got {}", name, arity, argc), span)?;
+                                    self.handle_error(
+                                        format!(
+                                            "{}.init() expected {} arguments but got {}",
+                                            name, arity, argc
+                                        ),
+                                        span,
+                                    )?;
                                     continue;
                                 }
-                                
+
                                 self.stack.push(Value::Null);
 
                                 let base = self.stack.len();
@@ -571,7 +640,9 @@ impl VM {
                                     self.stack.push(arg);
                                 }
 
-                                let extra_locals = self.chunks[*chunk_id].locals_count.saturating_sub(*argc + 1);
+                                let extra_locals = self.chunks[*chunk_id]
+                                    .locals_count
+                                    .saturating_sub(*argc + 1);
                                 for _ in 0..extra_locals {
                                     self.stack.push(Value::Null);
                                 }
@@ -584,7 +655,13 @@ impl VM {
                                 });
                             } else {
                                 if *argc != 0 {
-                                    self.handle_error(format!("{} has no init method, but got {} arguments", name, argc), span)?;
+                                    self.handle_error(
+                                        format!(
+                                            "{} has no init method, but got {} arguments",
+                                            name, argc
+                                        ),
+                                        span,
+                                    )?;
                                     continue;
                                 }
 
@@ -600,9 +677,12 @@ impl VM {
                             match (func.func)(args) {
                                 Ok(result) => self.stack.push(result),
                                 Err(e) => {
-                                    self.handle_error(format!("error calling {}(): {}", func.name, e), span)?;
+                                    self.handle_error(
+                                        format!("error calling {}(): {}", func.name, e),
+                                        span,
+                                    )?;
                                     continue;
-                                },
+                                }
                             }
                         }
 
@@ -614,16 +694,22 @@ impl VM {
                             match crate::stdlib::ffi::call_ffi(lib_idx, &func_name, args) {
                                 Ok(result) => self.stack.push(result),
                                 Err(e) => {
-                                    self.handle_error(format!("error calling {}(): {}", func_name, e), span)?;
+                                    self.handle_error(
+                                        format!("error calling {}(): {}", func_name, e),
+                                        span,
+                                    )?;
                                     continue;
-                                },
+                                }
                             }
                         }
 
                         _ => {
-                            self.handle_error(format!("{} is not callable", callee.type_name()), span)?;
+                            self.handle_error(
+                                format!("{} is not callable", callee.type_name()),
+                                span,
+                            )?;
                             continue;
-                        },
+                        }
                     }
                 }
 
@@ -641,9 +727,8 @@ impl VM {
                         if matches!(ns, Value::Instance { .. }) {
                             match target {
                                 Variable::Local(slot) => {
-                                    let caller_base = self.frames.last()
-                                        .map(|f| f.base)
-                                        .unwrap_or(0);
+                                    let caller_base =
+                                        self.frames.last().map(|f| f.base).unwrap_or(0);
 
                                     if caller_base + *slot < self.stack.len() {
                                         self.stack[caller_base + *slot] = ns;
@@ -682,7 +767,13 @@ impl VM {
                         let key = match key {
                             Value::String(s) => s,
                             _ => {
-                                self.handle_error(format!("object property keys must be strings, got {}", key.type_name()), span)?;
+                                self.handle_error(
+                                    format!(
+                                        "object property keys must be strings, got {}",
+                                        key.type_name()
+                                    ),
+                                    span,
+                                )?;
                                 continue;
                             }
                         };
@@ -698,46 +789,62 @@ impl VM {
                     let target = self.stack.pop().unwrap_or(Value::Null);
 
                     match target {
-                        Value::Array(elements) => {
-                            match index {
-                                Value::Int(i) => {
-                                    if i < 0 || (i as usize) >= elements.len() {
-                                        self.handle_error("index is out of bounds".to_string(), span)?;
-                                        continue;
-                                    } else {
-                                        self.stack.push(elements[i as usize].clone());
-                                    }
-                                }
-
-                                Value::Range { start, end, inclusive } => {
-                                    let end = if inclusive { end + 1 } else { end };
-
-                                    if start < 0 || (start as usize) >= elements.len() {
-                                        self.handle_error("start is out of bounds".to_string(), span)?;
-                                        continue;
-                                    }
-
-                                    if end < 0 || (end as usize) > elements.len() {
-                                        self.handle_error("end is out of bounds".to_string(), span)?;
-                                        continue;
-                                    }
-
-                                    self.stack.push(Value::Array(elements[(start as usize)..(end as usize)].to_vec()));
-                                }
-
-                                _ => {
-                                    self.handle_error(format!("expected int index for array but got {}", index.type_name()), span)?;
+                        Value::Array(elements) => match index {
+                            Value::Int(i) => {
+                                if i < 0 || (i as usize) >= elements.len() {
+                                    self.handle_error("index is out of bounds".to_string(), span)?;
                                     continue;
+                                } else {
+                                    self.stack.push(elements[i as usize].clone());
                                 }
                             }
-                        }
+
+                            Value::Range {
+                                start,
+                                end,
+                                inclusive,
+                            } => {
+                                let end = if inclusive { end + 1 } else { end };
+
+                                if start < 0 || (start as usize) >= elements.len() {
+                                    self.handle_error("start is out of bounds".to_string(), span)?;
+                                    continue;
+                                }
+
+                                if end < 0 || (end as usize) > elements.len() {
+                                    self.handle_error("end is out of bounds".to_string(), span)?;
+                                    continue;
+                                }
+
+                                self.stack.push(Value::Array(
+                                    elements[(start as usize)..(end as usize)].to_vec(),
+                                ));
+                            }
+
+                            _ => {
+                                self.handle_error(
+                                    format!(
+                                        "expected int index for array but got {}",
+                                        index.type_name()
+                                    ),
+                                    span,
+                                )?;
+                                continue;
+                            }
+                        },
 
                         Value::Object(properties) => {
                             let key = match index {
                                 Value::String(s) => s,
-                                
+
                                 _ => {
-                                    self.handle_error(format!("expected string index for object but got {}", index.type_name()), span)?;
+                                    self.handle_error(
+                                        format!(
+                                            "expected string index for object but got {}",
+                                            index.type_name()
+                                        ),
+                                        span,
+                                    )?;
                                     continue;
                                 }
                             };
@@ -746,42 +853,61 @@ impl VM {
                             self.stack.push(value);
                         }
 
-                        Value::String(s) => {
-                            match index {
-                                Value::Int(i) => {
-                                    if i < 0 || (i as usize) >= s.len() {
-                                        self.handle_error("index is out of bounds".to_string(), span)?;
-                                        continue;
-                                    }
-                                    
-                                    self.stack.push(Value::String(s.chars().nth(i as usize).unwrap().to_string()));
-                                }
-
-                                Value::Range { start, end, inclusive } => {
-                                    let end = if inclusive { end + 1 } else { end };
-
-                                    if start < 0 || (start as usize) >= s.len() {
-                                        self.handle_error("start is out of bounds".to_string(), span)?;
-                                        continue;
-                                    }
-
-                                    if end < 0 || (end as usize) > s.len() {
-                                        self.handle_error("end is out of bounds".to_string(), span)?;
-                                        continue;
-                                    }
-
-                                    self.stack.push(Value::String(s[(start as usize)..(end as usize)].to_string()));
-                                }
-
-                                _ => {
-                                    self.handle_error(format!("expected int index for string but got {}", index.type_name()), span)?;
+                        Value::String(s) => match index {
+                            Value::Int(i) => {
+                                if i < 0 || (i as usize) >= s.len() {
+                                    self.handle_error("index is out of bounds".to_string(), span)?;
                                     continue;
                                 }
+
+                                self.stack.push(Value::String(
+                                    s.chars().nth(i as usize).unwrap().to_string(),
+                                ));
                             }
-                        }
+
+                            Value::Range {
+                                start,
+                                end,
+                                inclusive,
+                            } => {
+                                let end = if inclusive { end + 1 } else { end };
+
+                                if start < 0 || (start as usize) >= s.len() {
+                                    self.handle_error("start is out of bounds".to_string(), span)?;
+                                    continue;
+                                }
+
+                                if end < 0 || (end as usize) > s.len() {
+                                    self.handle_error("end is out of bounds".to_string(), span)?;
+                                    continue;
+                                }
+
+                                self.stack.push(Value::String(
+                                    s[(start as usize)..(end as usize)].to_string(),
+                                ));
+                            }
+
+                            _ => {
+                                self.handle_error(
+                                    format!(
+                                        "expected int index for string but got {}",
+                                        index.type_name()
+                                    ),
+                                    span,
+                                )?;
+                                continue;
+                            }
+                        },
 
                         _ => {
-                            self.handle_error(format!("cannot index {} with {}", target.type_name(), index.type_name()), span)?;
+                            self.handle_error(
+                                format!(
+                                    "cannot index {} with {}",
+                                    target.type_name(),
+                                    index.type_name()
+                                ),
+                                span,
+                            )?;
                             continue;
                         }
                     }
@@ -809,11 +935,14 @@ impl VM {
                         }
 
                         (t, i) => {
-                            self.handle_error(format!("cannot index {} with {}", t.type_name(), i.type_name()), span)?;
+                            self.handle_error(
+                                format!("cannot index {} with {}", t.type_name(), i.type_name()),
+                                span,
+                            )?;
                             continue;
                         }
                     };
-                    
+
                     self.stack.push(result);
                 }
 
@@ -829,26 +958,41 @@ impl VM {
                                 }
 
                                 None => {
-                                    let method = match crate::natives::object::get_fn(name.to_string()) {
-                                        Some(m) => m,
-                                        None => {
-                                            let props = crate::natives::object::list_fns().into_iter().chain(properties.keys().cloned());
-                                            let closest = find_closest(name.clone(), props);
+                                    let method =
+                                        match crate::natives::object::get_fn(name.to_string()) {
+                                            Some(m) => m,
+                                            None => {
+                                                let props = crate::natives::object::list_fns()
+                                                    .into_iter()
+                                                    .chain(properties.keys().cloned());
+                                                let closest = find_closest(name.clone(), props);
 
-                                            if let Some(closest) = closest {
-                                                self.handle_error_with_help(
-                                                    format!("undefined property '{}' on object", name), 
-                                                    format!("did you maybe mean: '{}'?", closest.green()),
-                                                    span
-                                                )?;
+                                                if let Some(closest) = closest {
+                                                    self.handle_error_with_help(
+                                                        format!(
+                                                            "undefined property '{}' on object",
+                                                            name
+                                                        ),
+                                                        format!(
+                                                            "did you maybe mean: '{}'?",
+                                                            closest.green()
+                                                        ),
+                                                        span,
+                                                    )?;
 
-                                                continue;
-                                            } else {
-                                                self.handle_error(format!("undefined property '{}' on object", name), span)?;
-                                                continue;
+                                                    continue;
+                                                } else {
+                                                    self.handle_error(
+                                                        format!(
+                                                            "undefined property '{}' on object",
+                                                            name
+                                                        ),
+                                                        span,
+                                                    )?;
+                                                    continue;
+                                                }
                                             }
-                                        }
-                                    };
+                                        };
 
                                     self.stack.push(Value::NativeFn(method));
                                 }
@@ -859,19 +1003,25 @@ impl VM {
                             let method = match crate::natives::string::get_fn(name.to_string()) {
                                 Some(m) => m,
                                 None => {
-                                    let closest = find_closest(name.clone(), crate::natives::string::list_fns().into_iter());
+                                    let closest = find_closest(
+                                        name.clone(),
+                                        crate::natives::string::list_fns().into_iter(),
+                                    );
 
                                     if let Some(closest) = closest {
                                         self.handle_error_with_help(
-                                            format!("undefined property '{}' on string", name), 
+                                            format!("undefined property '{}' on string", name),
                                             format!("did you maybe mean: '{}'?", closest.green()),
-                                            span
+                                            span,
                                         )?;
 
                                         continue;
                                     }
 
-                                    self.handle_error(format!("undefined property '{}' on string", name), span)?;
+                                    self.handle_error(
+                                        format!("undefined property '{}' on string", name),
+                                        span,
+                                    )?;
                                     continue;
                                 }
                             };
@@ -883,19 +1033,25 @@ impl VM {
                             let method = match crate::natives::int::get_fn(name.to_string()) {
                                 Some(m) => m,
                                 None => {
-                                    let closest = find_closest(name.clone(), crate::natives::int::list_fns().into_iter());
+                                    let closest = find_closest(
+                                        name.clone(),
+                                        crate::natives::int::list_fns().into_iter(),
+                                    );
 
                                     if let Some(closest) = closest {
                                         self.handle_error_with_help(
-                                            format!("undefined property '{}' on int", name), 
+                                            format!("undefined property '{}' on int", name),
                                             format!("did you maybe mean: '{}'?", closest.green()),
-                                            span
+                                            span,
                                         )?;
 
                                         continue;
                                     }
 
-                                    self.handle_error(format!("undefined property '{}' on int", name), span)?;
+                                    self.handle_error(
+                                        format!("undefined property '{}' on int", name),
+                                        span,
+                                    )?;
                                     continue;
                                 }
                             };
@@ -907,19 +1063,25 @@ impl VM {
                             let method = match crate::natives::float::get_fn(name.to_string()) {
                                 Some(m) => m,
                                 None => {
-                                    let closest = find_closest(name.clone(), crate::natives::float::list_fns().into_iter());
+                                    let closest = find_closest(
+                                        name.clone(),
+                                        crate::natives::float::list_fns().into_iter(),
+                                    );
 
                                     if let Some(closest) = closest {
                                         self.handle_error_with_help(
-                                            format!("undefined property '{}' on float", name), 
+                                            format!("undefined property '{}' on float", name),
                                             format!("did you maybe mean: '{}'?", closest.green()),
-                                            span
+                                            span,
                                         )?;
 
                                         continue;
                                     }
 
-                                    self.handle_error(format!("undefined property '{}' on float", name), span)?;
+                                    self.handle_error(
+                                        format!("undefined property '{}' on float", name),
+                                        span,
+                                    )?;
                                     continue;
                                 }
                             };
@@ -931,19 +1093,25 @@ impl VM {
                             let method = match crate::natives::array::get_fn(name.to_string()) {
                                 Some(m) => m,
                                 None => {
-                                    let closest = find_closest(name.clone(), crate::natives::array::list_fns().into_iter());
+                                    let closest = find_closest(
+                                        name.clone(),
+                                        crate::natives::array::list_fns().into_iter(),
+                                    );
 
                                     if let Some(closest) = closest {
                                         self.handle_error_with_help(
-                                            format!("undefined property '{}' on array", name), 
+                                            format!("undefined property '{}' on array", name),
                                             format!("did you maybe mean: '{}'?", closest.green()),
-                                            span
+                                            span,
                                         )?;
 
                                         continue;
                                     }
 
-                                    self.handle_error(format!("undefined property '{}' on array", name), span)?;
+                                    self.handle_error(
+                                        format!("undefined property '{}' on array", name),
+                                        span,
+                                    )?;
                                     continue;
                                 }
                             };
@@ -951,7 +1119,11 @@ impl VM {
                             self.stack.push(Value::NativeFn(method));
                         }
 
-                        Value::Instance { class_name, properties, .. } => {
+                        Value::Instance {
+                            class_name,
+                            properties,
+                            ..
+                        } => {
                             if let Some(v) = properties.get(name) {
                                 match v {
                                     Value::Function { chunk_id, arity } => {
@@ -970,18 +1142,28 @@ impl VM {
                                     }
                                 }
                             } else {
-                                let closest = find_closest(name.clone(), properties.keys().cloned());
+                                let closest =
+                                    find_closest(name.clone(), properties.keys().cloned());
 
                                 if let Some(closest) = closest {
                                     self.handle_error_with_help(
-                                        format!("undefined property '{}' on instance of {}", name, class_name), 
+                                        format!(
+                                            "undefined property '{}' on instance of {}",
+                                            name, class_name
+                                        ),
                                         format!("did you maybe mean: '{}'?", closest.green()),
-                                        span
+                                        span,
                                     )?;
 
                                     continue;
                                 } else {
-                                    self.handle_error(format!("undefined property '{}' on instance of {}", name, class_name), span)?;
+                                    self.handle_error(
+                                        format!(
+                                            "undefined property '{}' on instance of {}",
+                                            name, class_name
+                                        ),
+                                        span,
+                                    )?;
                                     continue;
                                 }
                             }
@@ -994,7 +1176,10 @@ impl VM {
                         }
 
                         _ => {
-                            self.handle_error(format!("cannot get property '{}' of {}", name, target.type_name()), span)?;
+                            self.handle_error(
+                                format!("cannot get property '{}' of {}", name, target.type_name()),
+                                span,
+                            )?;
                             continue;
                         }
                     }
@@ -1009,7 +1194,10 @@ impl VM {
                             let fns = crate::natives::object::list_fns();
 
                             if fns.contains(name) {
-                                self.handle_error(format!("'{}' is a read-only property on object", name), span)?;
+                                self.handle_error(
+                                    format!("'{}' is a read-only property on object", name),
+                                    span,
+                                )?;
                                 continue;
                             }
 
@@ -1017,13 +1205,24 @@ impl VM {
                             Value::Object(properties)
                         }
 
-                        Value::Instance { class_name, mut properties, parent_methods } => {
+                        Value::Instance {
+                            class_name,
+                            mut properties,
+                            parent_methods,
+                        } => {
                             properties.insert(name.clone(), value);
-                            Value::Instance { class_name, properties, parent_methods }
+                            Value::Instance {
+                                class_name,
+                                properties,
+                                parent_methods,
+                            }
                         }
 
                         t => {
-                            self.handle_error(format!("cannot set property '{}' of {}", name, t.type_name()), span)?;
+                            self.handle_error(
+                                format!("cannot set property '{}' of {}", name, t.type_name()),
+                                span,
+                            )?;
                             continue;
                         }
                     };
@@ -1038,20 +1237,35 @@ impl VM {
                     match (start, end) {
                         (Value::Int(a), Value::Int(b)) => {
                             if *inclusive {
-                                self.stack.push(Value::Range { start: a, end: b, inclusive: true });
+                                self.stack.push(Value::Range {
+                                    start: a,
+                                    end: b,
+                                    inclusive: true,
+                                });
                             } else {
-                                self.stack.push(Value::Range { start: a, end: b, inclusive: false });
+                                self.stack.push(Value::Range {
+                                    start: a,
+                                    end: b,
+                                    inclusive: false,
+                                });
                             }
                         }
 
                         _ => {
-                            self.handle_error("ranges can only be created from ints".to_string(), span)?;
+                            self.handle_error(
+                                "ranges can only be created from ints".to_string(),
+                                span,
+                            )?;
                             continue;
                         }
                     }
                 }
 
-                Instruction::IterNext { slot_iter, slot_index, slot_var } => {
+                Instruction::IterNext {
+                    slot_iter,
+                    slot_index,
+                    slot_var,
+                } => {
                     let iter = self.stack[frame.base + slot_iter].clone();
                     let index = match self.stack[frame.base + slot_index].clone() {
                         Value::Null => Value::Int(0),
@@ -1059,12 +1273,22 @@ impl VM {
                     };
 
                     match iter {
-                        Value::Range { start, end, inclusive } => {
+                        Value::Range {
+                            start,
+                            end,
+                            inclusive,
+                        } => {
                             let index = match index {
                                 Value::Int(i) => i,
 
                                 _ => {
-                                    self.handle_error(format!("expected int index for range but got {}", index.type_name()), span)?;
+                                    self.handle_error(
+                                        format!(
+                                            "expected int index for range but got {}",
+                                            index.type_name()
+                                        ),
+                                        span,
+                                    )?;
                                     continue;
                                 }
                             };
@@ -1085,7 +1309,13 @@ impl VM {
                             let index = match index {
                                 Value::Int(i) => i,
                                 _ => {
-                                    self.handle_error(format!("expected int index for array but got {}", index.type_name()), span)?;
+                                    self.handle_error(
+                                        format!(
+                                            "expected int index for array but got {}",
+                                            index.type_name()
+                                        ),
+                                        span,
+                                    )?;
                                     continue;
                                 }
                             };
@@ -1095,13 +1325,17 @@ impl VM {
                             } else {
                                 let frame = self.frames.last_mut().unwrap();
                                 self.stack[frame.base + slot_index] = Value::Int(index + 1);
-                                self.stack[frame.base + slot_var] = elements[index as usize].clone();
+                                self.stack[frame.base + slot_var] =
+                                    elements[index as usize].clone();
                                 self.stack.push(Value::Bool(true));
                             }
                         }
 
                         _ => {
-                            self.handle_error(format!("{} is not iterable", iter.type_name()), span)?;
+                            self.handle_error(
+                                format!("{} is not iterable", iter.type_name()),
+                                span,
+                            )?;
                             continue;
                         }
                     }
@@ -1132,21 +1366,23 @@ impl VM {
                             continue;
                         }
                     } else {
-                        let current_dir = self.source_path
+                        let current_dir = self
+                            .source_path
                             .parent()
                             .map(|p| p.to_path_buf())
                             .unwrap_or_else(|| std::path::PathBuf::from("."));
-                        
+
                         let is_package = !path.contains("/") && !path.ends_with(".modu");
 
                         let resolved: std::path::PathBuf = if is_package {
                             // so like an file lib/smth.modu will resolve packages
                             // from ../.modu/....
-                            let packages_path = std::iter::successors(Some(current_dir.as_path()), |p| p.parent())
-                                .find(|p| p.join(".modu").join("packages").is_dir())
-                                .map(|p| p.to_path_buf())
-                                .unwrap_or_else(|| current_dir.clone());
-                            
+                            let packages_path =
+                                std::iter::successors(Some(current_dir.as_path()), |p| p.parent())
+                                    .find(|p| p.join(".modu").join("packages").is_dir())
+                                    .map(|p| p.to_path_buf())
+                                    .unwrap_or_else(|| current_dir.clone());
+
                             packages_path
                                 .join(".modu")
                                 .join("packages")
@@ -1163,20 +1399,24 @@ impl VM {
                             current_dir.join(&with_ext)
                         };
 
-                        let absolute = resolved
-                            .canonicalize()
-                            .map_err(|_| format!("cannot find module '{}' (looked for {})", path, resolved.display()))?;
-                        
+                        let absolute = resolved.canonicalize().map_err(|_| {
+                            format!(
+                                "cannot find module '{}' (looked for {})",
+                                path,
+                                resolved.display()
+                            )
+                        })?;
+
                         let source = std::fs::read_to_string(&resolved)
                             .map_err(|e| format!("cannot read '{}': {}", resolved.display(), e))?;
-                        
+
                         let ast = crate::parser::parse(&source, &resolved.display().to_string());
 
                         if ast.is_err() {
                             self.handle_error("failed to parse package".to_string(), span)?;
                             continue;
                         }
-                        
+
                         let mut compiler = crate::compiler::compiler::Compiler::new();
                         compiler.compile_program(ast.clone().unwrap())?;
 
@@ -1192,7 +1432,7 @@ impl VM {
                             .filter(|(_, v)| !matches!(v, Value::BuiltinFn(_)))
                             .map(|(k, v)| (k, remap(v, chunk_offset)))
                             .collect();
-                        
+
                         let module = Value::Object(exports);
 
                         if let Some(alias) = alias {
@@ -1211,7 +1451,7 @@ impl VM {
                                 .and_then(|s| s.to_str())
                                 .unwrap_or(path.as_str())
                                 .to_string();
-                            
+
                             self.globals.insert(default_alias, module);
                         }
                     }
@@ -1234,14 +1474,26 @@ impl VM {
                     let child = self.stack.pop().unwrap_or(Value::Null);
 
                     match (child, parent) {
-                        (Value::Class { name, mut methods, .. }, Value::Class { methods: parent_methods, .. }) => {
+                        (
+                            Value::Class {
+                                name, mut methods, ..
+                            },
+                            Value::Class {
+                                methods: parent_methods,
+                                ..
+                            },
+                        ) => {
                             let saved_methods = parent_methods.clone();
 
                             for (k, v) in parent_methods {
                                 methods.entry(k).or_insert(v);
                             }
 
-                            self.stack.push(Value::Class { name, methods, parent_methods: saved_methods });
+                            self.stack.push(Value::Class {
+                                name,
+                                methods,
+                                parent_methods: saved_methods,
+                            });
                         }
 
                         (_, _) => {
@@ -1256,7 +1508,9 @@ impl VM {
 
                     match inst.clone() {
                         Value::Instance { parent_methods, .. } => {
-                            if let Some(Value::Function { chunk_id, arity }) = parent_methods.get(name) {
+                            if let Some(Value::Function { chunk_id, arity }) =
+                                parent_methods.get(name)
+                            {
                                 self.stack.push(Value::InstanceFn {
                                     instance: Box::new(inst),
                                     chunk_id: *chunk_id,
@@ -1269,7 +1523,10 @@ impl VM {
                         }
 
                         _ => {
-                            self.handle_error("super cannot be used outside of a class".to_string(), span)?;
+                            self.handle_error(
+                                "super cannot be used outside of a class".to_string(),
+                                span,
+                            )?;
                             continue;
                         }
                     }
@@ -1297,16 +1554,16 @@ impl VM {
 
                             if let Some(closest) = closest {
                                 self.handle_error_with_help(
-                                    format!("undefined variable '{}'", name), 
+                                    format!("undefined variable '{}'", name),
                                     format!("did you maybe mean: '{}'?", closest.green()),
-                                    span
+                                    span,
                                 )?;
                                 continue;
                             }
 
                             self.handle_error(format!("undefined variable '{}'", name), span)?;
                             continue;
-                        },
+                        }
                     };
 
                     self.stack.push(v);
@@ -1348,7 +1605,7 @@ impl VM {
         }
     }
 
-    fn runtime_error(&self, msg: String, span: SimpleSpan) -> String {        
+    fn runtime_error(&self, msg: String, span: SimpleSpan) -> String {
         let filename = self.source_path.to_string_lossy().to_string();
 
         let mut buf: Vec<u8> = Vec::new();
@@ -1356,12 +1613,9 @@ impl VM {
             .with_message(msg)
             .with_label(Label::new((&filename, span.start..span.end)).with_color(Color::Red))
             .finish()
-            .write(
-                (&filename, Source::from(self.source.clone())),
-                &mut buf
-            )
+            .write((&filename, Source::from(self.source.clone())), &mut buf)
             .ok();
-        
+
         String::from_utf8_lossy(&buf).to_string()
     }
 
@@ -1374,12 +1628,9 @@ impl VM {
             .with_label(Label::new((&filename, span.start..span.end)).with_color(Color::Red))
             .with_help(help)
             .finish()
-            .write(
-                (&filename, Source::from(self.source.clone())),
-                &mut buf
-            )
+            .write((&filename, Source::from(self.source.clone())), &mut buf)
             .ok();
-        
+
         String::from_utf8_lossy(&buf).to_string()
     }
 
@@ -1403,7 +1654,12 @@ impl VM {
         }
     }
 
-    fn handle_error_with_help(&mut self, msg: String, help: String, span: SimpleSpan) -> Result<(), String> {
+    fn handle_error_with_help(
+        &mut self,
+        msg: String,
+        help: String,
+        span: SimpleSpan,
+    ) -> Result<(), String> {
         if let Some(handler) = self.error_handlers.pop() {
             self.stack.truncate(handler.stack_depth);
 
@@ -1426,34 +1682,62 @@ impl VM {
 
 fn remap(value: Value, offset: usize) -> Value {
     match value {
-        Value::Function { chunk_id, arity } => Value::Function { chunk_id: chunk_id + offset, arity },
+        Value::Function { chunk_id, arity } => Value::Function {
+            chunk_id: chunk_id + offset,
+            arity,
+        },
 
         Value::Object(props) => Value::Object(
-            props.into_iter().map(|(k, v)| (k, remap(v, offset))).collect()
+            props
+                .into_iter()
+                .map(|(k, v)| (k, remap(v, offset)))
+                .collect(),
         ),
 
-        Value::Array(elems) => Value::Array(
-            elems.into_iter().map(|v| remap(v, offset)).collect()
-        ),
+        Value::Array(elems) => Value::Array(elems.into_iter().map(|v| remap(v, offset)).collect()),
 
-        Value::Class { name, methods, parent_methods } => Value::Class { 
-            name, 
-            methods: methods.into_iter().map(|(k, v)| (k, remap(v, offset))).collect(),
-            parent_methods: parent_methods.into_iter().map(|(k, v)| (k, remap(v, offset))).collect()
+        Value::Class {
+            name,
+            methods,
+            parent_methods,
+        } => Value::Class {
+            name,
+            methods: methods
+                .into_iter()
+                .map(|(k, v)| (k, remap(v, offset)))
+                .collect(),
+            parent_methods: parent_methods
+                .into_iter()
+                .map(|(k, v)| (k, remap(v, offset)))
+                .collect(),
         },
 
-        Value::Instance { class_name, properties, parent_methods } => Value::Instance { 
-            class_name, 
-            properties: properties.into_iter().map(|(k, v)| (k, remap(v, offset))).collect(),
-            parent_methods: parent_methods.into_iter().map(|(k, v)| (k, remap(v, offset))).collect()
+        Value::Instance {
+            class_name,
+            properties,
+            parent_methods,
+        } => Value::Instance {
+            class_name,
+            properties: properties
+                .into_iter()
+                .map(|(k, v)| (k, remap(v, offset)))
+                .collect(),
+            parent_methods: parent_methods
+                .into_iter()
+                .map(|(k, v)| (k, remap(v, offset)))
+                .collect(),
         },
 
-        Value::InstanceFn { instance, chunk_id, arity } => Value::InstanceFn { 
-            instance: Box::new(remap(*instance, offset)), 
-            chunk_id: chunk_id + offset, 
-            arity 
+        Value::InstanceFn {
+            instance,
+            chunk_id,
+            arity,
+        } => Value::InstanceFn {
+            instance: Box::new(remap(*instance, offset)),
+            chunk_id: chunk_id + offset,
+            arity,
         },
 
-        v => v
+        v => v,
     }
 }

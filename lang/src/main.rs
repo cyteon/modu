@@ -1,15 +1,15 @@
-use std::panic::{catch_unwind, AssertUnwindSafe};
 use colored::Colorize;
+use std::panic::{AssertUnwindSafe, catch_unwind};
 
 mod ast;
+mod functions;
 mod lexer;
 mod parser;
-mod functions;
 mod validator;
 
 mod cli;
-mod stdlib;
 mod natives;
+mod stdlib;
 
 mod compiler;
 mod vm;
@@ -20,7 +20,8 @@ fn main() {
     let args = std::env::args().collect::<Vec<String>>();
 
     if args.len() < 2 {
-        println!("Commands:
+        println!(
+            "Commands:
     run       <file>   - Run a Modu file
     repl               - Start the Modu REPL
     help      <stdlib> - Show documentation for a standard library module
@@ -28,29 +29,28 @@ fn main() {
     login              - Login with Modu Packages
     publish            - Publish a Modu package
     install   <name>   - Install a Modu package
-    uninstall <name>   - Uninstall a Modu package");
+    uninstall <name>   - Uninstall a Modu package"
+        );
         return;
     }
 
     let action = &args[1];
 
-    let result = catch_unwind(AssertUnwindSafe(|| {
-        match action.as_str() {
-            "run" => cli::run::run(),
-            "repl" => cli::repl::repl(),
-            "help" => cli::help::help(),
-            "login" => cli::login::login(),
-            "init" => cli::init::init(),
-            "publish" => cli::publish::publish(),
-            "install" => cli::install::install(),
-            "uninstall" => cli::uninstall::uninstall(),
-            "--version" | "-v" | "version" => { 
-                println!("Modu v{}", env!("CARGO_PKG_VERSION"));
-            }
+    let result = catch_unwind(AssertUnwindSafe(|| match action.as_str() {
+        "run" => cli::run::run(),
+        "repl" => cli::repl::repl(),
+        "help" => cli::help::help(),
+        "login" => cli::login::login(),
+        "init" => cli::init::init(),
+        "publish" => cli::publish::publish(),
+        "install" => cli::install::install(),
+        "uninstall" => cli::uninstall::uninstall(),
+        "--version" | "-v" | "version" => {
+            println!("Modu v{}", env!("CARGO_PKG_VERSION"));
+        }
 
-            action => {
-                println!("Unknown command: {}", action);
-            }
+        action => {
+            println!("Unknown command: {}", action);
         }
     }));
 
@@ -60,7 +60,7 @@ fn main() {
             .copied()
             .or_else(|| panic.downcast_ref::<String>().map(String::as_str))
             .unwrap_or("Unknown internal error");
-        
+
         eprintln!("{}", "Internal interpreter error".red().bold());
         eprintln!("  ├─ {}", msg.yellow());
 
@@ -70,9 +70,12 @@ fn main() {
             eprintln!("  ├─ Backtrace:");
             eprintln!("{}", format!("{bt:?}").dimmed());
         } else {
-            eprintln!("  ├─ {}", "Run with RUST_BACKTRACE=1 for more details".dimmed());
+            eprintln!(
+                "  ├─ {}",
+                "Run with RUST_BACKTRACE=1 for more details".dimmed()
+            );
         }
-        
+
         eprintln!("  └─ Please report this issue at https://github.com/cyteon/modu/issues");
     }
 }

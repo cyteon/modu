@@ -1,6 +1,6 @@
-use ariadne::{Color, Label, Report, ReportKind, Source};
 use crate::ast::{Expr, SpannedExpr};
 use crate::lexer::Span;
+use ariadne::{Color, Label, Report, ReportKind, Source};
 
 struct ValidationContext {
     inside_function: usize,
@@ -63,7 +63,9 @@ fn validate_expr(expr: &SpannedExpr, ctx: &mut ValidationContext) -> Result<(), 
             ctx.inside_function -= 1;
         }
 
-        Expr::WhileLoop { body, .. } | Expr::ForLoop { body, .. } | Expr::InfiniteLoop { body, .. } => {
+        Expr::WhileLoop { body, .. }
+        | Expr::ForLoop { body, .. }
+        | Expr::InfiniteLoop { body, .. } => {
             ctx.inside_loop += 1;
             validate_expr(&body, ctx)?;
             ctx.inside_loop -= 1;
@@ -74,7 +76,7 @@ fn validate_expr(expr: &SpannedExpr, ctx: &mut ValidationContext) -> Result<(), 
                 if let Some(cond) = condition {
                     validate_expr(cond, ctx)?;
                 }
-                
+
                 validate_expr(block, ctx)?;
             }
         }

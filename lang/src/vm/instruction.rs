@@ -7,10 +7,28 @@ pub enum Instruction {
     Swap,
     Rotate3,
 
-    BitAnd, BitOr, BitXor, BitShl, BitShr, BitNot,
-    Add, Sub, Mul, Div, Mod, Pow, Neg,
-    Eq, Neq, Gt, Lt, Gte, Lte,
-    In, NotIn, Not,
+    BitAnd,
+    BitOr,
+    BitXor,
+    BitShl,
+    BitShr,
+    BitNot,
+    Add,
+    Sub,
+    Mul,
+    Div,
+    Mod,
+    Pow,
+    Neg,
+    Eq,
+    Neq,
+    Gt,
+    Lt,
+    Gte,
+    Lte,
+    In,
+    NotIn,
+    Not,
 
     LoadLocal(usize),
     StoreLocal(usize),
@@ -24,12 +42,18 @@ pub enum Instruction {
     EndTry,
 
     Call(usize),
-    CallMethod { argc: usize, target_local: Option<usize>, target_global: Option<String> },
+    CallMethod {
+        argc: usize,
+        target_local: Option<usize>,
+        target_global: Option<String>,
+    },
     Return,
 
     MakeArray(usize),
     MakeObject(usize),
-    MakeRange { inclusive: bool },
+    MakeRange {
+        inclusive: bool,
+    },
 
     Extend,
     GetSuper(String),
@@ -48,5 +72,5 @@ pub enum Instruction {
     Import {
         path: String,
         alias: Option<String>,
-    }
+    },
 }

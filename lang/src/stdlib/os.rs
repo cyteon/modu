@@ -1,5 +1,5 @@
-use std::collections::HashMap;
 use crate::vm::value::{BuiltinFn, Value};
+use std::collections::HashMap;
 
 #[cfg(windows)]
 use std::os::windows::process::CommandExt;
@@ -7,26 +7,56 @@ use std::os::windows::process::CommandExt;
 pub fn object() -> Value {
     let mut methods = HashMap::new();
 
-    methods.insert("exec".to_string(), Value::BuiltinFn(BuiltinFn::new("exec", exec)));
-    methods.insert("pid".to_string(), Value::BuiltinFn(BuiltinFn::new("pid", pid)));
-    methods.insert("uid".to_string(), Value::BuiltinFn(BuiltinFn::new("uid", uid)));
-    methods.insert("gid".to_string(), Value::BuiltinFn(BuiltinFn::new("gid", gid)));
-    methods.insert("getenv".to_string(), Value::BuiltinFn(BuiltinFn::new("getenv", getenv)));
-    methods.insert("setenv".to_string(), Value::BuiltinFn(BuiltinFn::new("setenv", setenv)));
-    methods.insert("unsetenv".to_string(), Value::BuiltinFn(BuiltinFn::new("unsetenv", unsetenv)));
-    methods.insert("args".to_string(), Value::BuiltinFn(BuiltinFn::new("args", args)));
+    methods.insert(
+        "exec".to_string(),
+        Value::BuiltinFn(BuiltinFn::new("exec", exec)),
+    );
+    methods.insert(
+        "pid".to_string(),
+        Value::BuiltinFn(BuiltinFn::new("pid", pid)),
+    );
+    methods.insert(
+        "uid".to_string(),
+        Value::BuiltinFn(BuiltinFn::new("uid", uid)),
+    );
+    methods.insert(
+        "gid".to_string(),
+        Value::BuiltinFn(BuiltinFn::new("gid", gid)),
+    );
+    methods.insert(
+        "getenv".to_string(),
+        Value::BuiltinFn(BuiltinFn::new("getenv", getenv)),
+    );
+    methods.insert(
+        "setenv".to_string(),
+        Value::BuiltinFn(BuiltinFn::new("setenv", setenv)),
+    );
+    methods.insert(
+        "unsetenv".to_string(),
+        Value::BuiltinFn(BuiltinFn::new("unsetenv", unsetenv)),
+    );
+    methods.insert(
+        "args".to_string(),
+        Value::BuiltinFn(BuiltinFn::new("args", args)),
+    );
 
-    methods.insert("name".to_string(), Value::String({
-        if cfg!(target_os = "windows") {
-            "windows"
-        } else if cfg!(target_os = "linux") {
-            "linux"
-        } else if cfg!(target_os = "macos") {
-            "macos"
-        } else {
-            "unknown"
-        }
-    }.to_string()));
+    methods.insert(
+        "name".to_string(),
+        Value::String(
+            {
+                if cfg!(target_os = "windows") {
+                    "windows"
+                } else if cfg!(target_os = "linux") {
+                    "linux"
+                } else if cfg!(target_os = "macos") {
+                    "macos"
+                } else {
+                    "unknown"
+                }
+            }
+            .to_string(),
+        ),
+    );
 
     Value::Object(methods)
 }
@@ -38,7 +68,12 @@ fn exec(args: Vec<Value>) -> Result<Value, String> {
 
     let command = match &args[0] {
         Value::String(s) => s,
-        _ => return Err(format!("os.exec() first argument must be a string, got {}", args[0].type_name())),
+        _ => {
+            return Err(format!(
+                "os.exec() first argument must be a string, got {}",
+                args[0].type_name()
+            ));
+        }
     };
 
     let output = {
@@ -106,12 +141,20 @@ fn gid(_args: Vec<Value>) -> Result<Value, String> {
 
 fn getenv(args: Vec<Value>) -> Result<Value, String> {
     if args.len() != 1 {
-        return Err(format!("os.getenv() takes exactly one argument ({} given)", args.len()));
+        return Err(format!(
+            "os.getenv() takes exactly one argument ({} given)",
+            args.len()
+        ));
     }
 
     let key = match &args[0] {
         Value::String(s) => s,
-        _ => return Err(format!("os.getenv() argument must be a string, got {}", args[0].type_name())),
+        _ => {
+            return Err(format!(
+                "os.getenv() argument must be a string, got {}",
+                args[0].type_name()
+            ));
+        }
     };
 
     if let Some(value) = std::env::var_os(key) {
@@ -123,17 +166,30 @@ fn getenv(args: Vec<Value>) -> Result<Value, String> {
 
 fn setenv(args: Vec<Value>) -> Result<Value, String> {
     if args.len() != 2 {
-        return Err(format!("os.setenv() takes exactly two arguments ({} given)", args.len()));
+        return Err(format!(
+            "os.setenv() takes exactly two arguments ({} given)",
+            args.len()
+        ));
     }
 
     let key = match &args[0] {
         Value::String(s) => s,
-        _ => return Err(format!("os.setenv() first argument must be a string, got {}", args[0].type_name())),
+        _ => {
+            return Err(format!(
+                "os.setenv() first argument must be a string, got {}",
+                args[0].type_name()
+            ));
+        }
     };
 
     let value = match &args[1] {
         Value::String(s) => s,
-        _ => return Err(format!("os.setenv() second argument must be a string, got {}", args[1].type_name())),
+        _ => {
+            return Err(format!(
+                "os.setenv() second argument must be a string, got {}",
+                args[1].type_name()
+            ));
+        }
     };
 
     unsafe {
@@ -145,12 +201,20 @@ fn setenv(args: Vec<Value>) -> Result<Value, String> {
 
 fn unsetenv(args: Vec<Value>) -> Result<Value, String> {
     if args.len() != 1 {
-        return Err(format!("os.unsetenv() takes exactly one argument ({} given)", args.len()));
+        return Err(format!(
+            "os.unsetenv() takes exactly one argument ({} given)",
+            args.len()
+        ));
     }
 
     let key = match &args[0] {
         Value::String(s) => s,
-        _ => return Err(format!("os.unsetenv() argument must be a string, got {}", args[0].type_name())),
+        _ => {
+            return Err(format!(
+                "os.unsetenv() argument must be a string, got {}",
+                args[0].type_name()
+            ));
+        }
     };
 
     unsafe {

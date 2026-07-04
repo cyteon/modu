@@ -1,10 +1,13 @@
-use std::collections::HashMap;
 use crate::vm::value::{BuiltinFn, Value};
+use std::collections::HashMap;
 
 pub fn object() -> Value {
     let mut methods = HashMap::new();
 
-    methods.insert("parse".to_string(), Value::BuiltinFn(BuiltinFn::new("parse", parse)));
+    methods.insert(
+        "parse".to_string(),
+        Value::BuiltinFn(BuiltinFn::new("parse", parse)),
+    );
 
     Value::Object(methods)
 }
@@ -22,9 +25,9 @@ fn parse_obj(value: serde_json::Value) -> Result<Value, String> {
                 return Err(format!("Unsupported number type in JSON: {}", n));
             }
         }
-        
+
         serde_json::Value::String(s) => Ok(Value::String(s)),
-        
+
         serde_json::Value::Array(mut arr) => {
             let mut vec = Vec::new();
 
@@ -41,9 +44,9 @@ fn parse_obj(value: serde_json::Value) -> Result<Value, String> {
                             return Err(format!("Unsupported number type in JSON: {}", n));
                         }
                     }
-                    
+
                     serde_json::Value::String(s) => Value::String(s.clone()),
-                    
+
                     serde_json::Value::Array(_) | serde_json::Value::Object(_) => {
                         parse_obj(item.clone())?
                     }
@@ -57,7 +60,7 @@ fn parse_obj(value: serde_json::Value) -> Result<Value, String> {
 
         serde_json::Value::Object(obj) => {
             let mut properties = HashMap::new();
-            
+
             for (k, v) in obj.into_iter() {
                 properties.insert(k.clone(), parse_obj(v)?);
             }
@@ -69,12 +72,20 @@ fn parse_obj(value: serde_json::Value) -> Result<Value, String> {
 
 pub fn parse(args: Vec<Value>) -> Result<Value, String> {
     if args.len() != 1 {
-        return Err(format!("json.parse() takes exactly one argument ({} given)", args.len()));
+        return Err(format!(
+            "json.parse() takes exactly one argument ({} given)",
+            args.len()
+        ));
     }
 
     let json_str = match &args[0] {
         Value::String(s) => Value::process_escape_sequences(s),
-        _ => return Err(format!("json.parse() argument must be a string, got {}", args[0].type_name())),
+        _ => {
+            return Err(format!(
+                "json.parse() argument must be a string, got {}",
+                args[0].type_name()
+            ));
+        }
     };
 
     let value = match serde_json::from_str::<serde_json::Value>(&json_str) {

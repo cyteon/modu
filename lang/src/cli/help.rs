@@ -20,16 +20,16 @@ pub fn help() {
     };
 
     let contents = match stdlib.as_str() {
-        "crypto"   => include_str!("../stdlib/crypto.txt"),
+        "crypto" => include_str!("../stdlib/crypto.txt"),
         "encoding" => include_str!("../stdlib/encoding.txt"),
-        "ffi"      => include_str!("../stdlib/ffi.txt"),
-        "fs"       => include_str!("../stdlib/fs.txt"),
-        "http"     => include_str!("../stdlib/http.txt"),
-        "json"     => include_str!("../stdlib/json.txt"),
-        "math"     => include_str!("../stdlib/math.txt"),
-        "os"       => include_str!("../stdlib/os.txt"),
-        "time"     => include_str!("../stdlib/time.txt"),
-        "uuid"     => include_str!("../stdlib/uuid.txt"),
+        "ffi" => include_str!("../stdlib/ffi.txt"),
+        "fs" => include_str!("../stdlib/fs.txt"),
+        "http" => include_str!("../stdlib/http.txt"),
+        "json" => include_str!("../stdlib/json.txt"),
+        "math" => include_str!("../stdlib/math.txt"),
+        "os" => include_str!("../stdlib/os.txt"),
+        "time" => include_str!("../stdlib/time.txt"),
+        "uuid" => include_str!("../stdlib/uuid.txt"),
         stdlib => {
             println!("Unknown standard library module: {}", stdlib);
             return;

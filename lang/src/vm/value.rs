@@ -11,7 +11,10 @@ pub enum Value {
     Array(Vec<Value>),
     Object(HashMap<String, Value>),
 
-    Function { chunk_id: usize, arity: usize },
+    Function {
+        chunk_id: usize,
+        arity: usize,
+    },
     NativeFn(NativeFn),
     BuiltinFn(BuiltinFn),
 
@@ -40,7 +43,7 @@ pub enum Value {
         instance: Box<Value>,
         chunk_id: usize,
         arity: usize,
-    }
+    },
 }
 
 #[derive(Clone)]
@@ -51,7 +54,10 @@ pub struct BuiltinFn {
 
 impl BuiltinFn {
     pub fn new(name: &str, func: fn(Vec<Value>) -> Result<Value, String>) -> Self {
-        Self { name: name.to_string(), func }
+        Self {
+            name: name.to_string(),
+            func,
+        }
     }
 }
 
@@ -62,8 +68,14 @@ pub struct NativeFn {
 }
 
 impl NativeFn {
-    pub fn new(name: &str, func: fn(Value, Vec<Value>) -> Result<(Value, Option<Value>), String>) -> Self {
-        Self { name: name.to_string(), func }
+    pub fn new(
+        name: &str,
+        func: fn(Value, Vec<Value>) -> Result<(Value, Option<Value>), String>,
+    ) -> Self {
+        Self {
+            name: name.to_string(),
+            func,
+        }
     }
 }
 
@@ -91,25 +103,60 @@ impl PartialEq for Value {
             (Value::Array(a), Value::Array(b)) => a == b,
             (Value::Object(a), Value::Object(b)) => a == b,
             (Value::FFILib(a), Value::FFILib(b)) => a == b,
-            (Value::FFIFunc(lib_a, name_a), Value::FFIFunc(lib_b, name_b)) => lib_a == lib_b && name_a == name_b,
+            (Value::FFIFunc(lib_a, name_a), Value::FFIFunc(lib_b, name_b)) => {
+                lib_a == lib_b && name_a == name_b
+            }
 
-            (Value::Function { chunk_id: a_id, arity: a_arity }, Value::Function { chunk_id: b_id, arity: b_arity }) => a_id == b_id && a_arity == b_arity,
+            (
+                Value::Function {
+                    chunk_id: a_id,
+                    arity: a_arity,
+                },
+                Value::Function {
+                    chunk_id: b_id,
+                    arity: b_arity,
+                },
+            ) => a_id == b_id && a_arity == b_arity,
             (Value::NativeFn(a), Value::NativeFn(b)) => a.name == b.name,
             (Value::BuiltinFn(a), Value::BuiltinFn(b)) => a.name == b.name,
 
             (
-                Value::Class { name: a_name, methods: a_methods, .. },
-                Value::Class { name: b_name, methods: b_methods, .. }
+                Value::Class {
+                    name: a_name,
+                    methods: a_methods,
+                    ..
+                },
+                Value::Class {
+                    name: b_name,
+                    methods: b_methods,
+                    ..
+                },
             ) => a_name == b_name && a_methods == b_methods,
 
             (
-                Value::Instance { class_name: a_class, properties: a_props, .. },
-                Value::Instance { class_name: b_class, properties: b_props, .. }
+                Value::Instance {
+                    class_name: a_class,
+                    properties: a_props,
+                    ..
+                },
+                Value::Instance {
+                    class_name: b_class,
+                    properties: b_props,
+                    ..
+                },
             ) => a_class == b_class && a_props == b_props,
 
             (
-                Value::InstanceFn { instance: a_instance, chunk_id: a_id, arity: a_arity },
-                Value::InstanceFn { instance: b_instance, chunk_id: b_id, arity: b_arity }
+                Value::InstanceFn {
+                    instance: a_instance,
+                    chunk_id: a_id,
+                    arity: a_arity,
+                },
+                Value::InstanceFn {
+                    instance: b_instance,
+                    chunk_id: b_id,
+                    arity: b_arity,
+                },
             ) => a_instance == b_instance && a_id == b_id && a_arity == b_arity,
 
             _ => false,
@@ -144,22 +191,28 @@ impl std::fmt::Display for Value {
             Value::Null => write!(f, "null"),
 
             Value::Array(arr) => {
-                let elements: Vec<String> = arr.iter().map(|v| match v {
-                    Value::String(s) => format!("\"{}\"", s),
-                    _ => format!("{}", v),
-                }).collect();
+                let elements: Vec<String> = arr
+                    .iter()
+                    .map(|v| match v {
+                        Value::String(s) => format!("\"{}\"", s),
+                        _ => format!("{}", v),
+                    })
+                    .collect();
 
                 write!(f, "[{}]", elements.join(", "))
             }
 
             Value::Object(obj) => {
-                let properties: Vec<String> = obj.iter().map(|(k, v)| {
-                    let value_str = match v {
-                        Value::String(s) => format!("\"{}\"", s),
-                        _ => format!("{}", v),
-                    };
-                    format!("\"{}\": {}", k, value_str)
-                }).collect();
+                let properties: Vec<String> = obj
+                    .iter()
+                    .map(|(k, v)| {
+                        let value_str = match v {
+                            Value::String(s) => format!("\"{}\"", s),
+                            _ => format!("{}", v),
+                        };
+                        format!("\"{}\": {}", k, value_str)
+                    })
+                    .collect();
 
                 write!(f, "{{ {} }}", properties.join(", "))
             }
@@ -169,8 +222,12 @@ impl std::fmt::Display for Value {
             Value::BuiltinFn(builtin_fn) => write!(f, "{:?}", builtin_fn),
             Value::FFILib(lib_id) => write!(f, "<ffi lib {}>", lib_id),
             Value::FFIFunc(lib_id, name) => write!(f, "<ffi func {} from lib {}>", name, lib_id),
-            
-            Value::Range { start, end, inclusive } => {
+
+            Value::Range {
+                start,
+                end,
+                inclusive,
+            } => {
                 if *inclusive {
                     write!(f, "{}..={}", start, end)
                 } else {
@@ -180,7 +237,11 @@ impl std::fmt::Display for Value {
 
             Value::Class { name, .. } => write!(f, "<class {}>", name),
             Value::Instance { class_name, .. } => write!(f, "<instance of class {}>", class_name),
-            Value::InstanceFn { instance, chunk_id, arity } => write!(f, "<fn {}:{} of {}>", chunk_id, arity, instance),
+            Value::InstanceFn {
+                instance,
+                chunk_id,
+                arity,
+            } => write!(f, "<fn {}:{} of {}>", chunk_id, arity, instance),
         }
     }
 }
@@ -189,7 +250,7 @@ impl Value {
     pub fn process_escape_sequences(s: &str) -> String {
         let mut result = String::new();
         let mut chars = s.chars();
-        
+
         while let Some(ch) = chars.next() {
             if ch == '\\' {
                 if let Some(next) = chars.next() {
@@ -220,7 +281,7 @@ impl Value {
                 result.push(ch);
             }
         }
-        
+
         result
     }
 
@@ -235,7 +296,6 @@ impl Value {
             _ => true,
         }
     }
-
 
     pub fn type_name(&self) -> &'static str {
         match self {
@@ -265,7 +325,11 @@ impl Value {
             (Value::Int(a), Value::Float(b)) => Ok(Value::Float(*a as f64 + b)),
             (Value::Float(a), Value::Int(b)) => Ok(Value::Float(a + *b as f64)),
             (Value::String(a), Value::String(b)) => Ok(Value::String(format!("{}{}", a, b))),
-            _ => Err(format!("cannot add {} and {}", self.type_name(), other.type_name())),
+            _ => Err(format!(
+                "cannot add {} and {}",
+                self.type_name(),
+                other.type_name()
+            )),
         }
     }
 
@@ -275,7 +339,11 @@ impl Value {
             (Value::Float(a), Value::Float(b)) => Ok(Value::Float(a - b)),
             (Value::Int(a), Value::Float(b)) => Ok(Value::Float(*a as f64 - b)),
             (Value::Float(a), Value::Int(b)) => Ok(Value::Float(a - *b as f64)),
-            _ => Err(format!("cannot subtract {} and {}", self.type_name(), other.type_name())),
+            _ => Err(format!(
+                "cannot subtract {} and {}",
+                self.type_name(),
+                other.type_name()
+            )),
         }
     }
 
@@ -294,7 +362,11 @@ impl Value {
                 }
             }
 
-            _ => Err(format!("cannot multiply {} and {}", self.type_name(), other.type_name())),
+            _ => Err(format!(
+                "cannot multiply {} and {}",
+                self.type_name(),
+                other.type_name()
+            )),
         }
     }
 
@@ -328,7 +400,11 @@ impl Value {
                     Ok(Value::Float(a / *b as f64))
                 }
             }
-            _ => Err(format!("cannot divide {} and {}", self.type_name(), other.type_name())),
+            _ => Err(format!(
+                "cannot divide {} and {}",
+                self.type_name(),
+                other.type_name()
+            )),
         }
     }
 
@@ -366,7 +442,11 @@ impl Value {
                 }
             }
 
-            _ => Err(format!("cannot modulo {} and {}", self.type_name(), other.type_name())),
+            _ => Err(format!(
+                "cannot modulo {} and {}",
+                self.type_name(),
+                other.type_name()
+            )),
         }
     }
 
@@ -378,13 +458,17 @@ impl Value {
                 } else {
                     Ok(Value::Int(a.pow(*b as u32)))
                 }
-            },
+            }
 
             (Value::Float(a), Value::Float(b)) => Ok(Value::Float(a.powf(*b))),
             (Value::Int(a), Value::Float(b)) => Ok(Value::Float((*a as f64).powf(*b))),
             (Value::Float(a), Value::Int(b)) => Ok(Value::Float(a.powf(*b as f64))),
 
-            _ => Err(format!("cannot exponentiate {} and {}", self.type_name(), other.type_name())),
+            _ => Err(format!(
+                "cannot exponentiate {} and {}",
+                self.type_name(),
+                other.type_name()
+            )),
         }
     }
 
@@ -397,10 +481,14 @@ impl Value {
     }
 
     pub fn contains(&self, item: &Value) -> Result<bool, String> {
-        match (self, item){
+        match (self, item) {
             (Value::String(s), Value::String(sub)) => Ok(s.contains(sub)),
             (Value::Array(arr), item) => Ok(arr.contains(item)),
-            _ => Err(format!("cannot check if {} contains {}", self.type_name(), item.type_name())),
+            _ => Err(format!(
+                "cannot check if {} contains {}",
+                self.type_name(),
+                item.type_name()
+            )),
         }
     }
 }

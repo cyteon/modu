@@ -1,5 +1,5 @@
-use std::collections::HashMap;
 use crate::vm::value::{BuiltinFn, Value};
+use std::collections::HashMap;
 
 pub fn object() -> Value {
     let mut methods = HashMap::new();
@@ -12,7 +12,10 @@ pub fn object() -> Value {
 
 fn v4(args: Vec<Value>) -> Result<Value, String> {
     if !args.is_empty() {
-        return Err(format!("uuid.v4() takes no arguments ({} given)", args.len()));
+        return Err(format!(
+            "uuid.v4() takes no arguments ({} given)",
+            args.len()
+        ));
     }
 
     let uuid = uuid::Uuid::new_v4();
@@ -22,7 +25,10 @@ fn v4(args: Vec<Value>) -> Result<Value, String> {
 
 fn v7(args: Vec<Value>) -> Result<Value, String> {
     if !args.is_empty() {
-        return Err(format!("uuid.v7() takes no arguments ({} given)", args.len()));
+        return Err(format!(
+            "uuid.v7() takes no arguments ({} given)",
+            args.len()
+        ));
     }
 
     let uuid = uuid::Uuid::now_v7();

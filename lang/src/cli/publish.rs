@@ -1,8 +1,8 @@
 use std::io::{Read, Write};
 
+use serde_json::json;
 use toml;
 use zip;
-use serde_json::json;
 
 static BLOCKLIST: [&str; 4] = [".git", ".gitignore", ".modu", ".github"];
 
@@ -37,7 +37,7 @@ fn read_dir(dir: &std::path::Path, archive: &mut zip::ZipWriter<std::fs::File>) 
                         do_break = true;
                     }
                 }
-            },
+            }
 
             Err(_) => {}
         }
@@ -55,7 +55,7 @@ fn read_dir(dir: &std::path::Path, archive: &mut zip::ZipWriter<std::fs::File>) 
                         do_break = true;
                     }
                 }
-            },
+            }
 
             Err(_) => {}
         }
@@ -69,14 +69,19 @@ fn read_dir(dir: &std::path::Path, archive: &mut zip::ZipWriter<std::fs::File>) 
         } else {
             let name = path.strip_prefix(".").unwrap();
 
-            archive.start_file(name.to_str().unwrap(), zip::write::SimpleFileOptions::default()).unwrap();
+            archive
+                .start_file(
+                    name.to_str().unwrap(),
+                    zip::write::SimpleFileOptions::default(),
+                )
+                .unwrap();
             let mut file = std::fs::File::open(path).unwrap();
             let mut contents = Vec::new();
-            
+
             let r = file.read_to_end(&mut contents);
 
             match r {
-                Ok(_) => {},
+                Ok(_) => {}
                 Err(_) => {
                     println!("Could not read file {}", entry.path().to_str().unwrap());
                 }
@@ -98,7 +103,7 @@ pub fn publish() {
     let version = package.get("version").unwrap();
     let description = match package.get("description") {
         Some(desc) => desc.as_str().unwrap(),
-        None => ""
+        None => "",
     };
 
     println!("Publishing {} v{}", name, version);
@@ -143,7 +148,10 @@ pub fn publish() {
     }
 
     let mut config_file_contents = String::new();
-    config_file.unwrap().read_to_string(&mut config_file_contents).unwrap();
+    config_file
+        .unwrap()
+        .read_to_string(&mut config_file_contents)
+        .unwrap();
 
     if config_file_contents.len() == 0 {
         println!("Not logged in, run modu login");
@@ -186,10 +194,12 @@ pub fn publish() {
     });
 
     let client = reqwest::blocking::Client::new();
-    let res = client.post(format!("{}/api/v1/packages", backend_url))
+    let res = client
+        .post(format!("{}/api/v1/packages", backend_url))
         .header("Authorization", token)
-        .json(&body)    
-        .send().unwrap();
+        .json(&body)
+        .send()
+        .unwrap();
 
     if res.status().as_u16() != 200 {
         let text = res.text().unwrap();
