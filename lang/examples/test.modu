@@ -1,5 +1,11 @@
-let a = [[0]];
+fn a() {
+    let x = 5;
 
-a[0][0] = 5;
+    fn b() {
+        print(x);
+    }
 
-print(a);
+    b();
+}
+
+a();

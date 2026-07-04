@@ -13,7 +13,7 @@ pub struct ScopeStack {
 
 pub enum Variable {
     Local(usize),
-    Global(String),   
+    Global(String),
 }
 
 impl ScopeStack {
@@ -30,28 +30,28 @@ impl ScopeStack {
         self.function_depth > 0
     }
 
-    pub fn enter_function(&mut self) -> (usize, usize) {
+    pub fn enter_function(&mut self) -> (usize, usize, Vec<Scope>) {
         self.function_depth += 1;
 
+        let saved_scopes = std::mem::take(&mut self.scopes);
         let saved_next = self.next_slot;
         let saved_max = self.max_slot;
 
         self.next_slot = 0;
         self.max_slot = 0;
-
         self.push_scope();
 
-        (saved_next, saved_max)
+        (saved_next, saved_max, saved_scopes)
     }
 
-    pub fn exit_function(&mut self, saved: (usize, usize)) -> usize {
+    pub fn exit_function(&mut self, saved: (usize, usize, Vec<Scope>)) -> usize {
         let locals_count = self.max_slot;
 
         self.function_depth -= 1;
-        
-        self.pop_scope();
+
         self.next_slot = saved.0;
         self.max_slot = saved.1;
+        self.scopes = saved.2;
 
         locals_count
     }
@@ -102,7 +102,7 @@ impl ScopeStack {
                 return c;
             }
         }
-        
+
         false
     }
 

@@ -10,7 +10,7 @@ class Counter {
     fn decrement() {
         self.value -= 1;
     }
-    
+
     fn get() {
         return self.value;
     }

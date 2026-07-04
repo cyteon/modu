@@ -415,6 +415,8 @@ impl VM {
                                     self.handle_error(format!("{}.init() expected {} arguments but got {}", name, arity, argc), span)?;
                                     continue;
                                 }
+                                
+                                self.stack.push(Value::Null);
 
                                 let base = self.stack.len();
 
@@ -559,6 +561,8 @@ impl VM {
                                     self.handle_error(format!("{}.init() expected {} arguments but got {}", name, arity, argc), span)?;
                                     continue;
                                 }
+                                
+                                self.stack.push(Value::Null);
 
                                 let base = self.stack.len();
 
