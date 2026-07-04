@@ -59,7 +59,7 @@ fn validate_expr(expr: &SpannedExpr, ctx: &mut ValidationContext) -> Result<(), 
 
         Expr::Function { body, .. } => {
             ctx.inside_function += 1;
-            validate_expr(&body, ctx)?;
+            validate_expr(body, ctx)?;
             ctx.inside_function -= 1;
         }
 
@@ -67,7 +67,7 @@ fn validate_expr(expr: &SpannedExpr, ctx: &mut ValidationContext) -> Result<(), 
         | Expr::ForLoop { body, .. }
         | Expr::InfiniteLoop { body, .. } => {
             ctx.inside_loop += 1;
-            validate_expr(&body, ctx)?;
+            validate_expr(body, ctx)?;
             ctx.inside_loop -= 1;
         }
 
@@ -83,7 +83,7 @@ fn validate_expr(expr: &SpannedExpr, ctx: &mut ValidationContext) -> Result<(), 
 
         Expr::Block(body) => {
             for expr in body {
-                validate_expr(&expr, ctx)?;
+                validate_expr(expr, ctx)?;
             }
         }
 

@@ -153,7 +153,7 @@ fn to_iso_8601(args: Vec<Value>) -> Result<Value, String> {
         .timestamp_opt(timestamp, 0)
         .single()
         .ok_or_else(|| format!("invalid timestamp: {}", timestamp))?;
-    let dt = DateTime::<Local>::from(lt);
+    let dt = lt;
 
     Ok(Value::String(dt.to_rfc3339()))
 }
@@ -180,7 +180,7 @@ fn to_rfc_2822(args: Vec<Value>) -> Result<Value, String> {
         .timestamp_opt(timestamp, 0)
         .single()
         .ok_or_else(|| format!("invalid timestamp: {}", timestamp))?;
-    let dt = DateTime::<Local>::from(lt);
+    let dt = lt;
 
     Ok(Value::String(dt.to_rfc2822()))
 }
@@ -207,7 +207,7 @@ fn to_local_date_time(args: Vec<Value>) -> Result<Value, String> {
         .timestamp_opt(timestamp, 0)
         .single()
         .ok_or_else(|| format!("invalid timestamp: {}", timestamp))?;
-    let dt = DateTime::<Local>::from(lt);
+    let dt = lt;
 
     Ok(Value::String(dt.to_string()))
 }
@@ -234,7 +234,7 @@ fn to_utc_date_time(args: Vec<Value>) -> Result<Value, String> {
         .timestamp_opt(timestamp, 0)
         .single()
         .ok_or_else(|| format!("invalid timestamp: {}", timestamp))?;
-    let dt = DateTime::<chrono::Utc>::from(lt);
+    let dt = lt;
 
     Ok(Value::String(dt.to_string()))
 }

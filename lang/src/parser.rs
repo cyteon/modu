@@ -431,7 +431,9 @@ fn parser<'src>() -> impl Parser<
             },
         );
 
-        let or_expr = and_expr.clone().foldl(
+        
+
+        and_expr.clone().foldl(
             select! { (Token::Or, span) => span }
                 .then(and_expr.clone())
                 .repeated(),
@@ -439,9 +441,7 @@ fn parser<'src>() -> impl Parser<
                 node: Expr::Or(Box::new(left.clone()), Box::new(right.clone())),
                 span: Span::from(left.span.start..right.span.end),
             },
-        );
-
-        or_expr
+        )
     });
 
     let stmt = recursive(|stmt| {
@@ -691,7 +691,7 @@ fn parser<'src>() -> impl Parser<
                         Some(v) => Box::new(v),
                         None => Box::new(SpannedExpr {
                             node: Expr::Null,
-                            span: start.clone(),
+                            span: start,
                         }),
                     }),
                     span: Span::from(start.start..end.end),
@@ -751,7 +751,7 @@ fn parser<'src>() -> impl Parser<
                             None,
                             SpannedExpr {
                                 node: Expr::Block(vec![]),
-                                span: start.clone(),
+                                span: start,
                             },
                         ),
                     };
@@ -816,9 +816,9 @@ pub fn parse(input: &str, filename: &str) -> Result<Vec<SpannedExpr>, ()> {
     match parser().parse(&tokens).into_result() {
         Ok(ast) => {
             if let Err(()) = crate::validator::validate_ast(&ast, filename, input) {
-                return Err(());
+                Err(())
             } else {
-                return Ok(ast);
+                Ok(ast)
             }
         }
 
@@ -830,11 +830,11 @@ pub fn parse(input: &str, filename: &str) -> Result<Vec<SpannedExpr>, ()> {
                     chumsky::error::RichReason::ExpectedFound { expected, found } => {
                         let (found_str, error_span) = match found {
                             Some(chumsky::util::MaybeRef::Val((tok, tok_span))) => {
-                                (format!("{:?}", tok), tok_span.clone())
+                                (format!("{:?}", tok), *tok_span)
                             }
 
                             Some(chumsky::util::MaybeRef::Ref((tok, tok_span))) => {
-                                (format!("{:?}", tok), tok_span.clone())
+                                (format!("{:?}", tok), *tok_span)
                             }
 
                             None => (
@@ -875,7 +875,7 @@ pub fn parse(input: &str, filename: &str) -> Result<Vec<SpannedExpr>, ()> {
                 }
             }
 
-            return Err(());
+            Err(())
         }
     }
 }

@@ -18,6 +18,12 @@ pub struct Syntax {
     math_re: Regex,
 }
 
+impl Default for Syntax {
+    fn default() -> Self {
+        Self::new()
+    }
+}
+
 impl Syntax {
     pub fn new() -> Self {
         Self {
@@ -59,7 +65,7 @@ impl Highlighter for Syntax {
         result = self
             .function_re
             .replace_all(&result, |caps: &regex::Captures| {
-                format!("{}{}", caps[1].blue().to_string(), &caps[2])
+                format!("{}{}", caps[1].blue(), &caps[2])
             })
             .to_string();
 
@@ -144,7 +150,7 @@ pub fn repl() {
                 if open_functions == 0 {
                     let ast = parse(&buffer, "<repl>");
 
-                    if let Err(_) = ast {
+                    if ast.is_err() {
                         buffer.clear();
                         continue;
                     }
@@ -159,7 +165,7 @@ pub fn repl() {
                     }
 
                     let mut all_chunks = persistent_chunks.clone();
-                    all_chunks.extend(compiler.chunks.into_iter());
+                    all_chunks.extend(compiler.chunks);
 
                     let mut vm = crate::vm::vm::VM::new(
                         all_chunks.clone(),

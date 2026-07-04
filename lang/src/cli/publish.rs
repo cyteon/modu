@@ -27,37 +27,29 @@ fn read_dir(dir: &std::path::Path, archive: &mut zip::ZipWriter<std::fs::File>) 
         let mut gitignore_content = String::new();
         let gitignore: Result<_, _> = std::fs::File::open(".gitignore");
 
-        match gitignore {
-            Ok(mut file) => {
-                file.read_to_string(&mut gitignore_content).unwrap();
+        if let Ok(mut file) = gitignore {
+            file.read_to_string(&mut gitignore_content).unwrap();
 
-                for line in gitignore_content.lines() {
-                    if path.to_str().unwrap().replace("\\", "/") == format!("./{}", line) {
-                        println!("Ignoring {}", path.to_str().unwrap());
-                        do_break = true;
-                    }
+            for line in gitignore_content.lines() {
+                if path.to_str().unwrap().replace("\\", "/") == format!("./{}", line) {
+                    println!("Ignoring {}", path.to_str().unwrap());
+                    do_break = true;
                 }
             }
-
-            Err(_) => {}
         }
 
         let mut moduignore_content = String::new();
         let moduignore: Result<_, _> = std::fs::File::open(".moduignore");
 
-        match moduignore {
-            Ok(mut file) => {
-                file.read_to_string(&mut moduignore_content).unwrap();
+        if let Ok(mut file) = moduignore {
+            file.read_to_string(&mut moduignore_content).unwrap();
 
-                for line in moduignore_content.lines() {
-                    if path.to_str().unwrap().replace("\\", "/") == format!("./{}", line) {
-                        println!("Ignoring {}", path.to_str().unwrap());
-                        do_break = true;
-                    }
+            for line in moduignore_content.lines() {
+                if path.to_str().unwrap().replace("\\", "/") == format!("./{}", line) {
+                    println!("Ignoring {}", path.to_str().unwrap());
+                    do_break = true;
                 }
             }
-
-            Err(_) => {}
         }
 
         if do_break {
@@ -124,8 +116,8 @@ pub fn publish() {
 
     println!("[1/2] Package compressed");
 
-    let token: String;
-    let backend_url: String;
+    
+    
     let path;
 
     if cfg!(windows) {
@@ -153,7 +145,7 @@ pub fn publish() {
         .read_to_string(&mut config_file_contents)
         .unwrap();
 
-    if config_file_contents.len() == 0 {
+    if config_file_contents.is_empty() {
         println!("Not logged in, run modu login");
         return;
     }
@@ -161,8 +153,8 @@ pub fn publish() {
     let toml = toml::from_str::<toml::Value>(&config_file_contents).unwrap();
     let toml = toml.as_table().unwrap();
 
-    token = toml.get("token").unwrap().as_str().unwrap().to_string();
-    backend_url = toml.get("backend").unwrap().as_str().unwrap().to_string();
+    let token: String = toml.get("token").unwrap().as_str().unwrap().to_string();
+    let backend_url: String = toml.get("backend").unwrap().as_str().unwrap().to_string();
 
     print!("Confirm you are publishing to {} (y/N) ", backend_url);
     std::io::stdout().flush().unwrap();

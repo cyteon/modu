@@ -22,7 +22,7 @@ fn parse_obj(value: serde_json::Value) -> Result<Value, String> {
             } else if n.is_f64() {
                 Ok(Value::Float(n.as_f64().unwrap()))
             } else {
-                return Err(format!("Unsupported number type in JSON: {}", n));
+                Err(format!("Unsupported number type in JSON: {}", n))
             }
         }
 
@@ -93,5 +93,5 @@ pub fn parse(args: Vec<Value>) -> Result<Value, String> {
         Err(e) => return Err(format!("Failed to parse JSON: {}", e)),
     };
 
-    Ok(parse_obj(value)?)
+    parse_obj(value)
 }

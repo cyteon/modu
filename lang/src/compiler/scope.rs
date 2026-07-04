@@ -16,6 +16,12 @@ pub enum Variable {
     Global(String),
 }
 
+impl Default for ScopeStack {
+    fn default() -> Self {
+        Self::new()
+    }
+}
+
 impl ScopeStack {
     pub fn new() -> Self {
         Self {

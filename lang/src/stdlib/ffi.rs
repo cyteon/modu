@@ -47,7 +47,7 @@ pub struct FFISig {
 }
 
 thread_local! {
-    pub static LIBS: std::cell::RefCell<Vec<Option<FFILib>>> = std::cell::RefCell::new(Vec::new());
+    pub static LIBS: std::cell::RefCell<Vec<Option<FFILib>>> = const { std::cell::RefCell::new(Vec::new()) };
 }
 
 fn load(args: Vec<Value>) -> Result<Value, String> {

@@ -45,7 +45,7 @@ pub fn object() -> Value {
 }
 
 thread_local! {
-    static FILES: std::cell::RefCell<Vec<Option<(std::fs::File, FileMode)>>> = std::cell::RefCell::new(Vec::new());
+    static FILES: std::cell::RefCell<Vec<Option<(std::fs::File, FileMode)>>> = const { std::cell::RefCell::new(Vec::new()) };
 }
 
 enum FileMode {

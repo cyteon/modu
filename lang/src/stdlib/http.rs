@@ -70,7 +70,7 @@ fn create_response_obj(response: reqwest::blocking::Response) -> Value {
 }
 
 fn get(args: Vec<Value>) -> Result<Value, String> {
-    if args.len() == 0 {
+    if args.is_empty() {
         return Err(format!(
             "http.get() needs at least one argument ({} given)",
             args.len()
@@ -130,7 +130,7 @@ fn get(args: Vec<Value>) -> Result<Value, String> {
 }
 
 fn post(args: Vec<Value>) -> Result<Value, String> {
-    if args.len() == 0 {
+    if args.is_empty() {
         return Err(format!(
             "http.post() needs at least one argument ({} given)",
             args.len()
@@ -204,7 +204,7 @@ fn post(args: Vec<Value>) -> Result<Value, String> {
 }
 
 fn put(args: Vec<Value>) -> Result<Value, String> {
-    if args.len() == 0 {
+    if args.is_empty() {
         return Err(format!(
             "http.put() needs at least one argument ({} given)",
             args.len()
@@ -278,7 +278,7 @@ fn put(args: Vec<Value>) -> Result<Value, String> {
 }
 
 fn patch(args: Vec<Value>) -> Result<Value, String> {
-    if args.len() == 0 {
+    if args.is_empty() {
         return Err(format!(
             "http.patch() needs at least one argument ({} given)",
             args.len()
@@ -352,7 +352,7 @@ fn patch(args: Vec<Value>) -> Result<Value, String> {
 }
 
 fn delete(args: Vec<Value>) -> Result<Value, String> {
-    if args.len() == 0 {
+    if args.is_empty() {
         return Err(format!(
             "http.delete() needs at least one argument ({} given)",
             args.len()

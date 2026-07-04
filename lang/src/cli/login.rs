@@ -30,7 +30,7 @@ pub fn login() {
         .read_to_string(&mut config_file_contents)
         .unwrap();
 
-    if config_file_contents.len() > 0 {
+    if !config_file_contents.is_empty() {
         use std::io::Write;
 
         println!("Already logged in");
@@ -54,7 +54,7 @@ pub fn login() {
         .open(path)
         .unwrap();
 
-    let toml = toml::from_str::<toml::Value>(&"").unwrap();
+    let toml = toml::from_str::<toml::Value>("").unwrap();
     let mut toml = toml.as_table().unwrap().clone();
 
     let mut use_diffrent_backend = String::new();
@@ -95,7 +95,7 @@ pub fn login() {
 
     let client = reqwest::blocking::Client::new();
     let res = client
-        .get(&format!("{}/api/v1/code/verify", backend_url))
+        .get(format!("{}/api/v1/code/verify", backend_url))
         .header("Authorization", token)
         .send()
         .unwrap();

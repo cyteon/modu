@@ -98,7 +98,7 @@ fn int(args: Vec<Value>) -> Result<Value, String> {
         Value::Bool(b) => Ok(Value::Int(if *b { 1 } else { 0 })),
         Value::String(s) => s
             .parse::<i64>()
-            .map(|i| Value::Int(i as i64))
+            .map(Value::Int)
             .map_err(|_| format!("cannot convert '{}' to int", s)),
 
         _ => Err(format!("cannot convert {} to int", args[0].type_name())),
@@ -119,7 +119,7 @@ fn float(args: Vec<Value>) -> Result<Value, String> {
         Value::Bool(b) => Ok(Value::Float(if *b { 1.0 } else { 0.0 })),
         Value::String(s) => s
             .parse::<f64>()
-            .map(|f| Value::Float(f))
+            .map(Value::Float)
             .map_err(|_| format!("cannot convert '{}' to float", s)),
 
         _ => Err(format!("cannot convert {} to float", args[0].type_name())),
@@ -160,23 +160,23 @@ fn r#type(args: Vec<Value>) -> Result<Value, String> {
 }
 
 fn exit(args: Vec<Value>) -> Result<Value, String> {
-    if args.len() == 0 {
+    if args.is_empty() {
         std::process::exit(0);
     } else if args.len() == 1 {
         match &args[0] {
             Value::Int(i) => std::process::exit(*i as i32),
             _ => {
-                return Err(format!(
+                Err(format!(
                     "exit() argument must be an int, got {}",
                     args[0].type_name()
-                ));
+                ))
             }
         }
     } else {
-        return Err(format!(
+        Err(format!(
             "exit() takes at most one argument ({} given)",
             args.len()
-        ));
+        ))
     }
 }
 

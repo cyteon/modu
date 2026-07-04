@@ -17,6 +17,12 @@ pub struct Compiler {
     continue_targets: Vec<usize>,
 }
 
+impl Default for Compiler {
+    fn default() -> Self {
+        Self::new()
+    }
+}
+
 impl Compiler {
     pub fn new() -> Self {
         Self {
@@ -134,11 +140,10 @@ impl Compiler {
                 value,
                 operator,
             } => {
-                if let Expr::Identifier(name) = &target.node {
-                    if self.scope.is_const(name) || self.global_consts.contains(name) {
+                if let Expr::Identifier(name) = &target.node
+                    && (self.scope.is_const(name) || self.global_consts.contains(name)) {
                         return Err(format!("cannot assign to constant '{}'", name));
                     }
-                }
 
                 match &target.node {
                     Expr::Identifier(name) => {
@@ -772,7 +777,7 @@ impl Compiler {
                 self.emit(Instruction::Push(index), span);
 
                 if let Some(name) = parent {
-                    match self.scope.resolve(&name) {
+                    match self.scope.resolve(name) {
                         Variable::Local(index) => self.emit(Instruction::LoadLocal(index), span),
                         Variable::Global(name) => self.emit(Instruction::LoadGlobal(name), span),
                     }
@@ -792,7 +797,7 @@ impl Compiler {
 
                 let mut var_slot = 0;
                 if let Some(var) = catch_var {
-                    var_slot = self.scope.define_local(&var);
+                    var_slot = self.scope.define_local(var);
                 }
 
                 let setup = self.emit_jump(Instruction::SetupTry(0), span);
@@ -807,7 +812,7 @@ impl Compiler {
 
                 self.patch_jump(setup);
 
-                if let Some(_) = catch_var {
+                if catch_var.is_some() {
                     self.emit(Instruction::StoreLocal(var_slot), span);
                 }
 

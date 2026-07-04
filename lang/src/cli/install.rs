@@ -6,7 +6,7 @@ fn install_package(backend: &str, name: &str, version: &str) -> Result<serde_jso
     let client = reqwest::blocking::Client::new();
 
     let response = client
-        .get(&format!(
+        .get(format!(
             "{}/api/v1/packages/{}/{}?isDownload=true",
             backend, name, version
         ))
@@ -30,10 +30,7 @@ fn install_package(backend: &str, name: &str, version: &str) -> Result<serde_jso
     );
     println!(
         "> {}",
-        match package["description"].as_str() {
-            Some(description) => description,
-            None => "No description",
-        }
+        package["description"].as_str().unwrap_or("No description")
     );
 
     let zip = client
@@ -126,7 +123,7 @@ pub fn install() {
 
     let mut backend_url = "https://mpm.cyteon.dev".to_string();
 
-    let config_file;
+    
     let path;
 
     if cfg!(windows) {
@@ -137,7 +134,7 @@ pub fn install() {
         path = format!("{}/.modu/config.toml", home);
     }
 
-    config_file = std::fs::OpenOptions::new()
+    let config_file = std::fs::OpenOptions::new()
         .write(true)
         .read(true)
         .create(true)
@@ -150,7 +147,7 @@ pub fn install() {
             .read_to_string(&mut config_file_content)
             .unwrap();
 
-        if config_file_content.len() > 0 {
+        if !config_file_content.is_empty() {
             let config_toml = toml::from_str::<toml::Value>(&config_file_content).unwrap();
             let table = config_toml.as_table().unwrap();
 

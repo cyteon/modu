@@ -122,7 +122,7 @@ impl VM {
                     match a.neg() {
                         Ok(v) => self.stack.push(v),
                         Err(e) => {
-                            self.handle_error(format!("{}", e), span)?;
+                            self.handle_error(e.to_string(), span)?;
                             continue;
                         }
                     }
@@ -135,7 +135,7 @@ impl VM {
                     match a.add(&b) {
                         Ok(v) => self.stack.push(v),
                         Err(e) => {
-                            self.handle_error(format!("{}", e), span)?;
+                            self.handle_error(e.to_string(), span)?;
                             continue;
                         }
                     }
@@ -148,7 +148,7 @@ impl VM {
                     match a.sub(&b) {
                         Ok(v) => self.stack.push(v),
                         Err(e) => {
-                            self.handle_error(format!("{}", e), span)?;
+                            self.handle_error(e.to_string(), span)?;
                             continue;
                         }
                     }
@@ -161,7 +161,7 @@ impl VM {
                     match a.mul(&b) {
                         Ok(v) => self.stack.push(v),
                         Err(e) => {
-                            self.handle_error(format!("{}", e), span)?;
+                            self.handle_error(e.to_string(), span)?;
                             continue;
                         }
                     }
@@ -174,7 +174,7 @@ impl VM {
                     match a.div(&b) {
                         Ok(v) => self.stack.push(v),
                         Err(e) => {
-                            self.handle_error(format!("{}", e), span)?;
+                            self.handle_error(e.to_string(), span)?;
                             continue;
                         }
                     }
@@ -187,7 +187,7 @@ impl VM {
                     match a.pow(&b) {
                         Ok(v) => self.stack.push(v),
                         Err(e) => {
-                            self.handle_error(format!("{}", e), span)?;
+                            self.handle_error(e.to_string(), span)?;
                             continue;
                         }
                     }
@@ -200,7 +200,7 @@ impl VM {
                     match a.r#mod(&b) {
                         Ok(v) => self.stack.push(v),
                         Err(e) => {
-                            self.handle_error(format!("{}", e), span)?;
+                            self.handle_error(e.to_string(), span)?;
                             continue;
                         }
                     }
@@ -378,7 +378,7 @@ impl VM {
                                     if func.name == "error"
                                         && !e.contains("error() takes exactly one argument")
                                     {
-                                        self.handle_error(format!("{}", e), span)?;
+                                        self.handle_error(e.to_string(), span)?;
                                         continue;
                                     }
 
@@ -561,11 +561,7 @@ impl VM {
 
                             let self_target = if let Some(target) = target_local {
                                 Some(Variable::Local(*target))
-                            } else if let Some(target) = target_global {
-                                Some(Variable::Global(target.clone()))
-                            } else {
-                                None
-                            };
+                            } else { target_global.as_ref().map(|target| Variable::Global(target.clone())) };
 
                             self.frames.push(CallFrame {
                                 chunk_id,
@@ -723,8 +719,8 @@ impl VM {
                         self.stack.truncate(frame.base - 1);
                     }
 
-                    if let (Some(target), Some(ns)) = (&frame.self_target, new_self) {
-                        if matches!(ns, Value::Instance { .. }) {
+                    if let (Some(target), Some(ns)) = (&frame.self_target, new_self)
+                        && matches!(ns, Value::Instance { .. }) {
                             match target {
                                 Variable::Local(slot) => {
                                     let caller_base =
@@ -740,7 +736,6 @@ impl VM {
                                 }
                             }
                         }
-                    }
 
                     self.stack.push(result);
                 }

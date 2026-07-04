@@ -225,6 +225,6 @@ fn unsetenv(args: Vec<Value>) -> Result<Value, String> {
 }
 
 fn args(_args: Vec<Value>) -> Result<Value, String> {
-    let args: Vec<Value> = std::env::args().map(|s| Value::String(s)).collect();
+    let args: Vec<Value> = std::env::args().map(Value::String).collect();
     Ok(Value::Array(args))
 }

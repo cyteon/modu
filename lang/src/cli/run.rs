@@ -11,7 +11,7 @@ pub fn run() {
         let main_path = std::path::Path::new("main.modu");
 
         if main_path.exists() {
-            file = std::fs::read_to_string(&main_path).unwrap_or_else(|e| {
+            file = std::fs::read_to_string(main_path).unwrap_or_else(|e| {
                 println!("Failed to read main.modu: {}", e);
                 std::process::exit(1);
             });
@@ -27,7 +27,7 @@ pub fn run() {
             return;
         }
 
-        file = std::fs::read_to_string(&path).unwrap_or_else(|e| {
+        file = std::fs::read_to_string(path).unwrap_or_else(|e| {
             println!("{}", format!("Failed to read file: {}", e).red());
             std::process::exit(1);
         });
@@ -83,7 +83,7 @@ pub fn run() {
             }
 
             if i != compiler.chunks.len() - 1 {
-                string.push_str("\n");
+                string.push('\n');
             }
         }
 
@@ -99,6 +99,5 @@ pub fn run() {
 
     if let Err(e) = vm.run(0) {
         println!("{}", e);
-        return;
     }
 }
