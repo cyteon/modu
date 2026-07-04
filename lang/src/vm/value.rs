@@ -320,11 +320,16 @@ impl Value {
 
     pub fn add(&self, other: &Value) -> Result<Value, String> {
         match (self, other) {
-            (Value::Int(a), Value::Int(b)) => Ok(Value::Int(a + b)),
+            (Value::Int(a), Value::Int(b)) => Ok(Value::Int(
+                a.checked_add(*b)
+                    .ok_or_else(|| "integer overflow".to_string())?,
+            )),
+
             (Value::Float(a), Value::Float(b)) => Ok(Value::Float(a + b)),
             (Value::Int(a), Value::Float(b)) => Ok(Value::Float(*a as f64 + b)),
             (Value::Float(a), Value::Int(b)) => Ok(Value::Float(a + *b as f64)),
             (Value::String(a), Value::String(b)) => Ok(Value::String(format!("{}{}", a, b))),
+
             _ => Err(format!(
                 "cannot add {} and {}",
                 self.type_name(),
@@ -335,10 +340,12 @@ impl Value {
 
     pub fn sub(&self, other: &Value) -> Result<Value, String> {
         match (self, other) {
-            (Value::Int(a), Value::Int(b)) => Ok(Value::Int(a - b)),
+            (Value::Int(a), Value::Int(b)) => Ok(Value::Int(a.checked_sub(*b).ok_or_else(|| "integer overflow".to_string())?)),
+
             (Value::Float(a), Value::Float(b)) => Ok(Value::Float(a - b)),
             (Value::Int(a), Value::Float(b)) => Ok(Value::Float(*a as f64 - b)),
             (Value::Float(a), Value::Int(b)) => Ok(Value::Float(a - *b as f64)),
+
             _ => Err(format!(
                 "cannot subtract {} and {}",
                 self.type_name(),
@@ -349,7 +356,8 @@ impl Value {
 
     pub fn mul(&self, other: &Value) -> Result<Value, String> {
         match (self, other) {
-            (Value::Int(a), Value::Int(b)) => Ok(Value::Int(a * b)),
+            (Value::Int(a), Value::Int(b)) => Ok(Value::Int(a.checked_mul(*b).ok_or_else(|| "integer overflow".to_string())?)),
+
             (Value::Float(a), Value::Float(b)) => Ok(Value::Float(a * b)),
             (Value::Int(a), Value::Float(b)) => Ok(Value::Float(*a as f64 * b)),
             (Value::Float(a), Value::Int(b)) => Ok(Value::Float(a * *b as f64)),
@@ -379,6 +387,7 @@ impl Value {
                     Ok(Value::Float((*a as f64) / (*b as f64)))
                 }
             }
+
             (Value::Float(a), Value::Float(b)) => {
                 if *b == 0.0 {
                     Err("division by zero".to_string())
@@ -386,6 +395,7 @@ impl Value {
                     Ok(Value::Float(a / b))
                 }
             }
+
             (Value::Int(a), Value::Float(b)) => {
                 if *b == 0.0 {
                     Err("division by zero".to_string())
@@ -393,6 +403,7 @@ impl Value {
                     Ok(Value::Float(*a as f64 / b))
                 }
             }
+
             (Value::Float(a), Value::Int(b)) => {
                 if *b == 0 {
                     Err("division by zero".to_string())
@@ -400,6 +411,7 @@ impl Value {
                     Ok(Value::Float(a / *b as f64))
                 }
             }
+
             _ => Err(format!(
                 "cannot divide {} and {}",
                 self.type_name(),
@@ -456,7 +468,7 @@ impl Value {
                 if *b < 0 {
                     Ok(Value::Float((*a as f64).powf(*b as f64)))
                 } else {
-                    Ok(Value::Int(a.pow(*b as u32)))
+                    Ok(Value::Int(a.checked_pow(*b as u32).ok_or_else(|| "integer overflow".to_string())?))
                 }
             }
 

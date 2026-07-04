@@ -4,8 +4,8 @@
     import { onMount, onDestroy } from "svelte";
     import { AnsiUp } from "ansi_up";
 
-    import Navbar from '$lib/navbar.svelte';
-    import { getLesson, getNext, getPrevious } from '$lib/tour/data';
+    import Navbar from "$lib/navbar.svelte";
+    import { getLesson, getNext, getPrevious } from "$lib/tour/data";
     import { newIDE } from "$lib/ide.js";
 
     let slug: string;
@@ -43,7 +43,11 @@
 
                 if (view) {
                     view.dispatch({
-                        changes: { from: 0, to: view.state.doc.length, insert: lesson.code },
+                        changes: {
+                            from: 0,
+                            to: view.state.doc.length,
+                            insert: lesson.code,
+                        },
                     });
                 }
 
@@ -64,16 +68,17 @@
         try {
             const code = view?.state.doc.toString() || "";
 
-            if (code.includes("import \"std/os\"")) {
+            if (code.includes('import "std/os"')) {
                 output = "The OS package does not work in the browser";
                 return;
-            } else if (code.includes("import \"std/fs\"")) {
+            } else if (code.includes('import "std/fs"')) {
                 output = "The FS package does not work in the browser";
                 return;
-            } else if (code.includes("import \"std/ffi\"")) {
+            } else if (code.includes('import "std/ffi"')) {
                 output = "The FFI package does not work in the browser";
                 return;
-            } if (code.includes("import \"std/http\"")) {
+            }
+            if (code.includes('import "std/http"')) {
                 output = "The HTTP package does not work in the browser";
                 return;
             }
@@ -86,31 +91,53 @@
     }
 </script>
 
-<div class="flex w-full max-w-screen h-screen flex-col max-w-screen overflow-x-hidden">
+<div
+    class="flex w-full max-w-screen h-screen flex-col max-w-screen overflow-x-hidden"
+>
     <Navbar />
 
     <hr class="border-bg2 mt-1" />
 
-    <div class="flex flex-col md:flex-row p-4 md:space-x-8 space-y-6 md:space-y-0 flex-1 min-h-0">
+    <div
+        class="flex flex-col md:flex-row p-4 md:space-x-8 space-y-6 md:space-y-0 flex-1 min-h-0"
+    >
         <div class="md:w-1/2 flex flex-col min-h-0">
-            <div class="prose max-w-none border border-bg2 py-2 px-4 rounded-lg flex-1 overflow-auto">{@html html}</div>
+            <div
+                class="prose max-w-none border border-bg2 py-2 px-4 rounded-lg flex-1 overflow-auto"
+            >
+                {@html html}
+            </div>
             <div class="mt-6 text-center">
-                <a href={getPrevious(slug)} class={`text-blue hover:underline ${!getPrevious(slug) && "opacity-50 cursor-not-allowed"}`}>back</a>
+                <a
+                    href={getPrevious(slug)}
+                    class={`text-blue hover:underline ${!getPrevious(slug) && "opacity-50 cursor-not-allowed"}`}
+                    >back</a
+                >
                 <span class="mx-2 text-[#7c6d67]">—</span>
-                <a href="/tour/contents" class="text-blue hover:underline">contents</a>
+                <a href="/tour/contents" class="text-blue hover:underline"
+                    >contents</a
+                >
                 <span class="mx-2 text-[#7c6d67]">—</span>
-                <a href={getNext(slug)} class={`text-blue hover:underline ${!getNext(slug) && "opacity-50 cursor-not-allowed"}`}>next</a>
+                <a
+                    href={getNext(slug)}
+                    class={`text-blue hover:underline ${!getNext(slug) && "opacity-50 cursor-not-allowed"}`}
+                    >next</a
+                >
             </div>
         </div>
 
         <div class="flex flex-col gap-2 h-full md:w-1/2">
             <div class="h-2/3 relative">
-                <div class="h-full border border-bg2 rounded-lg p-1 bg-bg0_h overflow-hidden" id="code"></div>
+                <div
+                    class="h-full border border-bg2 rounded-lg p-1 bg-bg0_h overflow-hidden"
+                    id="code"
+                ></div>
                 <button class="absolute top-4 right-4" on:click={run}>
                     <Play size="20" />
                 </button>
             </div>
-            <pre class="h-1/3 bg-bg0_h py-2 px-4 rounded-lg border border-bg2 text-lg overflow-auto whitespace-pre-wrap">{@html output}</pre>
+            <pre
+                class="h-1/3 bg-bg0_h py-2 px-4 rounded-lg border border-bg2 text-lg overflow-auto whitespace-pre-wrap">{@html output}</pre>
         </div>
     </div>
 </div>

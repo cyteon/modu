@@ -1,11 +1,11 @@
-import type { Config } from 'tailwindcss';
-import typography from '@tailwindcss/typography';
+import type { Config } from "tailwindcss";
+import typography from "@tailwindcss/typography";
 
 const linkColor = "blue";
 const accent = "fg2";
 
 export default {
-  content: ['./src/**/*.{html,js,svelte,ts}'],
+  content: ["./src/**/*.{html,js,svelte,ts}"],
 
   theme: {
     extend: {
@@ -37,39 +37,31 @@ export default {
             "--tw-prose-invert-bullets": theme(`colors.${accent}`),
             "--tw-prose-invert-hr": theme(`colors.${accent}`),
             "--tw-prose-invert-quotes": theme(`colors.${accent}`),
-            "--tw-prose-invert-quote-borders": theme(
-              `colors.${accent}`,
-            ),
+            "--tw-prose-invert-quote-borders": theme(`colors.${accent}`),
             "--tw-prose-invert-captions": theme(`colors.${accent}`),
             "--tw-prose-invert-code": theme("colors.white"),
             "--tw-prose-invert-pre-code": theme(`colors.${accent}`),
             "--tw-prose-invert-pre-bg": "rgb(0 0 0 / 50%)",
-            "--tw-prose-invert-th-borders": theme(
-              `colors.${accent}`,
-            ),
-            "--tw-prose-invert-td-borders": theme(
-              `colors.${accent}`,
-            ),
+            "--tw-prose-invert-th-borders": theme(`colors.${accent}`),
+            "--tw-prose-invert-td-borders": theme(`colors.${accent}`),
           },
         },
       }),
     },
 
     colors: {
-      "bg": "#282828",
-      "bg0_h": "#1d2021",
-      "bg1": "#3c3836",
-      "bg2": "#504945",
-      "fg0": "#fbf1c7",
-      "fg1": "#ebdbb2",
-      "fg2": "#d5c4a1",
-      "red": "#fb4934",
-      "yellow": "#fabd2f",
-      "blue": "#83a598",
-    }
+      bg: "#282828",
+      bg0_h: "#1d2021",
+      bg1: "#3c3836",
+      bg2: "#504945",
+      fg0: "#fbf1c7",
+      fg1: "#ebdbb2",
+      fg2: "#d5c4a1",
+      red: "#fb4934",
+      yellow: "#fabd2f",
+      blue: "#83a598",
+    },
   },
 
-  plugins: [
-    typography()
-  ],
+  plugins: [typography()],
 } satisfies Config;

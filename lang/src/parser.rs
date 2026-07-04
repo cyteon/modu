@@ -387,12 +387,6 @@ fn parser<'src>() -> impl Parser<
                     select! { (Token::NotIn, span) => span }
                         .then(inclusive_range.clone())
                         .map(|(span, right)| (Token::NotIn, span, right)),
-                    select! { (Token::And, span) => span }
-                        .then(inclusive_range.clone())
-                        .map(|(span, right)| (Token::And, span, right)),
-                    select! { (Token::Or, span) => span }
-                        .then(inclusive_range.clone())
-                        .map(|(span, right)| (Token::Or, span, right)),
                 ))
                 .repeated(),
                 |left: SpannedExpr, (op, _span, right): (Token, Span, SpannedExpr)| SpannedExpr {
@@ -420,8 +414,6 @@ fn parser<'src>() -> impl Parser<
                         Token::NotIn => {
                             Expr::NotIn(Box::new(left.clone()), Box::new(right.clone()))
                         }
-                        Token::And => Expr::And(Box::new(left.clone()), Box::new(right.clone())),
-                        Token::Or => Expr::Or(Box::new(left.clone()), Box::new(right.clone())),
                         _ => unreachable!(),
                     },
                     span: Span::from(left.span.start..right.span.end),
@@ -429,7 +421,27 @@ fn parser<'src>() -> impl Parser<
             )
             .boxed();
 
-        comparison
+        let and_expr = comparison.clone().foldl(
+            select! { (Token::And, span) => span }
+                .then(comparison.clone())
+                .repeated(),
+            |left, (_, right)| SpannedExpr {
+                node: Expr::And(Box::new(left.clone()), Box::new(right.clone())),
+                span: Span::from(left.span.start..right.span.end),
+            },
+        );
+
+        let or_expr = and_expr.clone().foldl(
+            select! { (Token::Or, span) => span }
+                .then(and_expr.clone())
+                .repeated(),
+            |left, (_, right)| SpannedExpr {
+                node: Expr::Or(Box::new(left.clone()), Box::new(right.clone())),
+                span: Span::from(left.span.start..right.span.end),
+            },
+        );
+
+        or_expr
     });
 
     let stmt = recursive(|stmt| {

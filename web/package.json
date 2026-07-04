@@ -1,35 +1,35 @@
 {
-	"name": "modu-website",
-	"private": true,
-	"version": "0.0.1",
-	"type": "module",
-	"scripts": {
-		"dev": "vite dev",
-		"build": "vite build",
-		"preview": "vite preview",
-		"check": "svelte-kit sync && svelte-check --tsconfig ./tsconfig.json",
-		"check:watch": "svelte-kit sync && svelte-check --tsconfig ./tsconfig.json --watch"
-	},
-	"devDependencies": {
-		"@catppuccin/tailwindcss": "^0.1.6",
-		"@sveltejs/adapter-auto": "^3.0.0",
-		"@sveltejs/kit": "^2.55.0",
-		"@sveltejs/vite-plugin-svelte": "^5.0.0",
-		"@tailwindcss/typography": "^0.5.19",
-		"autoprefixer": "^10.4.27",
-		"svelte": "^5.54.1",
-		"svelte-check": "^4.4.5",
-		"tailwindcss": "^3.4.9",
-		"typescript": "^5.9.3",
-		"vite": "^6.0.0",
-		"vite-plugin-wasm": "^3.6.0"
-	},
-	"dependencies": {
-		"@sveltejs/adapter-static": "^3.0.10",
-		"ansi_up": "^6.0.6",
-		"codemirror": "^6.0.2",
-		"lucide-svelte": "^0.468.0",
-		"marked": "^17.0.5",
-		"modu-wasm": "^3.3.0"
-	}
+  "name": "modu-website",
+  "private": true,
+  "version": "0.0.1",
+  "type": "module",
+  "scripts": {
+    "dev": "vite dev",
+    "build": "vite build",
+    "preview": "vite preview",
+    "check": "svelte-kit sync && svelte-check --tsconfig ./tsconfig.json",
+    "check:watch": "svelte-kit sync && svelte-check --tsconfig ./tsconfig.json --watch"
+  },
+  "devDependencies": {
+    "@catppuccin/tailwindcss": "^0.1.6",
+    "@sveltejs/adapter-auto": "^3.0.0",
+    "@sveltejs/kit": "^2.55.0",
+    "@sveltejs/vite-plugin-svelte": "^5.0.0",
+    "@tailwindcss/typography": "^0.5.19",
+    "autoprefixer": "^10.4.27",
+    "svelte": "^5.54.1",
+    "svelte-check": "^4.4.5",
+    "tailwindcss": "^3.4.9",
+    "typescript": "^5.9.3",
+    "vite": "^6.0.0",
+    "vite-plugin-wasm": "^3.6.0"
+  },
+  "dependencies": {
+    "@sveltejs/adapter-static": "^3.0.10",
+    "ansi_up": "^6.0.6",
+    "codemirror": "^6.0.2",
+    "lucide-svelte": "^0.468.0",
+    "marked": "^17.0.5",
+    "modu-wasm": "^3.3.0"
+  }
 }

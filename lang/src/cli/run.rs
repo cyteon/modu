@@ -9,6 +9,7 @@ pub fn run() {
 
     if args.len() < 3 || (args[2].as_str().contains("--") && args.len() == 3) {
         let main_path = std::path::Path::new("main.modu");
+
         if main_path.exists() {
             file = std::fs::read_to_string(&main_path).unwrap_or_else(|e| {
                 println!("Failed to read main.modu: {}", e);
@@ -89,9 +90,9 @@ pub fn run() {
         bytecode_file.write_all(string.as_bytes()).unwrap();
     }
 
-    let source_path = std::path::PathBuf::from(&args[2])
+    let source_path = std::path::PathBuf::from(&file_path)
         .canonicalize()
-        .map_err(|_| format!("cannot find file '{}'", args[2]))
+        .map_err(|_| format!("cannot find file '{}'", file_path))
         .unwrap();
 
     let mut vm = crate::vm::vm::VM::new(compiler.chunks, source_path, file);

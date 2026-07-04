@@ -248,7 +248,14 @@ fn sleep(args: Vec<Value>) -> Result<Value, String> {
     }
 
     let duration_ms = match &args[0] {
-        Value::Int(i) => *i,
+        Value::Int(i) => {
+            if *i < 0 {
+                return Err("time.sleep() argument must be a non-negative integer".to_string());
+            }
+
+            *i
+        }
+
         _ => {
             return Err(format!(
                 "time.sleep() argument must be an integer duration in milliseconds, got {}",

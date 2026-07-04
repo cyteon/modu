@@ -79,7 +79,7 @@ pub fn parse(args: Vec<Value>) -> Result<Value, String> {
     }
 
     let json_str = match &args[0] {
-        Value::String(s) => Value::process_escape_sequences(s),
+        Value::String(s) => s.clone(),
         _ => {
             return Err(format!(
                 "json.parse() argument must be a string, got {}",

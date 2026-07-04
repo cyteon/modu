@@ -1,11 +1,1 @@
-fn a() {
-    let x = 5;
-
-    fn b() {
-        print(x);
-    }
-
-    b();
-}
-
-a();
+print(3 > 2 or 5 < 4);
